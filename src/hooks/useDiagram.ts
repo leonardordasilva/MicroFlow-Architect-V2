@@ -57,11 +57,11 @@ export function useDiagram() {
   );
 
   const addNode = useCallback(
-    (type: NodeType) => {
+    (type: NodeType, subType?: string) => {
       pushHistory();
       const labelMap: Record<NodeType, string> = {
         service: 'Microserviço',
-        database: 'Oracle',
+        database: subType || 'Oracle',
         queue: 'MQ',
         external: 'REST',
       };
@@ -69,7 +69,7 @@ export function useDiagram() {
         id: createNodeId(),
         type,
         position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
-        data: { label: labelMap[type], type, internalDatabases: [], internalServices: [] },
+        data: { label: labelMap[type], type, subType, internalDatabases: [], internalServices: [] },
       };
       setNodes((prev) => [...prev, newNode]);
     },

@@ -1,7 +1,7 @@
-import { useCallback, useRef } from 'react';
+import { useCallback, useState, useRef, useEffect } from 'react';
 import {
   Box, Database, Mail, Globe, Trash2, Undo2, Redo2, LayoutGrid,
-  Download, Upload, Image, Sparkles, Brain, FileText, Moon, Sun,
+  Download, Upload, Image, Sparkles, Brain, FileText, Moon, Sun, ChevronDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import type { NodeType } from '@/types/diagram';
 
 interface ToolbarProps {
-  onAddNode: (type: NodeType) => void;
+  onAddNode: (type: NodeType, subType?: string) => void;
   onDelete: () => void;
   onUndo: () => void;
   onRedo: () => void;
@@ -48,6 +48,49 @@ function ToolbarButton({
   );
 }
 
+function DatabaseDropdown({ onSelect }: { onSelect: (subType: string) => void }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  return (
+    <div className="relative" ref={ref}>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => setOpen((p) => !p)}>
+            <Database className="h-4 w-4" />
+            <ChevronDown className="h-3 w-3 ml-[-2px]" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent side="bottom" className="text-xs">Banco de Dados</TooltipContent>
+      </Tooltip>
+      {open && (
+        <div className="absolute top-full left-0 mt-1 z-50 rounded-md border bg-popover p-1 shadow-md min-w-[120px]">
+          <button
+            className="flex w-full items-center gap-2 rounded-sm px-3 py-1.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground"
+            onClick={() => { onSelect('Oracle'); setOpen(false); }}
+          >
+            Oracle
+          </button>
+          <button
+            className="flex w-full items-center gap-2 rounded-sm px-3 py-1.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground"
+            onClick={() => { onSelect('Redis'); setOpen(false); }}
+          >
+            Redis
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function Toolbar({
   onAddNode, onDelete, onUndo, onRedo, onAutoLayout,
   onExportPNG, onExportJSON, onImportJSON,
@@ -67,7 +110,7 @@ export default function Toolbar({
       <Separator orientation="vertical" className="h-6" />
 
       <ToolbarButton icon={Box} label="Microserviço" onClick={() => onAddNode('service')} />
-      <ToolbarButton icon={Database} label="Oracle" onClick={() => onAddNode('database')} />
+      <DatabaseDropdown onSelect={(subType) => onAddNode('database', subType)} />
       <ToolbarButton icon={Mail} label="MQ" onClick={() => onAddNode('queue')} />
       <ToolbarButton icon={Globe} label="REST" onClick={() => onAddNode('external')} />
 
