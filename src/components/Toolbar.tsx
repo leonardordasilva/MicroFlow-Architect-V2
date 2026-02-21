@@ -75,13 +75,15 @@ function DatabaseDropdown({ onSelect }: { onSelect: (subType: string) => void })
         <div className="absolute top-full left-0 mt-1 z-50 rounded-md border bg-popover p-1 shadow-md min-w-[120px]">
           <button
             className="flex w-full items-center gap-2 rounded-sm px-3 py-1.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground"
-            onClick={() => { onSelect('Oracle'); setOpen(false); }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); onSelect('Oracle'); setOpen(false); }}
           >
             Oracle
           </button>
           <button
             className="flex w-full items-center gap-2 rounded-sm px-3 py-1.5 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground"
-            onClick={() => { onSelect('Redis'); setOpen(false); }}
+            onMouseDown={(e) => e.stopPropagation()}
+            onClick={(e) => { e.stopPropagation(); onSelect('Redis'); setOpen(false); }}
           >
             Redis
           </button>
