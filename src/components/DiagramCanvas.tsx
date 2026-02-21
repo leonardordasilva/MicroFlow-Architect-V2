@@ -106,8 +106,8 @@ export default function DiagramCanvas() {
   const handleNodeContextMenu = useCallback(
     (event: React.MouseEvent, node: any) => {
       event.preventDefault();
-      // Database nodes cannot spawn other nodes
-      if (node.type === 'database') return;
+      // Database and external nodes cannot spawn other nodes
+      if (node.type === 'database' || node.type === 'external') return;
       const nodeData = node.data as DiagramNodeData;
       setContextMenu({
         x: event.clientX,

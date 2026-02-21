@@ -83,7 +83,6 @@ export default function SpawnFromNodeModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="z-50">
-                  {sourceNodeType !== 'service' && <SelectItem value="service">Microserviço</SelectItem>}
                   <SelectItem value="database">Banco de Dados</SelectItem>
                   <SelectItem value="queue">MQ</SelectItem>
                   <SelectItem value="external">REST</SelectItem>
