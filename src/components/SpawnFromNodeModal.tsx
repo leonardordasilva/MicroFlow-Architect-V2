@@ -22,6 +22,7 @@ interface SpawnFromNodeModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   sourceNodeLabel: string;
+  sourceNodeType: string;
   onConfirm: (type: NodeType, count: number, subType?: string) => void;
 }
 
@@ -29,15 +30,20 @@ export default function SpawnFromNodeModal({
   open,
   onOpenChange,
   sourceNodeLabel,
+  sourceNodeType,
   onConfirm,
 }: SpawnFromNodeModalProps) {
-  const [type, setType] = useState<NodeType>('service');
+  const isQueue = sourceNodeType === 'queue';
+  const [type, setType] = useState<NodeType>(isQueue ? 'service' : 'service');
   const [subType, setSubType] = useState('Oracle');
   const [count, setCount] = useState(1);
 
+  // Reset type when source changes
+  const effectiveType = isQueue ? 'service' : type;
+
   const handleConfirm = () => {
     if (count < 1) return;
-    onConfirm(type, count, type === 'database' ? subType : undefined);
+    onConfirm(effectiveType, count, effectiveType === 'database' ? subType : undefined);
     onOpenChange(false);
     setCount(1);
   };
@@ -52,20 +58,30 @@ export default function SpawnFromNodeModal({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label>Tipo do objeto</Label>
-            <Select value={type} onValueChange={(v) => setType(v as NodeType)}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent className="z-50">
-                <SelectItem value="service">Microserviço</SelectItem>
-                <SelectItem value="database">Banco de Dados</SelectItem>
-                <SelectItem value="queue">MQ</SelectItem>
-                <SelectItem value="external">REST</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+          {isQueue ? (
+            <div className="space-y-2">
+              <Label>Tipo do objeto</Label>
+              <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
+                Microserviço
+              </div>
+              <p className="text-xs text-muted-foreground">Filas só podem criar microserviços</p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <Label>Tipo do objeto</Label>
+              <Select value={type} onValueChange={(v) => setType(v as NodeType)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="z-50">
+                  <SelectItem value="service">Microserviço</SelectItem>
+                  <SelectItem value="database">Banco de Dados</SelectItem>
+                  <SelectItem value="queue">MQ</SelectItem>
+                  <SelectItem value="external">REST</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {type === 'database' && (
             <div className="space-y-2">
