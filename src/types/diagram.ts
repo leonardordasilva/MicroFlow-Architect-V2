@@ -5,6 +5,7 @@ export type NodeType = 'service' | 'database' | 'queue' | 'external';
 export interface DiagramNodeData {
   label: string;
   type: NodeType;
+  subType?: string;
   internalDatabases?: string[];
   internalServices?: string[];
   [key: string]: unknown;
