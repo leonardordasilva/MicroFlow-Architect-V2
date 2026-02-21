@@ -41,7 +41,7 @@ export default function DiagramCanvas() {
   const [showAIGenerate, setShowAIGenerate] = useState(false);
   const [showAIAnalysis, setShowAIAnalysis] = useState(false);
   const [showImportJSON, setShowImportJSON] = useState(false);
-  const [spawnSource, setSpawnSource] = useState<{ id: string; label: string } | null>(null);
+  const [spawnSource, setSpawnSource] = useState<{ id: string; label: string; nodeType: string } | null>(null);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId: string; nodeLabel: string } | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
 
@@ -185,7 +185,8 @@ export default function DiagramCanvas() {
             <button
               className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground"
               onClick={() => {
-                setSpawnSource({ id: contextMenu.nodeId, label: contextMenu.nodeLabel });
+                const nd = nodes.find((n) => n.id === contextMenu.nodeId);
+                setSpawnSource({ id: contextMenu.nodeId, label: contextMenu.nodeLabel, nodeType: nd?.type || '' });
                 setContextMenu(null);
               }}
             >
@@ -221,6 +222,7 @@ export default function DiagramCanvas() {
         open={!!spawnSource}
         onOpenChange={(open) => { if (!open) setSpawnSource(null); }}
         sourceNodeLabel={spawnSource?.label || ''}
+        sourceNodeType={spawnSource?.nodeType || ''}
         onConfirm={(type, count, subType) => {
           if (spawnSource) {
             addNodesFromSource(spawnSource.id, type, count, subType);
