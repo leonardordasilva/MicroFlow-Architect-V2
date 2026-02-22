@@ -1,25 +1,4 @@
-<div align="center">
-
-# 👨‍💻 Leonardo R. da Silva
-
-### Desenvolvedor Full Stack | Arquitetura de Microserviços | React & TypeScript
-
-[![GitHub](https://img.shields.io/badge/GitHub-leonardordasilva-181717?style=for-the-badge&logo=github)](https://github.com/leonardordasilva)
-
-</div>
-
----
-
-## 🧭 Sobre
-
-Bem-vindo ao meu GitHub! Aqui você encontra projetos que refletem minha paixão por construir aplicações web modernas, com foco em **React**, **TypeScript**, **integração com IA (Gemini)** e **arquitetura escalável**. Os repositórios abaixo demonstram desde ferramentas visuais para design de arquiteturas de microserviços até plataformas completas de gestão de vida pessoal com autenticação, banco de dados em nuvem e comunidade.
-
----
-## 📂 Repositórios
-
----
-
-### 🔷 1. MicroFlow Architect
+### 🔷 MicroFlow Architect
 
 > **Gerador de Diagramas de Comunicação de Microserviços, Filas e Banco de Dados**
 
