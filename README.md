@@ -1,73 +1,90 @@
-# Welcome to your Lovable project
+<div align="center">
 
-## Project info
+# 👨‍💻 Leonardo R. da Silva
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+### Desenvolvedor Full Stack | Arquitetura de Microserviços | React & TypeScript
 
-## How can I edit this code?
+[![GitHub](https://img.shields.io/badge/GitHub-leonardordasilva-181717?style=for-the-badge&logo=github)](https://github.com/leonardordasilva)
 
-There are several ways of editing your application.
+</div>
 
-**Use Lovable**
+---
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## 🧭 Sobre
 
-Changes made via Lovable will be committed automatically to this repo.
+Bem-vindo ao meu GitHub! Aqui você encontra projetos que refletem minha paixão por construir aplicações web modernas, com foco em **React**, **TypeScript**, **integração com IA (Gemini)** e **arquitetura escalável**. Os repositórios abaixo demonstram desde ferramentas visuais para design de arquiteturas de microserviços até plataformas completas de gestão de vida pessoal com autenticação, banco de dados em nuvem e comunidade.
 
-**Use your preferred IDE**
+---
+## 📂 Repositórios
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+---
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+### 🔷 1. MicroFlow Architect
 
-Follow these steps:
+> **Gerador de Diagramas de Comunicação de Microserviços, Filas e Banco de Dados**
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+🔗 **Repositório:** [github.com/leonardordasilva/MicroFlow-Architect](https://github.com/leonardordasilva/MicroFlow-Architect)
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+#### 📖 Descrição
 
-# Step 3: Install the necessary dependencies.
-npm i
+O **MicroFlow Architect** é um editor visual interativo para criar diagramas de arquitetura de microserviços diretamente no navegador. Ele permite modelar serviços, filas de mensageria (IBM MQ), bancos de dados e sistemas externos, representando visualmente as conexões REST, SQL e MQ entre eles. Conta com geração automática de diagramas via **Inteligência Artificial (Google Gemini)**, onde o usuário descreve a arquitetura em linguagem natural e a IA gera o diagrama completo.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+#### ✨ Funcionalidades Principais
 
-**Edit a file directly in GitHub**
+- **Editor visual drag-and-drop** de nós e conexões usando React Flow
+- **Geração de diagramas via IA (Gemini):** descreva sua arquitetura em texto e o diagrama é criado automaticamente
+- **4 tipos de nós:** Microserviço, Fila (Queue/MQ), Banco de Dados e Sistema Externo
+- **Conexões inteligentes** com estilização automática por tipo (REST em azul, SQL em laranja, MQ em verde animado)
+- **Bancos de dados e serviços internos (nested):** possibilidade de adicionar DBs e serviços dentro de um nó de microserviço
+- **Auto-layout (Dagre):** organização automática do diagrama em 4 direções (Horizontal, Vertical e invertidos)
+- **Undo/Redo completo** com histórico de até 50 estados (Ctrl+Z / Ctrl+Y)
+- **Exportação para PNG** (via html-to-image) e **JSON** (backup/restore completo)
+- **Importação de JSON** para restaurar diagramas salvos
+- **Nomeação de diagramas** com título exibido como overlay no canvas
+- **Dark Mode** nativo com Tailwind CSS
+- **Fallback inteligente de modelos Gemini** (tenta múltiplos modelos em cascata)
+#### 🛠️ Stack Técnica
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+| Tecnologia | Uso |
+|---|---|
+| **React 18** | Framework de UI |
+| **TypeScript** | Tipagem estática |
+| **React Flow 11** | Motor de diagramas (nós, arestas, canvas interativo) |
+| **Google Gemini AI** (`@google/genai`) | Geração e análise de diagramas via IA |
+| **Dagre** | Algoritmo de layout automático de grafos |
+| **Tailwind CSS** | Estilização (Dark Mode, responsivo) |
+| **html-to-image** | Exportação do diagrama para PNG |
+| **react-markdown** | Renderização de markdown (análise de arquitetura) |
+| **Lucide React** | Ícones |
+| **Vite 5** | Build tool e dev server |
 
-**Use GitHub Codespaces**
+#### 🏗️ Arquitetura do Código
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+    MicroFlow-Architect/
+    ├── index.html
+    ├── index.tsx
+    ├── App.tsx
+    ├── types.ts
+    ├── constants.ts
+    ├── components/
+    │   ├── CustomNode.tsx
+    │   ├── CustomEdge.tsx
+    │   ├── QuantityModal.tsx
+    │   ├── ConfirmationModal.tsx
+    │   ├── NameModal.tsx
+    │   ├── TextToDiagramModal.tsx
+    │   └── ImportModal.tsx
+    ├── services/
+    │   ├── geminiService.ts
+    │   └── layoutService.ts
+    ├── package.json
+    ├── tsconfig.json
+    └── vite.config.ts
+#### 🧠 Destaques Técnicos
 
-## What technologies are used for this project?
+- **Sistema de fallback multi-modelo**: caso o modelo primário do Gemini esteja com rate limit (429) ou indisponível (503/404), o sistema tenta automaticamente o próximo modelo da lista, com delay inteligente entre tentativas.
+- **Prompt Engineering avançado**: o prompt enviado à IA contém regras estritas para internalização de bancos de dados, duplicação de nós para clareza visual e posicionamento automático (esquerda para direita).
+- **Extração robusta de JSON**: parser customizado que usa contagem de chaves/colchetes com awareness de strings para extrair JSON de respostas mistas da IA.
+- **Gerenciamento de estado com histórico**: sistema de undo/redo baseado em snapshots imutáveis do estado de nós e arestas, com limite de memória.
 
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
-
-## Can I connect a custom domain to my Lovable project?
-
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
