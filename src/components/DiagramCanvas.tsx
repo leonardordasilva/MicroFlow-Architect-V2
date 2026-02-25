@@ -180,10 +180,11 @@ export default function DiagramCanvas() {
           fitView
           snapToGrid
           snapGrid={[10, 10]}
-          defaultEdgeOptions={{
-            type: 'smoothstep',
+        defaultEdgeOptions={{
+            type: 'editable',
             animated: true,
             style: { strokeWidth: 2 },
+            data: { controlPoints: [] },
           }}
           proOptions={{ hideAttribution: true }}
         >

@@ -178,7 +178,17 @@ export default function EditableEdge({
 
   return (
     <>
-      {/* Invisible wider path for easier double-click targeting */}
+      <BaseEdge
+        path={edgePath}
+        markerEnd={markerEnd}
+        markerStart={markerStart}
+        style={{ ...style, pointerEvents: 'none' }}
+        labelX={labelX}
+        labelY={labelY}
+        label={label}
+        labelStyle={labelStyle}
+      />
+      {/* Invisible wider path for easier double-click targeting — rendered AFTER BaseEdge so it's on top in SVG */}
       <path
         d={edgePath}
         fill="none"
@@ -186,16 +196,6 @@ export default function EditableEdge({
         strokeWidth={20}
         onDoubleClick={handleEdgeDoubleClick}
         style={{ cursor: 'crosshair' }}
-      />
-      <BaseEdge
-        path={edgePath}
-        markerEnd={markerEnd}
-        markerStart={markerStart}
-        style={style}
-        labelX={labelX}
-        labelY={labelY}
-        label={label}
-        labelStyle={labelStyle}
       />
       {controlPoints.map((cp, i) => (
         <circle
