@@ -1,12 +1,14 @@
 import { useViewport } from '@xyflow/react';
 import type { DiagramNode, DiagramEdge } from '@/types/diagram';
+import type { SaveStatus } from '@/hooks/useAutoSave';
 
 interface StatusBarProps {
   nodes: DiagramNode[];
   edges: DiagramEdge[];
+  saveStatus?: SaveStatus;
 }
 
-export default function StatusBar({ nodes, edges }: StatusBarProps) {
+export default function StatusBar({ nodes, edges, saveStatus }: StatusBarProps) {
   const { zoom } = useViewport();
 
   return (
@@ -16,6 +18,12 @@ export default function StatusBar({ nodes, edges }: StatusBarProps) {
       <span>{edges.length} {edges.length === 1 ? 'conexão' : 'conexões'}</span>
       <span className="text-border">•</span>
       <span>{Math.round(zoom * 100)}%</span>
+      {saveStatus === 'saved' && (
+        <span className="text-green-500">• Auto-salvo</span>
+      )}
+      {saveStatus === 'saving' && (
+        <span className="text-muted-foreground opacity-70">• Salvando...</span>
+      )}
     </div>
   );
 }

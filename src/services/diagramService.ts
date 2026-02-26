@@ -29,6 +29,7 @@ export async function saveDiagram(
         updated_at: new Date().toISOString(),
       })
       .eq('id', existingId)
+      .eq('owner_id', ownerId)
       .select()
       .single();
     if (error) throw error;
@@ -88,6 +89,38 @@ export async function loadDiagramById(id: string): Promise<DiagramRecord | null>
 
 export async function deleteDiagram(id: string): Promise<void> {
   const { error } = await supabase.from('diagrams').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function saveSharedDiagram(
+  diagramId: string,
+  collaboratorId: string,
+  title: string,
+  nodes: DiagramNode[],
+  edges: DiagramEdge[],
+): Promise<void> {
+  // Verify collaborator has permission via diagram_shares
+  const { data: share, error: shareError } = await supabase
+    .from('diagram_shares')
+    .select('id')
+    .eq('diagram_id', diagramId)
+    .eq('shared_with_id', collaboratorId)
+    .maybeSingle();
+
+  if (shareError || !share) {
+    throw new Error('Você não tem permissão de edição neste diagrama.');
+  }
+
+  // Save only nodes, edges and updated_at (not title — only owner can rename)
+  const { error } = await supabase
+    .from('diagrams')
+    .update({
+      nodes: nodes as any,
+      edges: edges as any,
+      updated_at: new Date().toISOString(),
+    })
+    .eq('id', diagramId);
+
   if (error) throw error;
 }
 

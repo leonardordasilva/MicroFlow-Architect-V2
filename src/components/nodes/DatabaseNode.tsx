@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Database } from 'lucide-react';
 import type { DiagramNodeData } from '@/types/diagram';
@@ -8,6 +8,10 @@ const DatabaseNode = memo(({ data, id, selected }: NodeProps) => {
   const nodeData = data as unknown as DiagramNodeData;
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(nodeData.label);
+
+  useEffect(() => {
+    if (!editing) setLabel(nodeData.label);
+  }, [nodeData.label, editing]);
 
   const handleDoubleClick = () => setEditing(true);
   const handleBlur = () => {

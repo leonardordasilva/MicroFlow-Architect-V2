@@ -306,4 +306,89 @@ describe('diagramStore', () => {
       expect((getState().nodes[0].data as any).externalCategory).toBe('Auth');
     });
   });
+
+  // Épico 13 — Bloco 1: label sync source of truth
+  describe('addNode label sync source of truth', () => {
+    it('setNodes atualiza label no store corretamente', () => {
+      getState().addNode('service');
+      const nodeId = getState().nodes[0].id;
+      getState().setNodes(
+        getState().nodes.map((n) =>
+          n.id === nodeId ? { ...n, data: { ...n.data, label: 'Nome Atualizado' } } : n
+        )
+      );
+      expect((getState().nodes[0].data as any).label).toBe('Nome Atualizado');
+    });
+
+    it('undo restaura label anterior no store', () => {
+      getState().addNode('service');
+      const nodeId = getState().nodes[0].id;
+      const originalLabel = (getState().nodes[0].data as any).label;
+      getState().setNodes(
+        getState().nodes.map((n) =>
+          n.id === nodeId ? { ...n, data: { ...n.data, label: 'Novo Label' } } : n
+        )
+      );
+      useDiagramStore.temporal.getState().undo();
+      expect((getState().nodes[0].data as any).label).toBe(originalLabel);
+    });
+  });
+
+  // Épico 13 — Bloco 2: undo history isolation for remote updates
+  describe('undo history isolation for remote updates', () => {
+    it('setNodes após pause/resume não cria entrada de undo', () => {
+      getState().addNode('service');
+      useDiagramStore.temporal.getState().clear();
+
+      useDiagramStore.temporal.getState().pause();
+      getState().setNodes(
+        getState().nodes.map((n) => ({ ...n, data: { ...n.data, label: 'Atualização Remota' } }))
+      );
+      useDiagramStore.temporal.getState().resume();
+
+      expect((getState().nodes[0].data as any).label).toBe('Atualização Remota');
+
+      useDiagramStore.temporal.getState().undo();
+      // Label should remain because the change was not recorded in history
+      expect((getState().nodes[0].data as any).label).toBe('Atualização Remota');
+    });
+  });
+
+  // Épico 13 — Bloco 3: isCollaborator flag
+  describe('isCollaborator flag', () => {
+    it('setIsCollaborator define o valor corretamente', () => {
+      expect(getState().isCollaborator).toBe(false);
+      getState().setIsCollaborator(true);
+      expect(getState().isCollaborator).toBe(true);
+    });
+
+    it('clearCanvas reseta isCollaborator para false', () => {
+      getState().setIsCollaborator(true);
+      getState().clearCanvas();
+      expect(getState().isCollaborator).toBe(false);
+    });
+
+    it('loadDiagram reseta isCollaborator para false', () => {
+      getState().setIsCollaborator(true);
+      getState().loadDiagram([], []);
+      expect(getState().isCollaborator).toBe(false);
+    });
+  });
+
+  // Épico 13 — Bloco 4: addNode position parameter
+  describe('addNode position parameter', () => {
+    it('usa posição fornecida quando passada como argumento', () => {
+      getState().addNode('service', undefined, { x: 500, y: 300 });
+      const node = getState().nodes[0];
+      expect(node.position.x).toBe(500);
+      expect(node.position.y).toBe(300);
+    });
+
+    it('usa posição aleatória quando posição não é fornecida', () => {
+      getState().addNode('service');
+      const node = getState().nodes[0];
+      expect(typeof node.position.x).toBe('number');
+      expect(typeof node.position.y).toBe('number');
+    });
+  });
 });

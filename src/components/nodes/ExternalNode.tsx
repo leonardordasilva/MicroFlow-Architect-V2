@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Globe, Wifi, Share2, Lock, Hexagon, CreditCard, Database, BarChart3, Shield, Box } from 'lucide-react';
 import type { DiagramNodeData, ExternalCategory } from '@/types/diagram';
@@ -27,6 +27,10 @@ const ExternalNode = memo(({ data, id, selected }: NodeProps) => {
   const nodeData = data as unknown as DiagramNodeData;
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(nodeData.label);
+
+  useEffect(() => {
+    if (!editing) setLabel(nodeData.label);
+  }, [nodeData.label, editing]);
   const category = nodeData.externalCategory;
   const protocol = nodeData.subType || 'REST';
 

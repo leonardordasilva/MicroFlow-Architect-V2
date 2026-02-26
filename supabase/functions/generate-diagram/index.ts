@@ -16,6 +16,7 @@ function getCorsHeaders(req: Request) {
 
 const MODEL_CASCADE = [
   "google/gemini-3-flash-preview",
+  "google/gemini-3-pro-preview",
   "google/gemini-2.5-flash",
   "google/gemini-2.5-flash-lite",
 ];

@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import type { DiagramNode, DiagramEdge } from '@/types/diagram';
 
 export interface ShareRecord {
   id: string;
@@ -93,7 +94,7 @@ export async function revokeShare(shareId: string): Promise<void> {
 
 /** Load diagrams shared with current user */
 export async function loadSharedWithMe(userId: string): Promise<
-  { diagram_id: string; title: string; owner_email: string; updated_at: string; nodes: any[]; edges: any[] }[]
+  { diagram_id: string; title: string; owner_email: string; updated_at: string; nodes: DiagramNode[]; edges: DiagramEdge[] }[]
 > {
   const { data: shares, error } = await supabase
     .from('diagram_shares')

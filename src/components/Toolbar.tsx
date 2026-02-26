@@ -121,11 +121,9 @@ export default function Toolbar({
           placeholder="Nome do diagrama"
           aria-label="Nome do diagrama"
         />
-        {localName.length > 80 && (
-          <span className="absolute -bottom-4 right-0 text-[10px] text-muted-foreground">
-            {localName.length}/100
-          </span>
-        )}
+        <div aria-live="polite" aria-atomic="true" className="absolute -bottom-4 right-0 text-[10px] text-muted-foreground">
+          {localName.length > 80 ? `${localName.length}/100` : ''}
+        </div>
       </div>
 
       <Separator orientation="vertical" className="h-6" />
