@@ -29,7 +29,15 @@ export default function AuthPage() {
         toast({ title: 'Conta criada com sucesso!' });
       }
     } catch (err: any) {
-      toast({ title: 'Erro', description: err.message, variant: 'destructive' });
+      const msgMap: Record<string, string> = {
+        'Invalid login credentials': 'Credenciais inválidas. Verifique seu e-mail e senha.',
+        'Email not confirmed': 'E-mail não confirmado. Verifique sua caixa de entrada.',
+        'User already registered': 'Este e-mail já está cadastrado.',
+        'Signup requires a valid password': 'A senha deve ter no mínimo 6 caracteres.',
+        'Password should be at least 6 characters': 'A senha deve ter no mínimo 6 caracteres.',
+      };
+      const translated = msgMap[err.message] || err.message;
+      toast({ title: 'Erro', description: translated, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
