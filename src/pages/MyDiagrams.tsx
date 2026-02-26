@@ -1,10 +1,12 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import {
   loadUserDiagrams,
   deleteDiagram,
   renameDiagram,
+  shareDiagram,
   type DiagramRecord,
 } from '@/services/diagramService';
 import { useDiagramStore } from '@/store/diagramStore';
@@ -21,54 +23,63 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Trash2, Pencil, ArrowLeft, FileText } from 'lucide-react';
+import { Plus, Trash2, Pencil, ArrowLeft, FileText, Share2, RefreshCw } from 'lucide-react';
 import { format } from 'date-fns';
+
+function DiagramCardSkeleton() {
+  return (
+    <div className="flex flex-col rounded-xl border bg-card p-4 shadow-sm animate-pulse">
+      <div className="mb-2 flex items-center justify-between">
+        <div className="h-5 w-2/3 rounded bg-muted" />
+      </div>
+      <div className="h-3 w-1/2 rounded bg-muted" />
+      <div className="mt-2 h-3 w-1/3 rounded bg-muted" />
+    </div>
+  );
+}
 
 export default function MyDiagrams() {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [diagrams, setDiagrams] = useState<DiagramRecord[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient();
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
 
-  const fetchDiagrams = useCallback(async () => {
-    if (!user) return;
-    setLoading(true);
-    const data = await loadUserDiagrams(user.id);
-    setDiagrams(data);
-    setLoading(false);
-  }, [user]);
+  const { data: diagrams = [], isLoading, isError } = useQuery({
+    queryKey: ['diagrams', user?.id],
+    queryFn: () => loadUserDiagrams(user!.id),
+    enabled: !!user,
+    staleTime: 30_000,
+  });
 
-  useEffect(() => {
-    fetchDiagrams();
-  }, [fetchDiagrams]);
-
-  const handleDelete = async () => {
-    if (!deleteId) return;
-    try {
-      await deleteDiagram(deleteId);
-      setDiagrams((prev) => prev.filter((d) => d.id !== deleteId));
+  const deleteMutation = useMutation({
+    mutationFn: deleteDiagram,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['diagrams', user?.id] });
       toast({ title: 'Diagrama excluído' });
-    } catch {
-      toast({ title: 'Erro ao excluir', variant: 'destructive' });
-    }
-    setDeleteId(null);
+      setDeleteId(null);
+    },
+    onError: () => toast({ title: 'Erro ao excluir', variant: 'destructive' }),
+  });
+
+  const renameMutation = useMutation({
+    mutationFn: ({ id, title }: { id: string; title: string }) => renameDiagram(id, title),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['diagrams', user?.id] });
+      toast({ title: 'Diagrama renomeado' });
+      setEditingId(null);
+    },
+    onError: () => toast({ title: 'Erro ao renomear', variant: 'destructive' }),
+  });
+
+  const handleDelete = () => {
+    if (deleteId) deleteMutation.mutate(deleteId);
   };
 
-  const handleRename = async (id: string) => {
+  const handleRename = (id: string) => {
     if (!editTitle.trim()) return;
-    try {
-      await renameDiagram(id, editTitle.trim());
-      setDiagrams((prev) =>
-        prev.map((d) => (d.id === id ? { ...d, title: editTitle.trim() } : d))
-      );
-      toast({ title: 'Diagrama renomeado' });
-    } catch {
-      toast({ title: 'Erro ao renomear', variant: 'destructive' });
-    }
-    setEditingId(null);
+    renameMutation.mutate({ id, title: editTitle.trim() });
   };
 
   const handleLoad = (diagram: DiagramRecord) => {
@@ -78,10 +89,16 @@ export default function MyDiagrams() {
     navigate('/');
   };
 
-  if (!user) {
-    navigate('/');
-    return null;
-  }
+  const handleShare = async (e: React.MouseEvent, d: DiagramRecord) => {
+    e.stopPropagation();
+    const url = await shareDiagram(d.id);
+    if (url) {
+      await navigator.clipboard.writeText(url);
+      toast({ title: 'Link copiado!', description: url });
+    } else {
+      toast({ title: 'Erro ao compartilhar', variant: 'destructive' });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -98,14 +115,34 @@ export default function MyDiagrams() {
           </Button>
         </div>
 
-        {loading ? (
-          <div className="flex justify-center py-20 text-muted-foreground">Carregando...</div>
-        ) : diagrams.length === 0 ? (
+        {isError && (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-            <FileText className="mb-4 h-12 w-12 opacity-40" />
-            <p>Nenhum diagrama salvo ainda.</p>
+            <p className="mb-4">Erro ao carregar diagramas.</p>
+            <Button
+              variant="outline"
+              onClick={() => queryClient.invalidateQueries({ queryKey: ['diagrams', user?.id] })}
+            >
+              <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
+            </Button>
           </div>
-        ) : (
+        )}
+
+        {isLoading ? (
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <DiagramCardSkeleton key={i} />
+            ))}
+          </div>
+        ) : !isError && diagrams.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
+            <FileText className="mb-4 h-14 w-14 opacity-30" />
+            <p className="mb-1">Nenhum diagrama salvo ainda</p>
+            <p className="mb-4 text-sm">Crie seu primeiro diagrama de arquitetura</p>
+            <Button onClick={() => navigate('/')}>
+              <Plus className="mr-2 h-4 w-4" /> Criar primeiro diagrama
+            </Button>
+          </div>
+        ) : !isError ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {diagrams.map((d) => (
               <div
@@ -142,6 +179,15 @@ export default function MyDiagrams() {
                     variant="ghost"
                     size="icon"
                     className="h-7 w-7"
+                    onClick={(e) => handleShare(e, d)}
+                    aria-label="Compartilhar"
+                  >
+                    <Share2 className="h-3.5 w-3.5" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7"
                     onClick={(e) => {
                       e.stopPropagation();
                       setEditingId(d.id);
@@ -167,7 +213,7 @@ export default function MyDiagrams() {
               </div>
             ))}
           </div>
-        )}
+        ) : null}
       </div>
 
       <AlertDialog open={!!deleteId} onOpenChange={(open) => { if (!open) setDeleteId(null); }}>

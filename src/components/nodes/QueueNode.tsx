@@ -2,6 +2,7 @@ import { memo, useState } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Mail, MessageSquare, Radio } from 'lucide-react';
 import type { DiagramNodeData } from '@/types/diagram';
+import { useDiagramStore } from '@/store/diagramStore';
 
 const QUEUE_ICONS: Record<string, React.ElementType> = {
   MQ: Mail,
@@ -9,7 +10,7 @@ const QUEUE_ICONS: Record<string, React.ElementType> = {
   AMQP: MessageSquare,
 };
 
-const QueueNode = memo(({ data, selected }: NodeProps) => {
+const QueueNode = memo(({ data, id, selected }: NodeProps) => {
   const nodeData = data as unknown as DiagramNodeData;
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(nodeData.label);
@@ -19,7 +20,11 @@ const QueueNode = memo(({ data, selected }: NodeProps) => {
   const handleDoubleClick = () => setEditing(true);
   const handleBlur = () => {
     setEditing(false);
-    nodeData.label = label;
+    useDiagramStore.getState().setNodes(
+      useDiagramStore.getState().nodes.map((n) =>
+        n.id === id ? { ...n, data: { ...n.data, label } } : n
+      )
+    );
   };
 
   return (

@@ -34,4 +34,15 @@ describe('PROTOCOL_CONFIGS', () => {
       }
     }
   });
+
+  it('all protocol colors should have sufficient lightness for dark mode (L >= 40%)', () => {
+    for (const proto of protocols) {
+      const color = PROTOCOL_CONFIGS[proto].color;
+      // Parse hsl(h, s%, l%) format
+      const match = color.match(/hsl\(\s*(\d+)\s*,\s*(\d+)%?\s*,\s*(\d+)%?\s*\)/);
+      expect(match, `Invalid HSL format for ${proto}: ${color}`).toBeTruthy();
+      const lightness = parseInt(match![3], 10);
+      expect(lightness, `${proto} lightness ${lightness}% is below 40%`).toBeGreaterThanOrEqual(40);
+    }
+  });
 });

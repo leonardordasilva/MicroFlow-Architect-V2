@@ -26,7 +26,7 @@ export const PROTOCOL_CONFIGS: Record<EdgeProtocol, ProtocolConfig> = {
   gRPC:      { label: 'gRPC',      color: 'hsl(262, 83%, 58%)',  async: false },
   GraphQL:   { label: 'GraphQL',   color: 'hsl(319, 80%, 55%)',  async: false },
   WebSocket: { label: 'WebSocket', color: 'hsl(38, 92%, 50%)',   async: true,  dashArray: '8 4' },
-  Kafka:     { label: 'Kafka',     color: 'hsl(0, 0%, 20%)',     async: true,  dashArray: '6 3' },
+  Kafka:     { label: 'Kafka',     color: 'hsl(38, 92%, 50%)',   async: true,  dashArray: '6 3' },
   AMQP:      { label: 'AMQP',      color: 'hsl(25, 95%, 53%)',   async: true,  dashArray: '6 3' },
   MQTT:      { label: 'MQTT',      color: 'hsl(142, 71%, 45%)',  async: true,  dashArray: '4 4' },
   HTTPS:     { label: 'HTTPS',     color: 'hsl(200, 80%, 50%)',  async: false },
