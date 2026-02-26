@@ -78,3 +78,16 @@ export async function loadDiagramById(id: string): Promise<DiagramRecord | null>
   if (error) return null;
   return data as unknown as DiagramRecord;
 }
+
+export async function deleteDiagram(id: string): Promise<void> {
+  const { error } = await supabase.from('diagrams').delete().eq('id', id);
+  if (error) throw error;
+}
+
+export async function renameDiagram(id: string, title: string): Promise<void> {
+  const { error } = await supabase
+    .from('diagrams')
+    .update({ title, updated_at: new Date().toISOString() })
+    .eq('id', id);
+  if (error) throw error;
+}

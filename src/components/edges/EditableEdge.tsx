@@ -4,6 +4,7 @@ import {
   useReactFlow,
   type EdgeProps,
 } from '@xyflow/react';
+import { PROTOCOL_CONFIGS, type EdgeProtocol } from '@/types/diagram';
 
 interface Point {
   x: number;
@@ -12,6 +13,7 @@ interface Point {
 
 interface EditableEdgeData {
   waypoints?: Point[];
+  protocol?: EdgeProtocol;
   [key: string]: unknown;
 }
 
@@ -69,6 +71,9 @@ export default function EditableEdge({
   const edgeData = data as EditableEdgeData | undefined;
   const waypoints: Point[] =
     edgeData?.waypoints ?? computeDefaultWaypoints(sourceX, sourceY, targetX, targetY);
+
+  const protocol = edgeData?.protocol;
+  const protocolConfig = protocol ? PROTOCOL_CONFIGS[protocol] : undefined;
 
   const source: Point = { x: sourceX, y: sourceY };
   const target: Point = { x: targetX, y: targetY };
@@ -212,7 +217,14 @@ export default function EditableEdge({
         path={edgePath}
         markerEnd={markerEnd}
         markerStart={markerStart}
-        style={{ ...style, pointerEvents: 'none' }}
+        style={{
+          ...style,
+          pointerEvents: 'none',
+          ...(protocolConfig ? {
+            stroke: protocolConfig.color,
+            strokeDasharray: protocolConfig.dashArray || undefined,
+          } : {}),
+        }}
         labelX={labelX}
         labelY={labelY}
         label={label}
