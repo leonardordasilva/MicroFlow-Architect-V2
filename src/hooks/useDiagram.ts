@@ -27,64 +27,36 @@ export function useDiagram() {
     historyIndexRef.current = historyRef.current.length - 1;
   }, [nodes, edges]);
 
+  // Track previous node positions to compute deltas for waypoint translation
+  const nodePosRef = useRef<Record<string, { x: number; y: number }>>({});
+
   const onNodesChange = useCallback(
     (changes: NodeChange[]) => {
-      setNodes((nds) => applyNodeChanges(changes, nds) as DiagramNode[]);
-    },
-    []
-  );
-
-  // Track drag start position and initial waypoints for connected edges
-  const dragStartRef = useRef<{
-    nodeId: string;
-    startPos: { x: number; y: number };
-    edgeWaypoints: Record<string, { x: number; y: number }[]>;
-  } | null>(null);
-
-  const onNodeDragStart = useCallback(
-    (_event: React.MouseEvent, node: DiagramNode) => {
-      // Capture starting position and current waypoints of connected edges
-      const edgeWaypoints: Record<string, { x: number; y: number }[]> = {};
-      setEdges((eds) => {
-        for (const edge of eds) {
-          const connected = edge.source === node.id || edge.target === node.id;
-          if (connected && edge.data?.waypoints?.length) {
-            edgeWaypoints[edge.id] = edge.data.waypoints.map((wp: { x: number; y: number }) => ({ ...wp }));
-          }
+      setNodes((nds) => {
+        const newNodes = applyNodeChanges(changes, nds) as DiagramNode[];
+        // Update position cache
+        for (const n of newNodes) {
+          nodePosRef.current[n.id] = { x: n.position.x, y: n.position.y };
         }
-        return eds; // no mutation
+        return newNodes;
       });
-      dragStartRef.current = {
-        nodeId: node.id,
-        startPos: { x: node.position.x, y: node.position.y },
-        edgeWaypoints,
-      };
     },
     []
   );
 
+  // Called during node drag to reset waypoints so edge follows naturally
   const onNodeDragHandler = useCallback(
     (_event: React.MouseEvent, node: DiagramNode) => {
-      const info = dragStartRef.current;
-      if (!info || info.nodeId !== node.id) return;
-      if (Object.keys(info.edgeWaypoints).length === 0) return;
-
-      const dx = node.position.x - info.startPos.x;
-      const dy = node.position.y - info.startPos.y;
-
       setEdges((eds) =>
         eds.map((edge) => {
-          const initialWp = info.edgeWaypoints[edge.id];
-          if (!initialWp) return edge;
+          const connected = edge.source === node.id || edge.target === node.id;
+          if (!connected || !edge.data?.waypoints?.length) return edge;
 
           return {
             ...edge,
             data: {
               ...edge.data,
-              waypoints: initialWp.map((wp) => ({
-                x: wp.x + dx,
-                y: wp.y + dy,
-              })),
+              waypoints: undefined,
             },
           };
         })
@@ -287,7 +259,6 @@ export function useDiagram() {
     onNodesChange,
     onEdgesChange,
     onConnect,
-    onNodeDragStart,
     onNodeDragHandler,
     addNode,
     addNodesFromSource,
