@@ -106,7 +106,7 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
 
   const { saveStatus } = useAutoSave();
   const { user, signOut } = useAuth();
-  const [darkMode, setDarkMode] = useState(true);
+  const [darkMode, setDarkMode] = useState(false);
   const [showAIGenerate, setShowAIGenerate] = useState(false);
   const [showAIAnalysis, setShowAIAnalysis] = useState(false);
   const [showImportJSON, setShowImportJSON] = useState(false);
@@ -143,9 +143,14 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
     });
   }, []);
 
-  // Initialize dark mode
+  // Initialize light mode (default) and clear canvas on mount
   useEffect(() => {
-    document.documentElement.classList.add('dark');
+    document.documentElement.classList.remove('dark');
+    // Clear canvas so dashboard always starts clean
+    const store = useDiagramStore.getState();
+    store.clearCanvas();
+    store.setDiagramName('Novo Diagrama');
+    store.setCurrentDiagramId(undefined);
   }, []);
 
   const handleExportPNG = useCallback(async () => {
