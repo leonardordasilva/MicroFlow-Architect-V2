@@ -44,22 +44,9 @@ export function useDiagram() {
     []
   );
 
-  // Called during node drag to translate waypoints of connected edges
+  // Called during node drag to reset waypoints so edge follows naturally
   const onNodeDragHandler = useCallback(
     (_event: React.MouseEvent, node: DiagramNode) => {
-      const prevPos = nodePosRef.current[node.id];
-      if (!prevPos) {
-        nodePosRef.current[node.id] = { x: node.position.x, y: node.position.y };
-        return;
-      }
-
-      const dx = node.position.x - prevPos.x;
-      const dy = node.position.y - prevPos.y;
-
-      if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) return;
-
-      nodePosRef.current[node.id] = { x: node.position.x, y: node.position.y };
-
       setEdges((eds) =>
         eds.map((edge) => {
           const connected = edge.source === node.id || edge.target === node.id;
@@ -69,10 +56,7 @@ export function useDiagram() {
             ...edge,
             data: {
               ...edge.data,
-              waypoints: edge.data.waypoints.map((wp: { x: number; y: number }) => ({
-                x: wp.x + dx,
-                y: wp.y + dy,
-              })),
+              waypoints: undefined,
             },
           };
         })
