@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import {
   ReactFlow,
+  ReactFlowProvider,
   Background,
   Controls,
   MiniMap,
@@ -260,6 +261,7 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
   }, [user, diagramName, nodes, edges, diagramId]);
 
   return (
+    <ReactFlowProvider>
     <div className="flex h-screen w-screen flex-col bg-background" onKeyDown={handleKeyDown} tabIndex={0}>
       <header className="flex items-center justify-center gap-3 border-b bg-card/80 px-4 py-2 backdrop-blur-sm">
         <Toolbar
@@ -476,5 +478,6 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
         onOpenChange={setShowShortcuts}
       />
     </div>
+    </ReactFlowProvider>
   );
 }
