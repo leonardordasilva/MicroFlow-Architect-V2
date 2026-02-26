@@ -33,7 +33,7 @@ import AIGenerateModal from '@/components/AIGenerateModal';
 import AIAnalysisPanel from '@/components/AIAnalysisPanel';
 import ImportJSONModal from '@/components/ImportJSONModal';
 import SpawnFromNodeModal from '@/components/SpawnFromNodeModal';
-import type { DiagramNodeData } from '@/types/diagram';
+import type { DiagramNodeData, EdgeProtocol } from '@/types/diagram';
 import { exportToMermaid } from '@/services/exportService';
 import MermaidExportModal from '@/components/MermaidExportModal';
 import ShareModal from '@/components/ShareModal';
@@ -42,12 +42,16 @@ import RecoveryBanner from '@/components/RecoveryBanner';
 import { useAuth } from '@/hooks/useAuth';
 import { saveDiagram } from '@/services/diagramService';
 import { useRealtimeCollab } from '@/hooks/useRealtimeCollab';
-import { Check, Loader2, Share2, Save, LogOut, Keyboard } from 'lucide-react';
+import { Check, Loader2, Share2, Save, LogOut, Keyboard, FolderOpen } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import NodePropertiesPanel from '@/components/NodePropertiesPanel';
 import StatusBar from '@/components/StatusBar';
 import KeyboardShortcutsModal from '@/components/KeyboardShortcutsModal';
+import ProtocolSelectorModal from '@/components/ProtocolSelectorModal';
+import DiagramLegend from '@/components/DiagramLegend';
+import CollaboratorAvatars from '@/components/CollaboratorAvatars';
 
 const nodeTypes = {
   service: ServiceNode,
@@ -68,6 +72,7 @@ interface DiagramCanvasProps {
 }
 
 export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
+  const navigate = useNavigate();
   const nodes = useDiagramStore((s) => s.nodes);
   const edges = useDiagramStore((s) => s.edges);
   const diagramName = useDiagramStore((s) => s.diagramName);
@@ -110,9 +115,10 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
   const [saving, setSaving] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
+  const [protocolEdgeId, setProtocolEdgeId] = useState<string | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { guides, onNodeDrag, onNodeDragStop } = useSnapGuides(nodes);
-  const { broadcastChanges } = useRealtimeCollab(shareToken || null);
+  const { broadcastChanges, collaborators } = useRealtimeCollab(shareToken || null);
 
   // Broadcast changes when nodes/edges update (only if in shared mode)
   useEffect(() => {
@@ -130,9 +136,9 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
   }, []);
 
   // Initialize dark mode
-  useState(() => {
+  useEffect(() => {
     document.documentElement.classList.add('dark');
-  });
+  }, []);
 
   const handleExportPNG = useCallback(async () => {
     const el = document.querySelector('.react-flow') as HTMLElement;
@@ -230,6 +236,24 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
     setSelectedNodeId(null);
   }, []);
 
+  const handleEdgeDoubleClick = useCallback((_event: React.MouseEvent, edge: any) => {
+    setProtocolEdgeId(edge.id);
+  }, []);
+
+  const handleProtocolSelect = useCallback(
+    (protocol: EdgeProtocol) => {
+      if (!protocolEdgeId) return;
+      const store = useDiagramStore.getState();
+      store.setEdges(
+        edges.map((e) =>
+          e.id === protocolEdgeId ? { ...e, data: { ...e.data, protocol } } : e
+        )
+      );
+      setProtocolEdgeId(null);
+    },
+    [protocolEdgeId, edges]
+  );
+
   const handleSaveToCloud = useCallback(async () => {
     if (!user) return;
     setSaving(true);
@@ -302,7 +326,16 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
           )}
         </div>
         {user && (
-          <div className="flex items-center gap-1 ml-auto">
+          <div className="flex items-center gap-2 ml-auto">
+            <CollaboratorAvatars collaborators={collaborators} />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate('/my-diagrams')} aria-label="Meus Diagramas">
+                  <FolderOpen className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">Meus Diagramas</TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSaveToCloud} disabled={saving} aria-label="Salvar na nuvem">
@@ -355,6 +388,7 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
           onNodeContextMenu={handleNodeContextMenu}
           onPaneClick={handlePaneClick}
           onNodeClick={handleNodeClick}
+          onEdgeDoubleClick={handleEdgeDoubleClick}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           fitView
@@ -409,6 +443,7 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
             onClose={() => setSelectedNodeId(null)}
           />
         )}
+        <DiagramLegend />
       </div>
 
       <StatusBar nodes={nodes} edges={edges} />
@@ -476,6 +511,13 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
       <KeyboardShortcutsModal
         open={showShortcuts}
         onOpenChange={setShowShortcuts}
+      />
+
+      <ProtocolSelectorModal
+        open={!!protocolEdgeId}
+        onOpenChange={(open) => { if (!open) setProtocolEdgeId(null); }}
+        currentProtocol={protocolEdgeId ? (edges.find((e) => e.id === protocolEdgeId)?.data as any)?.protocol : undefined}
+        onSelect={handleProtocolSelect}
       />
     </div>
     </ReactFlowProvider>

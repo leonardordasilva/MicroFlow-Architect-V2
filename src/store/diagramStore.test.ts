@@ -155,4 +155,53 @@ describe('diagramStore', () => {
       expect((getState().nodes[0].data as any).internalDatabases).toHaveLength(1);
     });
   });
+
+  describe('onConnect', () => {
+    it('should create an edge between two nodes', () => {
+      getState().addNode('service');
+      getState().addNode('service');
+      const [n1, n2] = getState().nodes;
+
+      getState().onConnect({
+        source: n1.id,
+        target: n2.id,
+        sourceHandle: null,
+        targetHandle: null,
+      });
+
+      expect(getState().edges).toHaveLength(1);
+      expect(getState().edges[0].source).toBe(n1.id);
+      expect(getState().edges[0].target).toBe(n2.id);
+    });
+
+    it('should label edge "produce" for service→queue', () => {
+      getState().addNode('service');
+      getState().addNode('queue', 'MQ');
+      const [svc, queue] = getState().nodes;
+
+      getState().onConnect({
+        source: svc.id,
+        target: queue.id,
+        sourceHandle: null,
+        targetHandle: null,
+      });
+
+      expect(getState().edges[0].label).toBe('produce');
+    });
+
+    it('should label edge "consume" for queue→service', () => {
+      getState().addNode('queue', 'MQ');
+      getState().addNode('service');
+      const [queue, svc] = getState().nodes;
+
+      getState().onConnect({
+        source: queue.id,
+        target: svc.id,
+        sourceHandle: null,
+        targetHandle: null,
+      });
+
+      expect(getState().edges[0].label).toBe('consume');
+    });
+  });
 });
