@@ -27,8 +27,57 @@ export function useDiagram() {
     historyIndexRef.current = historyRef.current.length - 1;
   }, [nodes, edges]);
 
+  // Track previous node positions to compute deltas for waypoint translation
+  const nodePosRef = useRef<Record<string, { x: number; y: number }>>({});
+
   const onNodesChange = useCallback(
-    (changes: NodeChange[]) => setNodes((nds) => applyNodeChanges(changes, nds) as DiagramNode[]),
+    (changes: NodeChange[]) => {
+      setNodes((nds) => {
+        const newNodes = applyNodeChanges(changes, nds) as DiagramNode[];
+        // Update position cache
+        for (const n of newNodes) {
+          nodePosRef.current[n.id] = { x: n.position.x, y: n.position.y };
+        }
+        return newNodes;
+      });
+    },
+    []
+  );
+
+  // Called during node drag to translate waypoints of connected edges
+  const onNodeDragHandler = useCallback(
+    (_event: React.MouseEvent, node: DiagramNode) => {
+      const prevPos = nodePosRef.current[node.id];
+      if (!prevPos) {
+        nodePosRef.current[node.id] = { x: node.position.x, y: node.position.y };
+        return;
+      }
+
+      const dx = node.position.x - prevPos.x;
+      const dy = node.position.y - prevPos.y;
+
+      if (Math.abs(dx) < 0.01 && Math.abs(dy) < 0.01) return;
+
+      nodePosRef.current[node.id] = { x: node.position.x, y: node.position.y };
+
+      setEdges((eds) =>
+        eds.map((edge) => {
+          const connected = edge.source === node.id || edge.target === node.id;
+          if (!connected || !edge.data?.waypoints?.length) return edge;
+
+          return {
+            ...edge,
+            data: {
+              ...edge.data,
+              waypoints: edge.data.waypoints.map((wp: { x: number; y: number }) => ({
+                x: wp.x + dx,
+                y: wp.y + dy,
+              })),
+            },
+          };
+        })
+      );
+    },
     []
   );
 
@@ -226,6 +275,7 @@ export function useDiagram() {
     onNodesChange,
     onEdgesChange,
     onConnect,
+    onNodeDragHandler,
     addNode,
     addNodesFromSource,
     deleteSelected,
