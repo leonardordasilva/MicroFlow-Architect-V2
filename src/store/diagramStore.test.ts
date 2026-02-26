@@ -240,6 +240,32 @@ describe('diagramStore', () => {
     });
   });
 
+  describe('setDiagramName undo/redo', () => {
+    it('reverte nome completo com um único undo', () => {
+      getState().setDiagramName('Diagrama Antigo');
+      useDiagramStore.temporal.getState().clear();
+
+      getState().setDiagramName('Diagrama Novo');
+      expect(getState().diagramName).toBe('Diagrama Novo');
+
+      useDiagramStore.temporal.getState().undo();
+      expect(getState().diagramName).toBe('Diagrama Antigo');
+    });
+
+    it('duas renomeações distintas geram dois passos de undo independentes', () => {
+      getState().setDiagramName('Nome A');
+      getState().setDiagramName('Nome B');
+
+      expect(getState().diagramName).toBe('Nome B');
+
+      useDiagramStore.temporal.getState().undo();
+      expect(getState().diagramName).toBe('Nome A');
+
+      useDiagramStore.temporal.getState().undo();
+      expect(getState().diagramName).toBe('Novo Diagrama');
+    });
+  });
+
   describe('externalCategory undo/redo', () => {
     it('captura mudança de externalCategory no histórico', () => {
       getState().addNode('external', 'REST');

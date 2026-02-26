@@ -1,10 +1,11 @@
-import { useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box, Database, Mail, Globe, Trash2, Undo2, Redo2, LayoutGrid,
   Download, Upload, Image, Sparkles, Brain, Moon, Sun, ChevronDown, XCircle,
   FileCode, FileImage, FileJson,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Separator } from '@/components/ui/separator';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -82,20 +83,47 @@ export default function Toolbar({
   diagramName, onDiagramNameChange,
   darkMode, onToggleDarkMode,
 }: ToolbarProps) {
+  const [localName, setLocalName] = useState(diagramName);
+
+  // Sync when store changes externally (e.g. loadDiagram, RecoveryBanner)
+  useEffect(() => {
+    setLocalName(diagramName);
+  }, [diagramName]);
+
+  const commitName = () => {
+    const trimmed = localName.trim();
+    if (trimmed && trimmed !== diagramName) {
+      onDiagramNameChange(trimmed);
+    } else {
+      setLocalName(diagramName);
+    }
+  };
+
   return (
     <div className="flex items-center gap-1 rounded-lg border bg-card p-1.5 shadow-sm">
       <div className="relative">
-        <input
-          className="w-40 bg-transparent px-2 text-sm font-semibold text-foreground outline-none placeholder:text-muted-foreground"
-          value={diagramName}
-          onChange={(e) => onDiagramNameChange(e.target.value)}
+        <Input
+          className="h-8 w-40 text-sm font-semibold bg-transparent border-transparent focus-visible:border-border focus-visible:ring-1 px-2"
+          value={localName}
+          onChange={(e) => setLocalName(e.target.value)}
+          onBlur={commitName}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              commitName();
+              (e.target as HTMLInputElement).blur();
+            }
+            if (e.key === 'Escape') {
+              setLocalName(diagramName);
+              (e.target as HTMLInputElement).blur();
+            }
+          }}
           maxLength={100}
           placeholder="Nome do diagrama"
           aria-label="Nome do diagrama"
         />
-        {diagramName.length > 80 && (
+        {localName.length > 80 && (
           <span className="absolute -bottom-4 right-0 text-[10px] text-muted-foreground">
-            {diagramName.length}/100
+            {localName.length}/100
           </span>
         )}
       </div>

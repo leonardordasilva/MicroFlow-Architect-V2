@@ -9,6 +9,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Info } from 'lucide-react';
 import {
   Select,
   SelectContent,
@@ -150,6 +152,35 @@ export default function SpawnFromNodeModal({
             </div>
           )}
 
+          {/* Alert de embedding ou conexão manual */}
+          {(() => {
+            const isEmbeddingOracle = isService && effectiveType === 'database' && subType === 'Oracle';
+            const isEmbeddingService = isService && effectiveType === 'service';
+            const isEmbedding = isEmbeddingOracle || isEmbeddingService;
+
+            if (isEmbedding) {
+              const embeddingMessage = isEmbeddingOracle
+                ? `O Oracle será adicionado como banco interno do nó "${sourceNodeLabel}". Nenhum nó separado será criado no canvas.`
+                : `O microserviço será adicionado como serviço interno do nó "${sourceNodeLabel}". Nenhum nó separado será criado no canvas.`;
+              return (
+                <Alert className="border-blue-500/30 bg-blue-500/5">
+                  <Info className="h-4 w-4 text-blue-500" />
+                  <AlertDescription className="text-xs text-muted-foreground">
+                    {embeddingMessage}
+                  </AlertDescription>
+                </Alert>
+              );
+            }
+            return (
+              <Alert className="border-muted bg-muted/30">
+                <Info className="h-4 w-4 text-muted-foreground" />
+                <AlertDescription className="text-xs text-muted-foreground">
+                  O nó será criado próximo a "{sourceNodeLabel}". Conecte-os manualmente arrastando entre os handles desejados.
+                </AlertDescription>
+              </Alert>
+            );
+          })()}
+
           <div className="space-y-2">
             <Label>Quantidade</Label>
             <Input
@@ -159,9 +190,6 @@ export default function SpawnFromNodeModal({
               value={count}
               onChange={(e) => setCount(Math.max(1, parseInt(e.target.value) || 1))}
             />
-            <p className="text-xs text-muted-foreground">
-              O nó será criado próximo à origem. Conecte-os manualmente arrastando entre os handles desejados.
-            </p>
           </div>
         </div>
 
