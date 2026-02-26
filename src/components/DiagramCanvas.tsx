@@ -33,7 +33,7 @@ import AIGenerateModal from '@/components/AIGenerateModal';
 import AIAnalysisPanel from '@/components/AIAnalysisPanel';
 import ImportJSONModal from '@/components/ImportJSONModal';
 import SpawnFromNodeModal from '@/components/SpawnFromNodeModal';
-import type { DiagramNodeData, EdgeProtocol } from '@/types/diagram';
+import type { DiagramNodeData, EdgeProtocol, NodeType } from '@/types/diagram';
 import { exportToMermaid } from '@/services/exportService';
 import MermaidExportModal from '@/components/MermaidExportModal';
 import ShareModal from '@/components/ShareModal';
@@ -42,9 +42,11 @@ import RecoveryBanner from '@/components/RecoveryBanner';
 import { useAuth } from '@/hooks/useAuth';
 import { saveDiagram } from '@/services/diagramService';
 import { useRealtimeCollab } from '@/hooks/useRealtimeCollab';
+import { inferProtocol } from '@/utils/protocolInference';
 import { Check, Loader2, Share2, Save, LogOut, Keyboard, FolderOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import NodePropertiesPanel from '@/components/NodePropertiesPanel';
 import StatusBar from '@/components/StatusBar';
@@ -94,6 +96,7 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
       clearCanvas: s.clearCanvas,
       loadDiagram: s.loadDiagram,
       exportJSON: s.exportJSON,
+      updateEdgeProtocol: s.updateEdgeProtocol,
     };
   }, []);
 
@@ -116,6 +119,10 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
   const [protocolEdgeId, setProtocolEdgeId] = useState<string | null>(null);
+  const [pendingProtocolEdge, setPendingProtocolEdge] = useState<{
+    edgeId: string;
+    defaultProtocol: EdgeProtocol;
+  } | null>(null);
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { guides, onNodeDrag, onNodeDragStop } = useSnapGuides(nodes);
   const { broadcastChanges, collaborators } = useRealtimeCollab(shareToken || null);
@@ -242,31 +249,79 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
 
   const handleProtocolSelect = useCallback(
     (protocol: EdgeProtocol) => {
-      if (!protocolEdgeId) return;
-      const store = useDiagramStore.getState();
-      store.setEdges(
-        edges.map((e) =>
-          e.id === protocolEdgeId ? { ...e, data: { ...e.data, protocol } } : e
-        )
-      );
-      setProtocolEdgeId(null);
+      if (protocolEdgeId) {
+        storeActions.updateEdgeProtocol(protocolEdgeId, protocol);
+        setProtocolEdgeId(null);
+      }
     },
-    [protocolEdgeId, edges]
+    [protocolEdgeId, storeActions]
   );
 
+  // Épico 2: Auto protocol on connect
+  const handleConnect = useCallback(
+    (connection: any) => {
+      // 1. Create edge normally
+      storeActions.onConnect(connection);
+
+      // 2. Determine edge ID (React Flow addEdge format)
+      const edgeId = `reactflow__edge-${connection.source}${connection.sourceHandle || ''}-${connection.target}${connection.targetHandle || ''}`;
+
+      // 3. Infer protocol from node types
+      const sourceNode = nodes.find((n) => n.id === connection.source);
+      const targetNode = nodes.find((n) => n.id === connection.target);
+      const defaultProtocol = inferProtocol(
+        (sourceNode?.type ?? 'service') as NodeType,
+        (targetNode?.type ?? 'service') as NodeType,
+      );
+
+      // 4. Open modal with pre-selected protocol
+      setPendingProtocolEdge({ edgeId, defaultProtocol });
+    },
+    [storeActions, nodes]
+  );
+
+  const handlePendingProtocolSelect = useCallback(
+    (protocol: EdgeProtocol) => {
+      if (pendingProtocolEdge) {
+        storeActions.updateEdgeProtocol(pendingProtocolEdge.edgeId, protocol);
+        setPendingProtocolEdge(null);
+      }
+    },
+    [pendingProtocolEdge, storeActions]
+  );
+
+  const handlePendingProtocolCancel = useCallback(() => {
+    if (pendingProtocolEdge) {
+      // Remove the edge that was just created
+      const store = useDiagramStore.getState();
+      store.setEdges(store.edges.filter((e) => e.id !== pendingProtocolEdge.edgeId));
+      setPendingProtocolEdge(null);
+    }
+  }, [pendingProtocolEdge]);
+
+  // Épico 7: Fork feedback
   const handleSaveToCloud = useCallback(async () => {
     if (!user) return;
     setSaving(true);
     try {
+      const isSharedContext = !!shareToken && !diagramId;
       const record = await saveDiagram(diagramName, nodes, edges, user.id, diagramId);
       setDiagramId(record.id);
-      toast({ title: 'Diagrama salvo na nuvem!' });
+      if (isSharedContext) {
+        toast({
+          title: 'Diagrama salvo como cópia!',
+          description: 'Uma cópia deste diagrama foi salva em "Meus Diagramas". Você não está editando o diagrama original.',
+          duration: 6000,
+        });
+      } else {
+        toast({ title: 'Diagrama salvo na nuvem!' });
+      }
     } catch (err: any) {
       toast({ title: 'Erro ao salvar', description: err.message, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
-  }, [user, diagramName, nodes, edges, diagramId]);
+  }, [user, diagramName, nodes, edges, diagramId, shareToken]);
 
   const handleShare = useCallback(async () => {
     if (!user) return;
@@ -325,6 +380,19 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
             </span>
           )}
         </div>
+
+        {/* Épico 7: shared context badges */}
+        {shareToken && !diagramId && (
+          <Badge variant="outline" className="text-xs">
+            Visualizando diagrama compartilhado
+          </Badge>
+        )}
+        {shareToken && diagramId && (
+          <Badge variant="secondary" className="text-xs">
+            ✓ Cópia salva em Meus Diagramas
+          </Badge>
+        )}
+
         {user && (
           <div className="flex items-center gap-2 ml-auto">
             <CollaboratorAvatars collaborators={collaborators} />
@@ -379,7 +447,7 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
           edges={edges}
           onNodesChange={storeActions.onNodesChange}
           onEdgesChange={storeActions.onEdgesChange}
-          onConnect={storeActions.onConnect}
+          onConnect={handleConnect}
           onNodeDrag={(event, node) => {
             onNodeDrag(event, node);
             storeActions.onNodeDragHandler(event, node as any);
@@ -513,11 +581,23 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
         onOpenChange={setShowShortcuts}
       />
 
+      {/* Existing edge double-click protocol selector */}
       <ProtocolSelectorModal
         open={!!protocolEdgeId}
         onOpenChange={(open) => { if (!open) setProtocolEdgeId(null); }}
         currentProtocol={protocolEdgeId ? (edges.find((e) => e.id === protocolEdgeId)?.data as any)?.protocol : undefined}
         onSelect={handleProtocolSelect}
+      />
+
+      {/* New edge protocol selector with inference */}
+      <ProtocolSelectorModal
+        open={!!pendingProtocolEdge}
+        onOpenChange={(open) => {
+          if (!open) handlePendingProtocolCancel();
+        }}
+        defaultProtocol={pendingProtocolEdge?.defaultProtocol}
+        onSelect={handlePendingProtocolSelect}
+        onCancel={handlePendingProtocolCancel}
       />
     </div>
     </ReactFlowProvider>

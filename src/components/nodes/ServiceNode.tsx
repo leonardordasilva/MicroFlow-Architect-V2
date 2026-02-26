@@ -2,6 +2,7 @@ import { memo, useState } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Box, Database, Server } from 'lucide-react';
 import type { DiagramNodeData } from '@/types/diagram';
+import { useDiagramStore } from '@/store/diagramStore';
 
 function EditableDbItem({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [editing, setEditing] = useState(false);
@@ -36,19 +37,31 @@ const ServiceNode = memo(({ data, id, selected }: NodeProps) => {
   const handleDoubleClick = () => setEditing(true);
   const handleBlur = () => {
     setEditing(false);
-    nodeData.label = label;
+    useDiagramStore.getState().setNodes(
+      useDiagramStore.getState().nodes.map((n) =>
+        n.id === id ? { ...n, data: { ...n.data, label } } : n
+      )
+    );
   };
 
   const handleDbRename = (index: number, newName: string) => {
-    if (nodeData.internalDatabases) {
-      nodeData.internalDatabases[index] = newName;
-    }
+    const currentDbs = nodeData.internalDatabases ?? [];
+    const updated = currentDbs.map((db, i) => (i === index ? newName : db));
+    useDiagramStore.getState().setNodes(
+      useDiagramStore.getState().nodes.map((n) =>
+        n.id === id ? { ...n, data: { ...n.data, internalDatabases: updated } } : n
+      )
+    );
   };
 
   const handleSvcRename = (index: number, newName: string) => {
-    if (nodeData.internalServices) {
-      nodeData.internalServices[index] = newName;
-    }
+    const currentSvcs = nodeData.internalServices ?? [];
+    const updated = currentSvcs.map((svc, i) => (i === index ? newName : svc));
+    useDiagramStore.getState().setNodes(
+      useDiagramStore.getState().nodes.map((n) =>
+        n.id === id ? { ...n, data: { ...n.data, internalServices: updated } } : n
+      )
+    );
   };
 
   return (

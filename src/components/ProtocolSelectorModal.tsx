@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -11,7 +10,9 @@ interface ProtocolSelectorModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentProtocol?: EdgeProtocol;
+  defaultProtocol?: EdgeProtocol;
   onSelect: (protocol: EdgeProtocol) => void;
+  onCancel?: () => void;
 }
 
 const protocols = Object.keys(PROTOCOL_CONFIGS) as EdgeProtocol[];
@@ -20,10 +21,21 @@ export default function ProtocolSelectorModal({
   open,
   onOpenChange,
   currentProtocol,
+  defaultProtocol,
   onSelect,
+  onCancel,
 }: ProtocolSelectorModalProps) {
+  const highlighted = currentProtocol ?? defaultProtocol;
+
+  const handleClose = (isOpen: boolean) => {
+    if (!isOpen && onCancel) {
+      onCancel();
+    }
+    onOpenChange(isOpen);
+  };
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle>Selecionar Protocolo</DialogTitle>
@@ -31,7 +43,7 @@ export default function ProtocolSelectorModal({
         <div className="grid grid-cols-2 gap-2">
           {protocols.map((proto) => {
             const config = PROTOCOL_CONFIGS[proto];
-            const isSelected = currentProtocol === proto;
+            const isSelected = highlighted === proto;
             return (
               <button
                 key={proto}

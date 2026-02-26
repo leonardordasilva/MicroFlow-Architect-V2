@@ -100,18 +100,36 @@ Return ONLY valid JSON with this exact structure:
       "id": "edge_id",
       "source": "source_node_id",
       "target": "target_node_id",
-      "type": "smoothstep",
+      "type": "editable",
       "animated": true,
-      "label": "optional label"
+      "data": {
+        "protocol": "REST"
+      },
+      "label": "REST"
     }
   ]
 }
 
-Types:
-- "service": microservice/API
-- "database": database (PostgreSQL, MongoDB, Redis, etc.)
-- "queue": message queue (RabbitMQ, Kafka, SQS, etc.)
-- "external": external service (Stripe, SendGrid, AWS S3, etc.)
+Valid protocol values for data.protocol and label:
+- REST → HTTP/REST between services (service→service)
+- gRPC → gRPC between services (service→service, high-performance)
+- GraphQL → GraphQL API calls (service→external or service→service)
+- WebSocket → Real-time bidirectional (service→service or service→external)
+- Kafka → Kafka consumer (queue→service)
+- AMQP → RabbitMQ/AMQP producer (service→queue)
+- MQTT → IoT messaging (service→queue or queue→service)
+- HTTPS → External HTTPS calls (service→external)
+- TCP → Direct TCP/database connections (service→database)
+- UDP → UDP datagram (service→service, rarely)
+
+Protocol Assignment Rules:
+- service → service: use "REST" (default) or "gRPC" for high-performance
+- service → database: ALWAYS use "TCP"
+- service → queue: ALWAYS use "AMQP"
+- queue → service: ALWAYS use "Kafka"
+- service → external: ALWAYS use "HTTPS"
+- external → service: use "REST"
+- Always set both "data.protocol" and "label" to the same protocol value
 
 Rules:
 - Use descriptive names in Portuguese when possible
@@ -135,6 +153,24 @@ Rules:
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 
     const diagram = JSON.parse(content);
+
+    // Fallback: ensure every edge has a protocol
+    const validProtocols = ['REST','gRPC','GraphQL','WebSocket','Kafka','AMQP','MQTT','HTTPS','TCP','UDP'];
+    if (diagram.edges && Array.isArray(diagram.edges)) {
+      diagram.edges = diagram.edges.map((edge: any) => {
+        if (!edge.data?.protocol) {
+          const labelProtocol = validProtocols.includes(edge.label) ? edge.label : 'REST';
+          return {
+            ...edge,
+            type: edge.type === 'smoothstep' ? 'editable' : (edge.type || 'editable'),
+            data: { ...(edge.data || {}), protocol: labelProtocol },
+            label: labelProtocol,
+          };
+        }
+        // Ensure edge type is 'editable'
+        return { ...edge, type: edge.type === 'smoothstep' ? 'editable' : (edge.type || 'editable') };
+      });
+    }
 
     return new Response(JSON.stringify(diagram), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },

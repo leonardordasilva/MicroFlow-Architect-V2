@@ -204,4 +204,36 @@ describe('diagramStore', () => {
       expect(getState().edges[0].label).toBe('consume');
     });
   });
+
+  describe('node rename via setNodes (undo/redo)', () => {
+    it('should capture label change in undo history', () => {
+      getState().addNode('service');
+      const node = getState().nodes[0];
+      const originalLabel = (node.data as any).label;
+      // Simula o que o ServiceNode faz ao renomear
+      getState().setNodes(
+        getState().nodes.map((n) =>
+          n.id === node.id ? { ...n, data: { ...n.data, label: 'Novo Nome' } } : n
+        )
+      );
+      expect((getState().nodes[0].data as any).label).toBe('Novo Nome');
+      // Undo deve restaurar o label original
+      useDiagramStore.temporal.getState().undo();
+      expect((getState().nodes[0].data as any).label).toBe(originalLabel);
+    });
+  });
+
+  describe('updateEdgeProtocol', () => {
+    it('should update edge protocol and label', () => {
+      getState().addNode('service');
+      getState().addNode('service');
+      const [n1, n2] = getState().nodes;
+      getState().setEdges([
+        { id: 'e1', source: n1.id, target: n2.id, type: 'editable', data: { waypoints: undefined } },
+      ]);
+      getState().updateEdgeProtocol('e1', 'gRPC');
+      expect((getState().edges[0].data as any).protocol).toBe('gRPC');
+      expect(getState().edges[0].label).toBe('gRPC');
+    });
+  });
 });

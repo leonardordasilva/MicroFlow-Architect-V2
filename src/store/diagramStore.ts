@@ -8,7 +8,7 @@ import {
   type NodeChange,
   type EdgeChange,
 } from '@xyflow/react';
-import type { DiagramNode, DiagramEdge, DiagramNodeData, NodeType } from '@/types/diagram';
+import type { DiagramNode, DiagramEdge, DiagramNodeData, NodeType, EdgeProtocol } from '@/types/diagram';
 import { getLayoutedElements, getELKLayoutedElements, type LayoutDirection } from '@/services/layoutService';
 
 const createNodeId = () => `node_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
@@ -41,6 +41,7 @@ interface DiagramActions {
   clearCanvas: () => void;
   loadDiagram: (nodes: DiagramNode[], edges: DiagramEdge[]) => void;
   exportJSON: () => string;
+  updateEdgeProtocol: (edgeId: string, protocol: EdgeProtocol) => void;
 }
 
 type DiagramStore = DiagramState & DiagramActions;
@@ -249,6 +250,16 @@ export const useDiagramStore = create<DiagramStore>()(
       exportJSON: () => {
         const { diagramName, nodes, edges } = get();
         return JSON.stringify({ name: diagramName, nodes, edges }, null, 2);
+      },
+
+      updateEdgeProtocol: (edgeId, protocol) => {
+        set((state) => ({
+          edges: state.edges.map((e) =>
+            e.id === edgeId
+              ? { ...e, data: { ...e.data, protocol }, label: protocol, labelStyle: { fontSize: 10, fontWeight: 600 } }
+              : e
+          ),
+        }));
       },
     }),
     {

@@ -91,3 +91,14 @@ export async function renameDiagram(id: string, title: string): Promise<void> {
     .eq('id', id);
   if (error) throw error;
 }
+
+export async function shareDiagram(diagramId: string): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('diagrams')
+    .select('share_token')
+    .eq('id', diagramId)
+    .single();
+
+  if (error || !data?.share_token) return null;
+  return `${window.location.origin}/diagram/${data.share_token}`;
+}
