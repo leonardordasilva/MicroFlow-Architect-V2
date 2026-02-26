@@ -84,12 +84,21 @@ export default function Toolbar({
 }: ToolbarProps) {
   return (
     <div className="flex items-center gap-1 rounded-lg border bg-card p-1.5 shadow-sm">
-      <input
-        className="w-40 bg-transparent px-2 text-sm font-semibold text-foreground outline-none placeholder:text-muted-foreground"
-        value={diagramName}
-        onChange={(e) => onDiagramNameChange(e.target.value)}
-        placeholder="Nome do diagrama"
-      />
+      <div className="relative">
+        <input
+          className="w-40 bg-transparent px-2 text-sm font-semibold text-foreground outline-none placeholder:text-muted-foreground"
+          value={diagramName}
+          onChange={(e) => onDiagramNameChange(e.target.value)}
+          maxLength={100}
+          placeholder="Nome do diagrama"
+          aria-label="Nome do diagrama"
+        />
+        {diagramName.length > 80 && (
+          <span className="absolute -bottom-4 right-0 text-[10px] text-muted-foreground">
+            {diagramName.length}/100
+          </span>
+        )}
+      </div>
 
       <Separator orientation="vertical" className="h-6" />
 

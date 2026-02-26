@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useDiagramStore } from './diagramStore';
+import type { ExternalCategory } from '@/types/diagram';
 
 const { getState } = useDiagramStore;
 
@@ -52,12 +53,10 @@ describe('diagramStore', () => {
       getState().addNode('service');
       const [n1, n2] = getState().nodes;
 
-      // Manually select first node
       getState().setNodes(
         getState().nodes.map((n) => (n.id === n1.id ? { ...n, selected: true } : n))
       );
 
-      // Add an edge between them
       getState().setEdges([
         { id: 'e1', source: n1.id, target: n2.id, type: 'editable', data: { waypoints: undefined } },
       ]);
@@ -65,7 +64,6 @@ describe('diagramStore', () => {
       getState().deleteSelected();
       expect(getState().nodes).toHaveLength(1);
       expect(getState().nodes[0].id).toBe(n2.id);
-      // Edge connected to deleted node should also be removed
       expect(getState().edges).toHaveLength(0);
     });
   });
@@ -136,13 +134,20 @@ describe('diagramStore', () => {
   });
 
   describe('addNodesFromSource', () => {
-    it('should create nodes and edges from a source node', () => {
+    it('cria nós sem conexão automática entre eles', () => {
       getState().addNode('service');
-      const source = getState().nodes[0];
+      const sourceId = getState().nodes[0].id;
+      getState().addNodesFromSource(sourceId, 'queue', 1, 'Kafka');
+      expect(getState().nodes).toHaveLength(2);
+      expect(getState().edges).toHaveLength(0);
+    });
 
-      getState().addNodesFromSource(source.id, 'queue', 2, 'MQ');
-      expect(getState().nodes).toHaveLength(3);
-      expect(getState().edges).toHaveLength(2);
+    it('cria múltiplos nós sem conexões automáticas', () => {
+      getState().addNode('queue', 'Kafka');
+      const sourceId = getState().nodes[0].id;
+      getState().addNodesFromSource(sourceId, 'service', 3);
+      expect(getState().nodes).toHaveLength(4);
+      expect(getState().edges).toHaveLength(0);
     });
 
     it('should embed Oracle database inside service node', () => {
@@ -150,9 +155,9 @@ describe('diagramStore', () => {
       const source = getState().nodes[0];
 
       getState().addNodesFromSource(source.id, 'database', 1, 'Oracle');
-      // Should NOT create a new node, should embed
       expect(getState().nodes).toHaveLength(1);
       expect((getState().nodes[0].data as any).internalDatabases).toHaveLength(1);
+      expect(getState().edges).toHaveLength(0);
     });
   });
 
@@ -210,14 +215,12 @@ describe('diagramStore', () => {
       getState().addNode('service');
       const node = getState().nodes[0];
       const originalLabel = (node.data as any).label;
-      // Simula o que o ServiceNode faz ao renomear
       getState().setNodes(
         getState().nodes.map((n) =>
           n.id === node.id ? { ...n, data: { ...n.data, label: 'Novo Nome' } } : n
         )
       );
       expect((getState().nodes[0].data as any).label).toBe('Novo Nome');
-      // Undo deve restaurar o label original
       useDiagramStore.temporal.getState().undo();
       expect((getState().nodes[0].data as any).label).toBe(originalLabel);
     });
@@ -234,6 +237,47 @@ describe('diagramStore', () => {
       getState().updateEdgeProtocol('e1', 'gRPC');
       expect((getState().edges[0].data as any).protocol).toBe('gRPC');
       expect(getState().edges[0].label).toBe('gRPC');
+    });
+  });
+
+  describe('externalCategory undo/redo', () => {
+    it('captura mudança de externalCategory no histórico', () => {
+      getState().addNode('external', 'REST');
+      const nodeId = getState().nodes[0].id;
+
+      getState().setNodes(
+        getState().nodes.map((n) =>
+          n.id === nodeId ? { ...n, data: { ...n.data, externalCategory: 'Payment' } } : n
+        )
+      );
+      expect((getState().nodes[0].data as any).externalCategory).toBe('Payment');
+
+      useDiagramStore.temporal.getState().undo();
+      expect((getState().nodes[0].data as any).externalCategory).toBeUndefined();
+
+      useDiagramStore.temporal.getState().redo();
+      expect((getState().nodes[0].data as any).externalCategory).toBe('Payment');
+    });
+
+    it('captura múltiplas mudanças de externalCategory consecutivas', () => {
+      getState().addNode('external');
+      const nodeId = getState().nodes[0].id;
+
+      const setCategory = (cat: ExternalCategory) =>
+        useDiagramStore.getState().setNodes(
+          useDiagramStore.getState().nodes.map((n) =>
+            n.id === nodeId ? { ...n, data: { ...n.data, externalCategory: cat } } : n
+          )
+        );
+
+      setCategory('API');
+      setCategory('Auth');
+      setCategory('CDN');
+
+      expect((getState().nodes[0].data as any).externalCategory).toBe('CDN');
+
+      useDiagramStore.temporal.getState().undo();
+      expect((getState().nodes[0].data as any).externalCategory).toBe('Auth');
     });
   });
 });

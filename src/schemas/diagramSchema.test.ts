@@ -71,4 +71,41 @@ describe('ImportDiagramSchema', () => {
     });
     expect(result.success).toBe(true);
   });
+
+  // Épico 1 — Normalização de internalDatabases/internalServices
+  it('normaliza internalDatabases de formato objeto {id, label} para string', () => {
+    const node = {
+      ...validNode,
+      data: {
+        ...validNode.data,
+        internalDatabases: [{ id: 'db1', label: 'Oracle Prod' }],
+      },
+    };
+    const result = ImportDiagramSchema.parse({ nodes: [node], edges: [] });
+    expect(result.nodes[0].data.internalDatabases).toEqual(['Oracle Prod']);
+  });
+
+  it('mantém internalDatabases string[] inalterado', () => {
+    const node = {
+      ...validNode,
+      data: {
+        ...validNode.data,
+        internalDatabases: ['Oracle Prod'],
+      },
+    };
+    const result = ImportDiagramSchema.parse({ nodes: [node], edges: [] });
+    expect(result.nodes[0].data.internalDatabases).toEqual(['Oracle Prod']);
+  });
+
+  it('normaliza internalDatabases de formato {label} sem id para string', () => {
+    const node = {
+      ...validNode,
+      data: {
+        ...validNode.data,
+        internalDatabases: [{ label: 'Redis Cache' }],
+      },
+    };
+    const result = ImportDiagramSchema.parse({ nodes: [node], edges: [] });
+    expect(result.nodes[0].data.internalDatabases).toEqual(['Redis Cache']);
+  });
 });

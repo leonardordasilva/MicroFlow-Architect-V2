@@ -60,8 +60,35 @@ describe('exportToMermaid', () => {
   it('should escape special characters in node labels', () => {
     const nodes = [makeNode('1', 'Auth [v2] (new)', 'service')];
     const result = exportToMermaid(nodes, []);
-    // Brackets and parens should be replaced
     expect(result).not.toContain('[v2]');
     expect(result).not.toContain('(new)');
+  });
+
+  // Épico 6 — data.protocol tem prioridade sobre edge.label
+  it('exporta com data.protocol quando label está ausente', () => {
+    const nodes = [makeNode('a', 'A', 'service'), makeNode('b', 'B', 'service')];
+    const edges: DiagramEdge[] = [
+      { id: 'e1', source: 'a', target: 'b', data: { protocol: 'gRPC' } as any },
+    ];
+    const result = exportToMermaid(nodes, edges);
+    expect(result).toContain('N0 -->|gRPC| N1');
+  });
+
+  it('prioriza data.protocol sobre edge.label', () => {
+    const nodes = [makeNode('a', 'A', 'service'), makeNode('b', 'B', 'service')];
+    const edges: DiagramEdge[] = [
+      { id: 'e1', source: 'a', target: 'b', label: 'consume', data: { protocol: 'TCP' } as any },
+    ];
+    const result = exportToMermaid(nodes, edges);
+    expect(result).toContain('N0 -->|TCP| N1');
+  });
+
+  it('exporta sem rótulo quando não há protocol nem label', () => {
+    const nodes = [makeNode('a', 'A', 'service'), makeNode('b', 'B', 'service')];
+    const edges: DiagramEdge[] = [
+      { id: 'e1', source: 'a', target: 'b', data: {} as any },
+    ];
+    const result = exportToMermaid(nodes, edges);
+    expect(result).toContain('N0 --> N1');
   });
 });

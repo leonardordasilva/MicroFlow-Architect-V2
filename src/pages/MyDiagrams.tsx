@@ -23,7 +23,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Trash2, Pencil, ArrowLeft, FileText, Share2, RefreshCw } from 'lucide-react';
+import { Plus, Trash2, Pencil, ArrowLeft, FileText, Share2, RefreshCw, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 
 function DiagramCardSkeleton() {
@@ -90,8 +90,17 @@ export default function MyDiagrams() {
   };
 
   const handleRename = (id: string) => {
-    if (!editTitle.trim()) return;
-    renameMutation.mutate({ id, title: editTitle.trim() });
+    const trimmed = editTitle.trim();
+    if (!trimmed) {
+      toast({ title: 'Título não pode ser vazio', variant: 'destructive' });
+      setEditingId(null);
+      return;
+    }
+    if (trimmed.length > 100) {
+      toast({ title: 'Título muito longo', description: 'Máximo de 100 caracteres', variant: 'destructive' });
+      return;
+    }
+    renameMutation.mutate({ id, title: trimmed });
   };
 
   const handleLoad = (diagram: DiagramRecord) => {
@@ -235,7 +244,12 @@ export default function MyDiagrams() {
                   onClick={() => fetchNextPage()}
                   disabled={isFetchingNextPage}
                 >
-                  {isFetchingNextPage ? 'Carregando...' : 'Carregar mais'}
+                {isFetchingNextPage ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Carregando...
+                    </>
+                  ) : 'Carregar mais'}
                 </Button>
               </div>
             )}

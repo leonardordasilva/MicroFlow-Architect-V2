@@ -46,7 +46,8 @@ export function exportToMermaid(nodes: DiagramNode[], edges: DiagramEdge[]): str
     const tgt = idMap.get(edge.target);
     if (!src || !tgt) return;
 
-    const label = typeof edge.label === 'string' ? edge.label : '';
+    const protocol = (edge.data as any)?.protocol as string | undefined;
+    const label = protocol || (typeof edge.label === 'string' ? edge.label : '');
     if (label) {
       lines.push(`  ${src} -->|${escapeMermaid(label)}| ${tgt}`);
     } else {

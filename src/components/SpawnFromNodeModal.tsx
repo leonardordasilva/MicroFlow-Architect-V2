@@ -159,6 +159,9 @@ export default function SpawnFromNodeModal({
               value={count}
               onChange={(e) => setCount(Math.max(1, parseInt(e.target.value) || 1))}
             />
+            <p className="text-xs text-muted-foreground">
+              O nó será criado próximo à origem. Conecte-os manualmente arrastando entre os handles desejados.
+            </p>
           </div>
         </div>
 
