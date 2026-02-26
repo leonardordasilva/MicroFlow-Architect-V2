@@ -49,7 +49,7 @@ const edgeTypes = {
 export default function DiagramCanvas() {
   const {
     nodes, edges, diagramName, setDiagramName,
-    onNodesChange, onEdgesChange, onConnect, onNodeDragHandler,
+    onNodesChange, onEdgesChange, onConnect, onNodeDragStart, onNodeDragHandler,
     addNode, addNodesFromSource, deleteSelected, undo, redo, autoLayout,
     clearCanvas, loadDiagram, exportJSON, setNodes, setEdges,
   } = useDiagram();
@@ -171,6 +171,9 @@ export default function DiagramCanvas() {
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={onConnect}
+          onNodeDragStart={(event, node) => {
+            onNodeDragStart(event, node as any);
+          }}
           onNodeDrag={(event, node) => {
             onNodeDrag(event, node);
             onNodeDragHandler(event, node as any);
