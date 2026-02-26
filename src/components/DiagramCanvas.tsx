@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useCallback, useRef, useMemo } from 'react';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -21,8 +21,6 @@ import SnapGuideLines from '@/components/SnapGuideLines';
 import { toPng } from 'html-to-image';
 import { toast } from '@/hooks/use-toast';
 import { useDiagramStore } from '@/store/diagramStore';
-import { useStore } from 'zustand';
-import { useShallow } from 'zustand/react/shallow';
 
 import ServiceNode from '@/components/nodes/ServiceNode';
 import DatabaseNode from '@/components/nodes/DatabaseNode';
@@ -47,26 +45,35 @@ const edgeTypes = {
   editable: EditableEdge,
 };
 
+// Get stable references to temporal actions (no reactive subscription)
+const getTemporalActions = () => useDiagramStore.temporal.getState();
+
 export default function DiagramCanvas() {
   const nodes = useDiagramStore((s) => s.nodes);
   const edges = useDiagramStore((s) => s.edges);
   const diagramName = useDiagramStore((s) => s.diagramName);
-  const actions = useDiagramStore(useShallow((s) => ({
-    setDiagramName: s.setDiagramName,
-    onNodesChange: s.onNodesChange,
-    onEdgesChange: s.onEdgesChange,
-    onConnect: s.onConnect,
-    onNodeDragHandler: s.onNodeDragHandler,
-    addNode: s.addNode,
-    addNodesFromSource: s.addNodesFromSource,
-    deleteSelected: s.deleteSelected,
-    autoLayout: s.autoLayout,
-    clearCanvas: s.clearCanvas,
-    loadDiagram: s.loadDiagram,
-    exportJSON: s.exportJSON,
-  })));
 
-  const { undo, redo } = useStore(useDiagramStore.temporal, (state) => ({ undo: state.undo, redo: state.redo }));
+  // Get action references directly - they're stable in Zustand
+  const storeActions = useMemo(() => {
+    const s = useDiagramStore.getState();
+    return {
+      setDiagramName: s.setDiagramName,
+      onNodesChange: s.onNodesChange,
+      onEdgesChange: s.onEdgesChange,
+      onConnect: s.onConnect,
+      onNodeDragHandler: s.onNodeDragHandler,
+      addNode: s.addNode,
+      addNodesFromSource: s.addNodesFromSource,
+      deleteSelected: s.deleteSelected,
+      autoLayout: s.autoLayout,
+      clearCanvas: s.clearCanvas,
+      loadDiagram: s.loadDiagram,
+      exportJSON: s.exportJSON,
+    };
+  }, []);
+
+  const undo = useCallback(() => getTemporalActions().undo(), []);
+  const redo = useCallback(() => getTemporalActions().redo(), []);
 
   const [darkMode, setDarkMode] = useState(true);
   const [showAIGenerate, setShowAIGenerate] = useState(false);
@@ -107,7 +114,7 @@ export default function DiagramCanvas() {
   }, [darkMode, diagramName]);
 
   const handleExportJSON = useCallback(() => {
-    const json = actions.exportJSON();
+    const json = storeActions.exportJSON();
     const blob = new Blob([json], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -116,24 +123,24 @@ export default function DiagramCanvas() {
     a.click();
     URL.revokeObjectURL(url);
     toast({ title: 'JSON exportado com sucesso!' });
-  }, [actions, diagramName]);
+  }, [storeActions, diagramName]);
 
   const handleImport = useCallback(
     (data: { nodes: any[]; edges: any[]; name?: string }) => {
-      actions.loadDiagram(data.nodes, data.edges);
-      if (data.name) actions.setDiagramName(data.name);
+      storeActions.loadDiagram(data.nodes, data.edges);
+      if (data.name) storeActions.setDiagramName(data.name);
       toast({ title: 'Diagrama importado com sucesso!' });
     },
-    [actions]
+    [storeActions]
   );
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (e.key === 'Delete') actions.deleteSelected();
+      if (e.key === 'Delete') storeActions.deleteSelected();
       if (e.ctrlKey && e.key === 'z') undo();
       if (e.ctrlKey && e.key === 'y') redo();
     },
-    [actions, undo, redo]
+    [storeActions, undo, redo]
   );
 
   const handleNodeContextMenu = useCallback(
@@ -159,19 +166,19 @@ export default function DiagramCanvas() {
     <div className="flex h-screen w-screen flex-col bg-background" onKeyDown={handleKeyDown} tabIndex={0}>
       <header className="flex items-center justify-center border-b bg-card/80 px-4 py-2 backdrop-blur-sm">
         <Toolbar
-          onAddNode={actions.addNode}
-          onDelete={actions.deleteSelected}
+          onAddNode={storeActions.addNode}
+          onDelete={storeActions.deleteSelected}
           onClearCanvas={() => setShowClearConfirm(true)}
           onUndo={undo}
           onRedo={redo}
-          onAutoLayout={() => actions.autoLayout('LR')}
+          onAutoLayout={() => storeActions.autoLayout('LR')}
           onExportPNG={handleExportPNG}
           onExportJSON={handleExportJSON}
           onImportJSON={() => setShowImportJSON(true)}
           onOpenAIGenerate={() => setShowAIGenerate(true)}
           onOpenAIAnalyze={() => setShowAIAnalysis(true)}
           diagramName={diagramName}
-          onDiagramNameChange={actions.setDiagramName}
+          onDiagramNameChange={storeActions.setDiagramName}
           darkMode={darkMode}
           onToggleDarkMode={toggleDarkMode}
         />
@@ -181,12 +188,12 @@ export default function DiagramCanvas() {
         <ReactFlow
           nodes={nodes}
           edges={edges}
-          onNodesChange={actions.onNodesChange}
-          onEdgesChange={actions.onEdgesChange}
-          onConnect={actions.onConnect}
+          onNodesChange={storeActions.onNodesChange}
+          onEdgesChange={storeActions.onEdgesChange}
+          onConnect={storeActions.onConnect}
           onNodeDrag={(event, node) => {
             onNodeDrag(event, node);
-            actions.onNodeDragHandler(event, node as any);
+            storeActions.onNodeDragHandler(event, node as any);
           }}
           onNodeDragStop={onNodeDragStop}
           onNodeContextMenu={handleNodeContextMenu}
@@ -244,8 +251,8 @@ export default function DiagramCanvas() {
         open={showAIGenerate}
         onOpenChange={setShowAIGenerate}
         onGenerate={(newNodes, newEdges) => {
-          actions.loadDiagram(newNodes, newEdges);
-          actions.autoLayout('LR');
+          storeActions.loadDiagram(newNodes, newEdges);
+          storeActions.autoLayout('LR');
         }}
       />
 
@@ -269,7 +276,7 @@ export default function DiagramCanvas() {
         sourceNodeType={spawnSource?.nodeType || ''}
         onConfirm={(type, count, subType) => {
           if (spawnSource) {
-            actions.addNodesFromSource(spawnSource.id, type, count, subType);
+            storeActions.addNodesFromSource(spawnSource.id, type, count, subType);
           }
         }}
       />
@@ -283,7 +290,7 @@ export default function DiagramCanvas() {
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={actions.clearCanvas}>Limpar</AlertDialogAction>
+            <AlertDialogAction onClick={storeActions.clearCanvas}>Limpar</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
