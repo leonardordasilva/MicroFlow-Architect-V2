@@ -11,6 +11,12 @@ const EXTERNAL_CATEGORIES = [
   'API', 'CDN', 'Auth', 'Payment', 'Storage', 'Analytics', 'Other',
 ] as const;
 
+const InternalItemSchema = z.union([
+  z.string().min(1),
+  z.object({ id: z.string(), label: z.string() }).transform((obj) => obj.label),
+  z.object({ label: z.string() }).transform((obj) => obj.label),
+]);
+
 export const NodeSchema = z.object({
   id: z.string().min(1, 'Node id é obrigatório'),
   type: z.enum(NODE_TYPES, { errorMap: () => ({ message: `Tipo de nó deve ser: ${NODE_TYPES.join(', ')}` }) }),
@@ -23,8 +29,8 @@ export const NodeSchema = z.object({
     type: z.enum(NODE_TYPES),
     subType: z.string().optional(),
     externalCategory: z.enum(EXTERNAL_CATEGORIES).optional(),
-    internalDatabases: z.array(z.string()).optional(),
-    internalServices: z.array(z.string()).optional(),
+    internalDatabases: z.array(InternalItemSchema).optional(),
+    internalServices: z.array(InternalItemSchema).optional(),
   }).passthrough(),
 }).passthrough();
 

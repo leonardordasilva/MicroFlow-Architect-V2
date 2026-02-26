@@ -92,9 +92,13 @@ export async function deleteDiagram(id: string): Promise<void> {
 }
 
 export async function renameDiagram(id: string, title: string): Promise<void> {
+  const trimmed = title.trim();
+  if (!trimmed || trimmed.length > 100) {
+    throw new Error('Título inválido: deve ter entre 1 e 100 caracteres');
+  }
   const { error } = await supabase
     .from('diagrams')
-    .update({ title, updated_at: new Date().toISOString() })
+    .update({ title: trimmed, updated_at: new Date().toISOString() })
     .eq('id', id);
   if (error) throw error;
 }

@@ -182,7 +182,6 @@ export const useDiagramStore = create<DiagramStore>()(
         };
 
         const newNodes: DiagramNode[] = [];
-        const newEdges: DiagramEdge[] = [];
 
         for (let i = 0; i < count; i++) {
           const id = createNodeId();
@@ -195,27 +194,10 @@ export const useDiagramStore = create<DiagramStore>()(
             },
             data: { label: `${labelMap[type]} ${count > 1 ? i + 1 : ''}`.trim(), type, subType, internalDatabases: [], internalServices: [] },
           });
-
-          let edgeLabel: string | undefined;
-          if (sourceNode.type === 'service' && type === 'queue') edgeLabel = 'produce';
-          else if (sourceNode.type === 'queue' && type === 'service') edgeLabel = 'consume';
-
-          newEdges.push({
-            id: `edge_${sourceNodeId}_${id}`,
-            source: sourceNodeId,
-            target: id,
-            type: 'editable',
-            animated: true,
-            style: { strokeWidth: 2 },
-            markerEnd: { type: 'arrowclosed' as any },
-            data: { waypoints: undefined },
-            ...(edgeLabel ? { label: edgeLabel, labelStyle: { fontSize: 11, fontWeight: 600 } } : {}),
-          });
         }
 
         set((state) => ({
           nodes: [...state.nodes, ...newNodes],
-          edges: [...state.edges, ...newEdges],
         }));
       },
 
