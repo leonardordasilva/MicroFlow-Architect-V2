@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { DiagramNode, DiagramEdge } from '@/types/diagram';
 import { useNavigate } from 'react-router-dom';
 import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
@@ -43,7 +44,7 @@ export default function MyDiagrams() {
   const [editTitle, setEditTitle] = useState('');
   const [shareTarget, setShareTarget] = useState<{ diagramId: string; ownerId: string } | null>(null);
   const [sharedWithMe, setSharedWithMe] = useState<
-    { diagram_id: string; title: string; owner_email: string; updated_at: string; nodes: any[]; edges: any[] }[]
+    { diagram_id: string; title: string; owner_email: string; updated_at: string; nodes: DiagramNode[]; edges: DiagramEdge[] }[]
   >([]);
   const [loadingShared, setLoadingShared] = useState(false);
 
@@ -63,10 +64,10 @@ export default function MyDiagrams() {
 
   // Load shared diagrams
   useEffect(() => {
-    if (!user) return;
+    if (!user?.id) return;
     setLoadingShared(true);
     loadSharedWithMe(user.id).then(setSharedWithMe).finally(() => setLoadingShared(false));
-  }, [user]);
+  }, [user?.id]);
 
   const deleteMutation = useMutation({
     mutationFn: deleteDiagram,
@@ -111,6 +112,7 @@ export default function MyDiagrams() {
     store.loadDiagram(diagram.nodes, diagram.edges);
     store.setDiagramName(diagram.title);
     store.setCurrentDiagramId(diagram.id);
+    store.setIsCollaborator(false);
     navigate('/');
   };
 
@@ -119,6 +121,7 @@ export default function MyDiagrams() {
     store.loadDiagram(item.nodes, item.edges);
     store.setDiagramName(item.title);
     store.setCurrentDiagramId(item.diagram_id);
+    store.setIsCollaborator(true);
     navigate('/');
   };
 

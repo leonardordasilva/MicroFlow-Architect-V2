@@ -53,9 +53,17 @@ export function useRealtimeCollab(shareToken: string | null) {
       .on('broadcast', { event: 'diagram_updated' }, (payload) => {
         const { nodes, edges } = payload.payload as { nodes: DiagramNode[]; edges: DiagramEdge[] };
         isRemoteUpdate.current = true;
+
+        // Suspend undo history: remote updates should not create undo entries
+        const temporal = useDiagramStore.temporal.getState();
+        temporal.pause();
+
         const store = useDiagramStore.getState();
         store.setNodes(nodes);
         store.setEdges(edges);
+
+        temporal.resume();
+
         setTimeout(() => {
           isRemoteUpdate.current = false;
         }, 50);

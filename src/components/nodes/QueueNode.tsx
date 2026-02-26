@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Mail, MessageSquare, Radio } from 'lucide-react';
 import type { DiagramNodeData } from '@/types/diagram';
@@ -14,6 +14,10 @@ const QueueNode = memo(({ data, id, selected }: NodeProps) => {
   const nodeData = data as unknown as DiagramNodeData;
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(nodeData.label);
+
+  useEffect(() => {
+    if (!editing) setLabel(nodeData.label);
+  }, [nodeData.label, editing]);
   const queueType = nodeData.subType || 'MQ';
   const Icon = QUEUE_ICONS[queueType] || Mail;
 

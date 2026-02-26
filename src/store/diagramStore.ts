@@ -20,6 +20,7 @@ interface DiagramState {
   currentDiagramId: string | undefined;
   isAnalyzing: boolean;
   analysisResult: string | null;
+  isCollaborator: boolean;
 }
 
 interface DiagramActions {
@@ -29,13 +30,14 @@ interface DiagramActions {
   setCurrentDiagramId: (id: string | undefined) => void;
   setIsAnalyzing: (value: boolean) => void;
   setAnalysisResult: (result: string | null) => void;
+  setIsCollaborator: (value: boolean) => void;
 
   onNodesChange: (changes: NodeChange[]) => void;
   onEdgesChange: (changes: EdgeChange[]) => void;
   onConnect: (connection: Connection) => void;
   onNodeDragHandler: (event: React.MouseEvent, node: DiagramNode) => void;
 
-  addNode: (type: NodeType, subType?: string) => void;
+  addNode: (type: NodeType, subType?: string, position?: { x: number; y: number }) => void;
   addNodesFromSource: (sourceNodeId: string, type: NodeType, count: number, subType?: string) => void;
   deleteSelected: () => void;
   autoLayout: (direction?: LayoutDirection) => void;
@@ -61,6 +63,7 @@ export const useDiagramStore = create<DiagramStore>()(
       currentDiagramId: undefined,
       isAnalyzing: false,
       analysisResult: null,
+      isCollaborator: false,
 
       // Setters
       setNodes: (nodes) => set({ nodes }),
@@ -69,6 +72,7 @@ export const useDiagramStore = create<DiagramStore>()(
       setCurrentDiagramId: (currentDiagramId) => set({ currentDiagramId }),
       setIsAnalyzing: (isAnalyzing) => set({ isAnalyzing }),
       setAnalysisResult: (analysisResult) => set({ analysisResult }),
+      setIsCollaborator: (isCollaborator) => set({ isCollaborator }),
 
       // React Flow handlers - avoid unnecessary updates to prevent infinite loops
       onNodesChange: (changes) => {
@@ -125,7 +129,7 @@ export const useDiagramStore = create<DiagramStore>()(
       },
 
       // Actions
-      addNode: (type, subType) => {
+      addNode: (type, subType, position) => {
         const labelMap: Record<NodeType, string> = {
           service: 'Microserviço',
           database: subType || 'Oracle',
@@ -135,7 +139,7 @@ export const useDiagramStore = create<DiagramStore>()(
         const newNode: DiagramNode = {
           id: createNodeId(),
           type,
-          position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
+          position: position ?? { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
           data: { label: labelMap[type], type, subType, internalDatabases: [], internalServices: [] },
         };
         set((state) => ({ nodes: [...state.nodes, newNode] }));
@@ -229,9 +233,9 @@ export const useDiagramStore = create<DiagramStore>()(
         set({ nodes: layoutedNodes, edges: layoutedEdges });
       },
 
-      clearCanvas: () => set({ nodes: [], edges: [] }),
+      clearCanvas: () => set({ nodes: [], edges: [], isCollaborator: false }),
 
-      loadDiagram: (nodes, edges) => set({ nodes, edges }),
+      loadDiagram: (nodes, edges) => set({ nodes, edges, isCollaborator: false }),
 
       exportJSON: () => {
         const { diagramName, nodes, edges } = get();

@@ -1,4 +1,4 @@
-import { memo, useState } from 'react';
+import { memo, useState, useEffect } from 'react';
 import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Box, Database, Server } from 'lucide-react';
 import type { DiagramNodeData } from '@/types/diagram';
@@ -7,6 +7,10 @@ import { useDiagramStore } from '@/store/diagramStore';
 function EditableDbItem({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [editing, setEditing] = useState(false);
   const [text, setText] = useState(value);
+
+  useEffect(() => {
+    if (!editing) setText(value);
+  }, [value, editing]);
 
   const commit = () => {
     setEditing(false);
@@ -33,6 +37,10 @@ const ServiceNode = memo(({ data, id, selected }: NodeProps) => {
   const nodeData = data as unknown as DiagramNodeData;
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(nodeData.label);
+
+  useEffect(() => {
+    if (!editing) setLabel(nodeData.label);
+  }, [nodeData.label, editing]);
 
   const handleDoubleClick = () => setEditing(true);
   const handleBlur = () => {

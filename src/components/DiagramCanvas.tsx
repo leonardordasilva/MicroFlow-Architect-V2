@@ -16,6 +16,7 @@ import {
   Controls,
   MiniMap,
   BackgroundVariant,
+  useReactFlow,
 } from '@xyflow/react';
 import { useSnapGuides } from '@/hooks/useSnapGuides';
 import SnapGuideLines from '@/components/SnapGuideLines';
@@ -38,8 +39,10 @@ import { exportToMermaid } from '@/services/exportService';
 import MermaidExportModal from '@/components/MermaidExportModal';
 
 import { useAuth } from '@/hooks/useAuth';
-import { saveDiagram } from '@/services/diagramService';
+import { saveDiagram, saveSharedDiagram } from '@/services/diagramService';
 import { useRealtimeCollab } from '@/hooks/useRealtimeCollab';
+import { useAutoSave } from '@/hooks/useAutoSave';
+import RecoveryBanner from '@/components/RecoveryBanner';
 import { inferProtocol } from '@/utils/protocolInference';
 import { Loader2, Save, LogOut, Keyboard, FolderOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -71,12 +74,13 @@ interface DiagramCanvasProps {
   shareToken?: string;
 }
 
-export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
+function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
   const navigate = useNavigate();
   const nodes = useDiagramStore((s) => s.nodes);
   const edges = useDiagramStore((s) => s.edges);
   const diagramName = useDiagramStore((s) => s.diagramName);
   const diagramId = useDiagramStore((s) => s.currentDiagramId);
+  const isCollaborator = useDiagramStore((s) => s.isCollaborator);
 
   // Get action references directly - they're stable in Zustand
   const storeActions = useMemo(() => {
@@ -125,6 +129,8 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
   const { guides, onNodeDrag, onNodeDragStop } = useSnapGuides(nodes);
   const { broadcastChanges, collaborators } = useRealtimeCollab(shareToken || null);
+  const { saveStatus } = useAutoSave();
+  const { screenToFlowPosition } = useReactFlow();
 
   // Broadcast changes when nodes/edges update (only if in shared mode)
   useEffect(() => {
@@ -298,36 +304,61 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
     }
   }, [pendingProtocolEdge]);
 
-  // Épico 7: Fork feedback
+  // Épico 7: Fork feedback + Épico 6: Collaborative save
   const handleSaveToCloud = useCallback(async () => {
     if (!user) return;
     setSaving(true);
     try {
-      const isSharedContext = !!shareToken && !diagramId;
-      const record = await saveDiagram(diagramName, nodes, edges, user.id, diagramId);
-      setDiagramId(record.id);
-      if (isSharedContext) {
-        toast({
-          title: 'Diagrama salvo como cópia!',
-          description: 'Uma cópia deste diagrama foi salva em "Meus Diagramas". Você não está editando o diagrama original.',
-          duration: 6000,
-        });
+      if (isCollaborator && diagramId) {
+        // Save collaborative edits to the original diagram
+        await saveSharedDiagram(diagramId, user.id, diagramName, nodes, edges);
+        toast({ title: 'Alterações salvas no diagrama compartilhado!' });
       } else {
-        toast({ title: 'Diagrama salvo na nuvem!' });
+        const isSharedContext = !!shareToken && !diagramId;
+        const record = await saveDiagram(diagramName, nodes, edges, user.id, diagramId);
+        setDiagramId(record.id);
+        if (isSharedContext) {
+          toast({
+            title: 'Diagrama salvo como cópia!',
+            description: 'Uma cópia deste diagrama foi salva em "Meus Diagramas". Você não está editando o diagrama original.',
+            duration: 6000,
+          });
+        } else {
+          toast({ title: 'Diagrama salvo na nuvem!' });
+        }
       }
     } catch (err: any) {
       toast({ title: 'Erro ao salvar', description: err.message, variant: 'destructive' });
     } finally {
       setSaving(false);
     }
-  }, [user, diagramName, nodes, edges, diagramId, shareToken]);
+  }, [user, diagramName, nodes, edges, diagramId, shareToken, isCollaborator]);
+
+  // Smart node positioning using viewport center
+  const handleAddNode = useCallback(
+    (type: NodeType, subType?: string) => {
+      const wrapper = reactFlowWrapper.current;
+      if (wrapper) {
+        const rect = wrapper.getBoundingClientRect();
+        const jx = (Math.random() - 0.5) * 80;
+        const jy = (Math.random() - 0.5) * 80;
+        const pos = screenToFlowPosition({
+          x: rect.left + rect.width / 2 + jx,
+          y: rect.top + rect.height / 2 + jy,
+        });
+        storeActions.addNode(type, subType, pos);
+      } else {
+        storeActions.addNode(type, subType);
+      }
+    },
+    [screenToFlowPosition, storeActions]
+  );
 
   return (
-    <ReactFlowProvider>
     <div className="flex h-screen w-screen flex-col bg-background" onKeyDown={handleKeyDown} tabIndex={0}>
       <header className="flex items-center justify-center gap-3 border-b bg-card/80 px-4 py-2 backdrop-blur-sm">
         <Toolbar
-          onAddNode={storeActions.addNode}
+          onAddNode={handleAddNode}
           onDelete={storeActions.deleteSelected}
           onClearCanvas={() => setShowClearConfirm(true)}
           onUndo={undo}
@@ -361,6 +392,11 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
         {shareToken && diagramId && (
           <Badge variant="secondary" className="text-xs">
             ✓ Cópia salva em Meus Diagramas
+          </Badge>
+        )}
+        {isCollaborator && (
+          <Badge variant="outline" className="text-xs border-blue-500/30 text-blue-600 dark:text-blue-400">
+            Editando diagrama compartilhado
           </Badge>
         )}
 
@@ -404,6 +440,7 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
       </header>
 
       <div className="flex-1 relative" ref={reactFlowWrapper}>
+        <RecoveryBanner />
         
         <ReactFlow
           nodes={nodes}
@@ -477,7 +514,7 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
         <DiagramLegend edges={edges} />
       </div>
 
-      <StatusBar nodes={nodes} edges={edges} />
+      <StatusBar nodes={nodes} edges={edges} saveStatus={saveStatus} />
 
       <AIGenerateModal
         open={showAIGenerate}
@@ -558,6 +595,13 @@ export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
         onCancel={handlePendingProtocolCancel}
       />
     </div>
+  );
+}
+
+export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
+  return (
+    <ReactFlowProvider>
+      <DiagramCanvasInner shareToken={shareToken} />
     </ReactFlowProvider>
   );
 }
