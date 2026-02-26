@@ -64,17 +64,20 @@ export const useDiagramStore = create<DiagramStore>()(
       setIsAnalyzing: (isAnalyzing) => set({ isAnalyzing }),
       setAnalysisResult: (analysisResult) => set({ analysisResult }),
 
-      // React Flow handlers
+      // React Flow handlers - avoid unnecessary updates to prevent infinite loops
       onNodesChange: (changes) => {
-        set((state) => ({
-          nodes: applyNodeChanges(changes, state.nodes) as DiagramNode[],
-        }));
+        if (changes.length === 0) return;
+        const { nodes } = get();
+        const updated = applyNodeChanges(changes, nodes) as DiagramNode[];
+        // Only update if reference actually changed (avoid render loop)
+        if (updated !== nodes) set({ nodes: updated });
       },
 
       onEdgesChange: (changes) => {
-        set((state) => ({
-          edges: applyEdgeChanges(changes, state.edges) as DiagramEdge[],
-        }));
+        if (changes.length === 0) return;
+        const { edges } = get();
+        const updated = applyEdgeChanges(changes, edges) as DiagramEdge[];
+        if (updated !== edges) set({ edges: updated });
       },
 
       onConnect: (connection) => {
@@ -243,13 +246,15 @@ export const useDiagramStore = create<DiagramStore>()(
     }),
     {
       limit: 50,
-      partialize: (state) => {
-        const partial: Record<string, unknown> = {};
-        for (const key of TRACKED_KEYS) {
-          partial[key] = state[key];
-        }
-        return partial as Pick<DiagramState, 'nodes' | 'edges' | 'diagramName'>;
-      },
+      equality: (pastState, currentState) =>
+        pastState.nodes === currentState.nodes &&
+        pastState.edges === currentState.edges &&
+        pastState.diagramName === currentState.diagramName,
+      partialize: (state) => ({
+        nodes: state.nodes,
+        edges: state.edges,
+        diagramName: state.diagramName,
+      } as unknown as DiagramStore),
     },
   ),
 );
