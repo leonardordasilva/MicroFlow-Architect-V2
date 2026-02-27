@@ -3,11 +3,13 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Database } from 'lucide-react';
 import type { DiagramNodeData } from '@/types/diagram';
 import { useDiagramStore } from '@/store/diagramStore';
+import { getDbColor } from '@/constants/databaseColors';
 
 const DatabaseNode = memo(({ data, id, selected }: NodeProps) => {
   const nodeData = data as unknown as DiagramNodeData;
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(nodeData.label);
+  const color = getDbColor(nodeData.subType);
 
   useEffect(() => {
     if (!editing) setLabel(nodeData.label);
@@ -23,24 +25,28 @@ const DatabaseNode = memo(({ data, id, selected }: NodeProps) => {
     );
   };
 
+  const handleStyle = { background: color };
+
   return (
     <div
       className={`relative min-w-[160px] rounded-lg border-2 bg-card p-3 shadow-md transition-all ${
-        selected ? 'border-[hsl(var(--node-database))] shadow-lg ring-2 ring-[hsl(var(--node-database))]/30' : 'border-border'
+        selected ? 'shadow-lg ring-2' : 'border-border'
       }`}
+      style={selected ? { borderColor: color, '--tw-ring-color': `${color}4D` } as React.CSSProperties : undefined}
     >
-      <Handle id="top-target" type="target" position={Position.Top} className="!w-3 !h-3 !bg-[hsl(var(--node-database))]" />
-      <Handle id="top-source" type="source" position={Position.Top} className="!w-3 !h-3 !bg-[hsl(var(--node-database))]" />
-      <Handle id="left-target" type="target" position={Position.Left} className="!w-3 !h-3 !bg-[hsl(var(--node-database))]" />
-      <Handle id="left-source" type="source" position={Position.Left} className="!w-3 !h-3 !bg-[hsl(var(--node-database))]" />
+      <Handle id="top-target" type="target" position={Position.Top} className="!w-3 !h-3" style={handleStyle} />
+      <Handle id="top-source" type="source" position={Position.Top} className="!w-3 !h-3" style={handleStyle} />
+      <Handle id="left-target" type="target" position={Position.Left} className="!w-3 !h-3" style={handleStyle} />
+      <Handle id="left-source" type="source" position={Position.Left} className="!w-3 !h-3" style={handleStyle} />
 
       <div className="flex items-center gap-2 mb-1">
-        <div className="rounded-md bg-[hsl(var(--node-database))]/15 p-1.5">
-          <Database className="h-4 w-4 text-[hsl(var(--node-database))]" />
+        <div className="rounded-md p-1.5" style={{ backgroundColor: `${color}26` }}>
+          <Database className="h-4 w-4" style={{ color }} />
         </div>
         {editing ? (
           <input
-            className="bg-transparent border-b border-[hsl(var(--node-database))] text-sm font-semibold text-foreground outline-none w-full"
+            className="bg-transparent border-b text-sm font-semibold text-foreground outline-none w-full"
+            style={{ borderColor: color }}
             value={label}
             onChange={(e) => setLabel(e.target.value)}
             onBlur={handleBlur}
@@ -55,10 +61,10 @@ const DatabaseNode = memo(({ data, id, selected }: NodeProps) => {
       </div>
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">{nodeData.subType || 'Oracle'}</div>
 
-      <Handle id="bottom-target" type="target" position={Position.Bottom} className="!w-3 !h-3 !bg-[hsl(var(--node-database))]" />
-      <Handle id="bottom-source" type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-[hsl(var(--node-database))]" />
-      <Handle id="right-target" type="target" position={Position.Right} className="!w-3 !h-3 !bg-[hsl(var(--node-database))]" />
-      <Handle id="right-source" type="source" position={Position.Right} className="!w-3 !h-3 !bg-[hsl(var(--node-database))]" />
+      <Handle id="bottom-target" type="target" position={Position.Bottom} className="!w-3 !h-3" style={handleStyle} />
+      <Handle id="bottom-source" type="source" position={Position.Bottom} className="!w-3 !h-3" style={handleStyle} />
+      <Handle id="right-target" type="target" position={Position.Right} className="!w-3 !h-3" style={handleStyle} />
+      <Handle id="right-source" type="source" position={Position.Right} className="!w-3 !h-3" style={handleStyle} />
     </div>
   );
 });
