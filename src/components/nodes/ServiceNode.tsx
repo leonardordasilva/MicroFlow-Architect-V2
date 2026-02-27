@@ -3,6 +3,7 @@ import { Handle, Position, type NodeProps } from '@xyflow/react';
 import { Box, Database, Server } from 'lucide-react';
 import type { DiagramNodeData } from '@/types/diagram';
 import { useDiagramStore } from '@/store/diagramStore';
+import { getDbColor } from '@/constants/databaseColors';
 
 function EditableDbItem({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [editing, setEditing] = useState(false);
@@ -118,7 +119,7 @@ const ServiceNode = memo(({ data, id, selected }: NodeProps) => {
         <div className="mt-2 space-y-1">
           {nodeData.internalDatabases.map((db, i) => (
             <div key={i} className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Database className="h-3 w-3 text-[hsl(var(--node-database))]" />
+              <Database className="h-3 w-3" style={{ color: getDbColor('Oracle') }} />
               <EditableDbItem value={db} onChange={(v) => handleDbRename(i, v)} />
             </div>
           ))}
