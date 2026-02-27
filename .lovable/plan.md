@@ -1,46 +1,56 @@
-## Cores Distintas para Bancos de Dados por SubTipo
+
+## Seletor de Tipo de Banco ao Adicionar Banco Interno
 
 ### Objetivo
+Ao adicionar um banco de dados interno no painel de propriedades de um microservico, o usuario podera escolher o tipo do banco (Oracle, Redis, etc.) antes de adicionar. Cada banco interno tera sua cor correspondente no node.
 
-Cada tipo de banco de dados (Oracle, Redis, etc.) tera sua propria cor, em vez de todos usarem a mesma cor verde generica (`--node-database`).
+### Mudanca no Modelo de Dados
 
-### Mapeamento de Cores
+Atualmente `internalDatabases` e `string[]`. Sera alterado para um array de objetos:
 
-- **Oracle**: `#FBD982` (dourado/amarelo)
-- **Redis**: `#DC382C` (vermelho)
-- Fallback para outros subTypes: manter a cor atual verde (`hsl(142, 71%, 45%)`)
+```text
+interface InternalDatabase {
+  label: string;
+  dbType: string;  // "Oracle" | "Redis" | etc.
+}
+```
+
+Compatibilidade com dados existentes: strings puras serao tratadas como `{ label: string, dbType: "Oracle" }` (padrao atual).
 
 ### Arquivos a Modificar
 
-#### 1. Criar constante de cores por subType
+#### 1. `src/types/diagram.ts`
+- Criar interface `InternalDatabase` com `label` e `dbType`
+- Alterar `internalDatabases` de `string[]` para `InternalDatabase[]`
+- Exportar a lista de tipos de banco disponiveis (`DATABASE_TYPES`)
 
-**Arquivo**: `src/constants/databaseColors.ts` (novo)
+#### 2. `src/constants/databaseColors.ts`
+- Adicionar array `DATABASE_TYPES` com os tipos disponiveis: `['Oracle', 'Redis']`
+- Manter o mapa de cores existente
 
-Um mapa simples de subType para cor hex, usado tanto no DatabaseNode quanto no ServiceNode:
+#### 3. `src/components/NodePropertiesPanel.tsx`
+- Alterar o estado `internalDbs` para usar `InternalDatabase[]`
+- No botao "+" de adicionar banco, abrir um Select inline para o usuario escolher o tipo (Oracle/Redis) e entao criar o item com o tipo selecionado
+- Cada linha de banco interno exibira: um Select de tipo + Input de nome + botao remover
+- Ao mudar o tipo, atualizar o `dbType` do banco correspondente
 
-```ts
-export const DATABASE_COLORS: Record<string, string> = {
-  Oracle: '#FBD982',
-  Redis: '#DC382C',
-};
-export const DEFAULT_DB_COLOR = 'hsl(var(--node-database))';
+#### 4. `src/components/nodes/ServiceNode.tsx`
+- Adaptar a renderizacao para ler `db.label` e `db.dbType` em vez de string pura
+- Usar `getDbColor(db.dbType)` para cor do icone (em vez de hardcoded 'Oracle')
+- Manter compatibilidade: se o item for string, tratar como `{ label: str, dbType: 'Oracle' }`
+
+#### 5. `src/schemas/diagramSchema.ts`
+- Atualizar `InternalItemSchema` para aceitar o novo formato `{ label, dbType }` alem dos formatos existentes
+
+### Detalhes da UI no Painel de Propriedades
+
+Cada banco interno tera uma linha com 3 elementos:
+```text
+[Select tipo: Oracle/Redis] [Input nome] [X remover]
 ```
 
-#### 2. Atualizar `DatabaseNode.tsx`
+O botao "+" adicionara um novo banco com tipo Oracle por padrao e nome auto-gerado.
 
-- Importar o mapa de cores
-- Derivar a cor com base em `nodeData.subType`
-- Substituir todas as referencias a `hsl(var(--node-database))` por essa cor dinamica (bordas, handles, icone, input)
-
-#### 3. Atualizar `ServiceNode.tsx`
-
-- Para os bancos internos exibidos dentro do ServiceNode, usar a cor do Oracle (`#FBD982`) no icone do banco interno (ja que bancos internos sao Oracle por padrao)
-- Manter a cor do ServiceNode inalterada para o restante do componente
-
-### Detalhes Tecnicos
-
-- As cores serao aplicadas via `style` inline em vez de classes Tailwind, pois os valores sao dinamicos por instancia
-- Os handles, bordas, icones e inputs do DatabaseNode usarao a cor correspondente ao subType
-- O badge de subtipo (texto "ORACLE" / "REDIS") continuara usando `text-muted-foreground`
-
-Levar em conta que diagramas já salvos devem sofrer as alterações 
+### Compatibilidade com Dados Existentes
+- Uma funcao helper `normalizeInternalDb(item)` convertera strings para objetos `{ label, dbType: 'Oracle' }`
+- Aplicada na leitura dos dados tanto no painel quanto no node
