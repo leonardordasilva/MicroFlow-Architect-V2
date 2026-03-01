@@ -77,7 +77,21 @@ export default function EditableEdge({
 
   const source: Point = { x: sourceX, y: sourceY };
   const target: Point = { x: targetX, y: targetY };
-  const allPoints: Point[] = [source, ...waypoints, target];
+
+  // Deduplicate consecutive points to avoid zero-length segments (which break arrow markers)
+  const rawPoints: Point[] = [source, ...waypoints, target];
+  const allPoints: Point[] = [rawPoints[0]];
+  for (let i = 1; i < rawPoints.length; i++) {
+    const prev = allPoints[allPoints.length - 1];
+    if (Math.abs(rawPoints[i].x - prev.x) > 0.5 || Math.abs(rawPoints[i].y - prev.y) > 0.5) {
+      allPoints.push(rawPoints[i]);
+    }
+  }
+  // Ensure we always have at least source and target
+  if (allPoints.length < 2) {
+    allPoints.length = 0;
+    allPoints.push(source, target);
+  }
 
   const edgePath = buildOrthogonalPath(allPoints);
 
