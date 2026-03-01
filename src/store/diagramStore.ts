@@ -8,9 +8,8 @@ import {
   type NodeChange,
   type EdgeChange,
 } from '@xyflow/react';
-import type { DiagramNode, DiagramEdge, DiagramNodeData, NodeType, EdgeProtocol } from '@/types/diagram';
-import { inferProtocol } from '@/utils/protocolInference';
-import { PROTOCOL_CONFIGS } from '@/constants/protocolConfigs';
+import type { DiagramNode, DiagramEdge, DiagramNodeData, NodeType } from '@/types/diagram';
+
 import { getLayoutedElements, getELKLayoutedElements, type LayoutDirection } from '@/services/layoutService';
 
 const createNodeId = () => `node_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
@@ -47,7 +46,7 @@ interface DiagramActions {
   clearCanvas: () => void;
   loadDiagram: (nodes: DiagramNode[], edges: DiagramEdge[]) => void;
   exportJSON: () => string;
-  updateEdgeProtocol: (edgeId: string, protocol: EdgeProtocol) => void;
+  
 }
 
 type DiagramStore = DiagramState & DiagramActions;
@@ -93,39 +92,15 @@ export const useDiagramStore = create<DiagramStore>()(
       },
 
       onConnect: (connection) => {
-        const { nodes } = get();
-        const sourceNode = nodes.find((n) => n.id === connection.source);
-        const targetNode = nodes.find((n) => n.id === connection.target);
-
-        // Auto-infer protocol
-        const srcType = (sourceNode?.type ?? 'service') as NodeType;
-        const tgtType = (targetNode?.type ?? 'service') as NodeType;
-        const protocol = inferProtocol(srcType, tgtType);
-        const protocolConfig = PROTOCOL_CONFIGS[protocol];
-
-        // Auto labels for queue connections
-        let edgeLabel: string = protocol;
-        if (sourceNode?.type === 'service' && targetNode?.type === 'queue') {
-          edgeLabel = 'produce';
-        } else if (sourceNode?.type === 'queue' && targetNode?.type === 'service') {
-          edgeLabel = 'consume';
-        }
-
         set((state) => ({
           edges: addEdge(
             {
               ...connection,
               type: 'editable',
               animated: true,
-              style: {
-                strokeWidth: 2,
-                stroke: protocolConfig.color,
-                strokeDasharray: protocolConfig.dashArray || undefined,
-              },
+              style: { strokeWidth: 2 },
               markerEnd: { type: 'arrowclosed' as any },
-              data: { waypoints: undefined, protocol },
-              label: edgeLabel,
-              labelStyle: { fontSize: 11, fontWeight: 600 },
+              data: { waypoints: undefined },
             },
             state.edges,
           ) as DiagramEdge[],
@@ -256,15 +231,6 @@ export const useDiagramStore = create<DiagramStore>()(
         return JSON.stringify({ name: diagramName, nodes, edges }, null, 2);
       },
 
-      updateEdgeProtocol: (edgeId, protocol) => {
-        set((state) => ({
-          edges: state.edges.map((e) =>
-            e.id === edgeId
-              ? { ...e, data: { ...e.data, protocol }, label: protocol, labelStyle: { fontSize: 10, fontWeight: 600 } }
-              : e
-          ),
-        }));
-      },
     }),
     {
       limit: 50,
