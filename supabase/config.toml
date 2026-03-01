@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.share-diagram]
 verify_jwt = false
+
+[functions.diagram-crypto]
+verify_jwt = false
