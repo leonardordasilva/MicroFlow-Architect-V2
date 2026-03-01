@@ -5,9 +5,9 @@ import type { DiagramNodeData } from '@/types/diagram';
 import { useDiagramStore } from '@/store/diagramStore';
 
 const QUEUE_ICONS: Record<string, React.ElementType> = {
-  MQ: Mail,
+  'IBM MQ': Mail,
   Kafka: Radio,
-  AMQP: MessageSquare,
+  RabbitMQ: MessageSquare,
 };
 
 const QueueNode = memo(({ data, id, selected }: NodeProps) => {

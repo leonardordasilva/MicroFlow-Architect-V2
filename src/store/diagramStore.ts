@@ -133,7 +133,7 @@ export const useDiagramStore = create<DiagramStore>()(
         const labelMap: Record<NodeType, string> = {
           service: 'Microserviço',
           database: subType || 'Oracle',
-          queue: subType || 'MQ',
+          queue: subType || 'IBM MQ',
           external: subType || 'REST',
         };
         const newNode: DiagramNode = {
@@ -185,7 +185,7 @@ export const useDiagramStore = create<DiagramStore>()(
         const labelMap: Record<NodeType, string> = {
           service: 'Microserviço',
           database: subType || 'Oracle',
-          queue: subType || 'MQ',
+          queue: subType || 'IBM MQ',
           external: subType || 'REST',
         };
 
