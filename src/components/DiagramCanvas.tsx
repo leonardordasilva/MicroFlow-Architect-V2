@@ -43,7 +43,6 @@ import { saveDiagram, saveSharedDiagram, loadDiagramById } from '@/services/diag
 import { useRealtimeCollab } from '@/hooks/useRealtimeCollab';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import RecoveryBanner from '@/components/RecoveryBanner';
-import { inferProtocol } from '@/utils/protocolInference';
 import { canConnect, connectionErrorMessage } from '@/utils/connectionRules';
 import { Loader2, Save, LogOut, Keyboard, FolderOpen, RefreshCw } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
@@ -247,8 +246,6 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
     setSelectedNodeId(null);
   }, []);
 
-  // Double-click on edge removed — protocol is auto-inferred
-
   // Auto protocol on connect with connection validation
   const handleConnect = useCallback(
     (connection: any) => {
@@ -263,13 +260,8 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
         return;
       }
 
-      // Create edge
+      // Create edge (protocol is auto-inferred inside onConnect)
       storeActions.onConnect(connection);
-
-      // Auto-apply inferred protocol
-      const edgeId = `reactflow__edge-${connection.source}${connection.sourceHandle || ''}-${connection.target}${connection.targetHandle || ''}`;
-      const protocol = inferProtocol(srcType, tgtType);
-      storeActions.updateEdgeProtocol(edgeId, protocol);
     },
     [storeActions, nodes]
   );
