@@ -1,6 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
-// ─── Mock Supabase Client ───
+// ─── Mock cryptoService (pass-through for tests) ───
+vi.mock('@/services/cryptoService', () => ({
+  encryptDiagramData: vi.fn(async (nodes: unknown, edges: unknown) => ({
+    nodes: { iv: 'mock-iv', ciphertext: 'mock-ct' },
+    edges: { iv: 'mock-iv', ciphertext: 'mock-ct' },
+  })),
+  decryptDiagramData: vi.fn(async (nodes: unknown, edges: unknown) => ({
+    nodes: Array.isArray(nodes) ? nodes : [],
+    edges: Array.isArray(edges) ? edges : [],
+  })),
+}));
 const mockSelect = vi.fn();
 const mockInsert = vi.fn();
 const mockUpdate = vi.fn();

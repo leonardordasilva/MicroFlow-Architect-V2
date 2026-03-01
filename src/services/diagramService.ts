@@ -2,6 +2,7 @@ import { supabase } from '@/integrations/supabase/client';
 import type { DiagramNode, DiagramEdge } from '@/types/diagram';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { DbDiagramNodesSchema, DbDiagramEdgesSchema } from '@/schemas/diagramSchema';
+import { encryptDiagramData, decryptDiagramData } from '@/services/cryptoService';
 
 // Use Supabase generated type for rows
 type DiagramRow = Tables<'diagrams'>;
@@ -17,10 +18,16 @@ export interface DiagramRecord {
   updated_at: string;
 }
 
-/** Convert a Supabase row into our typed DiagramRecord */
-function toDiagramRecord(row: DiagramRow): DiagramRecord {
-  const nodesParsed = DbDiagramNodesSchema.safeParse(row.nodes ?? []);
-  const edgesParsed = DbDiagramEdgesSchema.safeParse(row.edges ?? []);
+/** Convert a Supabase row into our typed DiagramRecord, decrypting if needed */
+async function toDiagramRecord(row: DiagramRow): Promise<DiagramRecord> {
+  // Decrypt nodes/edges if they are encrypted envelopes (backward-compat with plain arrays)
+  const { nodes: rawNodes, edges: rawEdges } = await decryptDiagramData(
+    row.nodes ?? [],
+    row.edges ?? [],
+  );
+
+  const nodesParsed = DbDiagramNodesSchema.safeParse(rawNodes);
+  const edgesParsed = DbDiagramEdgesSchema.safeParse(rawEdges);
 
   if (!nodesParsed.success) {
     throw new Error('Dados do diagrama corrompidos no banco de dados. ID: ' + row.id);
@@ -29,9 +36,6 @@ function toDiagramRecord(row: DiagramRow): DiagramRecord {
     throw new Error('Dados do diagrama corrompidos no banco de dados. ID: ' + row.id);
   }
 
-  // Fronteira persistência→runtime: PersistedNode é structurally compatible
-  // com DiagramNode, salvo pelas propriedades de runtime do React Flow
-  // (selected, dragging, measured etc.) que são inicializadas como undefined.
   return {
     id: row.id,
     title: row.title,
@@ -51,11 +55,17 @@ export async function saveDiagram(
   ownerId: string,
   existingId?: string,
 ): Promise<DiagramRecord> {
+  // Encrypt nodes/edges before persisting
+  const encrypted = await encryptDiagramData(
+    JSON.parse(JSON.stringify(nodes)),
+    JSON.parse(JSON.stringify(edges)),
+  );
+
   if (existingId) {
     const updatePayload: TablesUpdate<'diagrams'> = {
       title,
-      nodes: JSON.parse(JSON.stringify(nodes)),
-      edges: JSON.parse(JSON.stringify(edges)),
+      nodes: encrypted.nodes as unknown as Tables<'diagrams'>['nodes'],
+      edges: encrypted.edges as unknown as Tables<'diagrams'>['edges'],
       updated_at: new Date().toISOString(),
     };
     const { data, error } = await supabase
@@ -71,8 +81,8 @@ export async function saveDiagram(
 
   const insertPayload: TablesInsert<'diagrams'> = {
     title,
-    nodes: JSON.parse(JSON.stringify(nodes)),
-    edges: JSON.parse(JSON.stringify(edges)),
+    nodes: encrypted.nodes as unknown as Tables<'diagrams'>['nodes'],
+    edges: encrypted.edges as unknown as Tables<'diagrams'>['edges'],
     owner_id: ownerId,
   };
   const { data, error } = await supabase
@@ -106,14 +116,17 @@ export async function loadUserDiagrams(
     .order('updated_at', { ascending: false })
     .range(from, to);
   if (error) return { diagrams: [], hasMore: false };
-  const rows = (data || []).flatMap((row) => {
-    try {
-      return [toDiagramRecord(row)];
-    } catch {
-      console.warn(`Diagrama corrompido ignorado: ${row.id}`);
-      return [];
+  const settled = await Promise.allSettled(
+    (data || []).map((row) => toDiagramRecord(row)),
+  );
+  const rows: DiagramRecord[] = [];
+  for (const result of settled) {
+    if (result.status === 'fulfilled') {
+      rows.push(result.value);
+    } else {
+      console.warn('Diagrama corrompido ignorado:', result.reason);
     }
-  });
+  }
   const hasMore = rows.length > PAGE_SIZE;
   return { diagrams: hasMore ? rows.slice(0, PAGE_SIZE) : rows, hasMore };
 }
@@ -151,9 +164,13 @@ export async function saveSharedDiagram(
   nodes: DiagramNode[],
   edges: DiagramEdge[],
 ): Promise<void> {
+  const encrypted = await encryptDiagramData(
+    JSON.parse(JSON.stringify(nodes)),
+    JSON.parse(JSON.stringify(edges)),
+  );
   const updatePayload: TablesUpdate<'diagrams'> = {
-    nodes: JSON.parse(JSON.stringify(nodes)),
-    edges: JSON.parse(JSON.stringify(edges)),
+    nodes: encrypted.nodes as unknown as Tables<'diagrams'>['nodes'],
+    edges: encrypted.edges as unknown as Tables<'diagrams'>['edges'],
     updated_at: new Date().toISOString(),
   };
   const { error } = await supabase
