@@ -53,7 +53,7 @@ import NodePropertiesPanel from '@/components/NodePropertiesPanel';
 import StatusBar from '@/components/StatusBar';
 import KeyboardShortcutsModal from '@/components/KeyboardShortcutsModal';
 
-import DiagramLegend from '@/components/DiagramLegend';
+
 import CollaboratorAvatars from '@/components/CollaboratorAvatars';
 
 const nodeTypes = {
@@ -99,7 +99,7 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
       clearCanvas: s.clearCanvas,
       loadDiagram: s.loadDiagram,
       exportJSON: s.exportJSON,
-      updateEdgeProtocol: s.updateEdgeProtocol,
+      
     };
   }, []);
 
@@ -511,7 +511,7 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
             onClose={() => setSelectedNodeId(null)}
           />
         )}
-        <DiagramLegend edges={edges} />
+        
       </div>
 
       <StatusBar nodes={nodes} edges={edges} saveStatus={saveStatus} />

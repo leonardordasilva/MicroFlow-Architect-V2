@@ -231,19 +231,6 @@ describe('diagramStore', () => {
     });
   });
 
-  describe('updateEdgeProtocol', () => {
-    it('should update edge protocol and label', () => {
-      getState().addNode('service');
-      getState().addNode('service');
-      const [n1, n2] = getState().nodes;
-      getState().setEdges([
-        { id: 'e1', source: n1.id, target: n2.id, type: 'editable', data: { waypoints: undefined } },
-      ]);
-      getState().updateEdgeProtocol('e1', 'gRPC');
-      expect((getState().edges[0].data as any).protocol).toBe('gRPC');
-      expect(getState().edges[0].label).toBe('gRPC');
-    });
-  });
 
   describe('setDiagramName undo/redo', () => {
     it('reverte nome completo com um único undo', () => {
