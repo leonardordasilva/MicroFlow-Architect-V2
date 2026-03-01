@@ -28,13 +28,12 @@ Um comentário HTML <!-- ... --> existe imediatamente acima da meta tag Content-
 O comentário menciona explicitamente que chamadas à API Gemini são feitas via Edge Functions no servidor e que o domínio Google não deve ser adicionado ao connect-src.
 O funcionamento da aplicação não é alterado.
 5.1.2 NEW-SEC-02 — Correção da lista de modelos na Edge Function generate-diagram
-Problema: O arquivo supabase/functions/generate-diagram/index.ts contém um MODEL_CASCADE com os modelos "google/gemini-3-flash-preview" e "google/gemini-3-pro-preview", que são identificadores inexistentes. Cada requisição de geração de diagrama tenta primeiro esses modelos inválidos antes de chegar aos modelos funcionais, adicionando latência desnecessária e erros nos logs da Edge Function. Este é o mesmo padrão do item QUA-07 (excluído do PRD-09) que foi reintroduzido na Edge Function com nomes de modelo diferentes.
+Problema: O arquivo supabase/functions/generate-diagram/index.ts contém um MODEL_CASCADE com os modelos que podem ser inexistentes. Cada requisição de geração de diagrama tenta primeiro esses modelos inválidos antes de chegar aos modelos funcionais, adicionando latência desnecessária e erros nos logs da Edge Function. Este é o mesmo padrão do item QUA-07 (excluído do PRD-09) que foi reintroduzido na Edge Function com nomes de modelo diferentes.
 
 Requisito: Atualizar o array MODEL_CASCADE na Edge Function para conter apenas modelos válidos e disponíveis no gateway Lovable, em ordem de prioridade por custo/capacidade.
 
 Critérios de aceite:
 
-O array MODEL_CASCADE não contém "google/gemini-3-flash-preview" nem "google/gemini-3-pro-preview".
 O array contém no mínimo dois modelos válidos disponíveis no gateway https://ai.gateway.lovable.dev.
 Após a mudança, uma geração de diagrama bem-sucedida não registra nenhum erro de modelo 404 nos logs da Edge Function.
 O fallback entre modelos continua funcional para cenários de rate limit (429) e sobrecarga (503).
@@ -191,4 +190,5 @@ Os seguintes requisitos se aplicam a todas as implementações deste PRD. Toda m
 A implementação deve respeitar a seguinte ordem para minimizar riscos. A remoção dos artefatos legados (QUA-01, NEW-QUA-01) deve ser feita primeiro, pois elimina código morto que poderia confundir as demais análises. A seguir, o item SEC-02 (pendente) deve ser implementado antes dos itens NEW-SEC-03 e NEW-QUA-03, pois todos envolvem a camada de dados do Supabase e é mais seguro ter as políticas RLS confirmadas antes de fazer mudanças adicionais. Os testes (INF-03 partes 1 e 2) devem ser implementados após todas as mudanças de código dos itens de qualidade, para que reflitam o estado final. Os demais itens são independentes entre si e podem ser implementados em paralelo.
 
 8. Critérios de Conclusão do PRD
+
 O PRD-10 será considerado concluído quando todos os 18 itens tiverem seus critérios de aceite verificados e aprovados; o comando npm run build executar sem erros ou warnings; o comando npm test executar com todos os testes passando; nenhum arquivo de artefato legado (/types.ts, /geminiService.ts) existir no repositório; e nenhuma regressão funcional for identificada nos fluxos principais da aplicação.
