@@ -44,7 +44,7 @@ export default function SpawnFromNodeModal({
   const handleTypeChange = (v: string) => {
     setType(v as NodeType);
     if (v === 'database') setSubType('Oracle');
-    else if (v === 'queue') setSubType('MQ');
+    else if (v === 'queue') setSubType('IBM MQ');
     else if (v === 'external') setSubType('REST');
   };
   const [count, setCount] = useState(1);
@@ -96,7 +96,7 @@ export default function SpawnFromNodeModal({
                 <SelectContent className="z-50">
                   <SelectItem value="service">Microserviço</SelectItem>
                   <SelectItem value="database">Banco de Dados</SelectItem>
-                  <SelectItem value="queue">Fila (MQ/Kafka/AMQP)</SelectItem>
+                  <SelectItem value="queue">Fila (IBM MQ/Kafka/RabbitMQ)</SelectItem>
                   <SelectItem value="external">API (REST/gRPC/GraphQL/WS/HTTPS)</SelectItem>
                 </SelectContent>
               </Select>
@@ -126,9 +126,9 @@ export default function SpawnFromNodeModal({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="z-50">
-                  <SelectItem value="MQ">MQ</SelectItem>
+                  <SelectItem value="IBM MQ">IBM MQ</SelectItem>
                   <SelectItem value="Kafka">Kafka</SelectItem>
-                  <SelectItem value="AMQP">AMQP</SelectItem>
+                  <SelectItem value="RabbitMQ">RabbitMQ</SelectItem>
                 </SelectContent>
               </Select>
             </div>

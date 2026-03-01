@@ -143,9 +143,9 @@ export default function Toolbar({
           <TooltipContent side="bottom" className="text-xs">Fila / Mensageria</TooltipContent>
         </Tooltip>
         <DropdownMenuContent align="start" className="z-50">
-          <DropdownMenuItem onClick={() => onAddNode('queue', 'MQ')}>MQ</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onAddNode('queue', 'IBM MQ')}>IBM MQ</DropdownMenuItem>
           <DropdownMenuItem onClick={() => onAddNode('queue', 'Kafka')}>Kafka</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onAddNode('queue', 'AMQP')}>AMQP</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onAddNode('queue', 'RabbitMQ')}>RabbitMQ</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <DropdownMenu>
