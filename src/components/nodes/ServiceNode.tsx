@@ -80,14 +80,14 @@ const ServiceNode = memo(({ data, id, selected }: NodeProps) => {
         selected ? 'border-[hsl(var(--node-service))] shadow-lg ring-2 ring-[hsl(var(--node-service))]/30' : 'border-border'
       }`}
     >
-      <Handle id="top-target" type="target" position={Position.Top} className="!w-3 !h-3 !bg-[hsl(var(--node-service))]" />
-      <Handle id="top-source" type="source" position={Position.Top} className="!w-3 !h-3 !bg-[hsl(var(--node-service))]" />
-      <Handle id="bottom-target" type="target" position={Position.Bottom} className="!w-3 !h-3 !bg-[hsl(var(--node-service))]" />
-      <Handle id="bottom-source" type="source" position={Position.Bottom} className="!w-3 !h-3 !bg-[hsl(var(--node-service))]" />
-      <Handle id="left-target" type="target" position={Position.Left} className="!w-3 !h-3 !bg-[hsl(var(--node-service))]" />
-      <Handle id="left-source" type="source" position={Position.Left} className="!w-3 !h-3 !bg-[hsl(var(--node-service))]" />
-      <Handle id="right-target" type="target" position={Position.Right} className="!w-3 !h-3 !bg-[hsl(var(--node-service))]" />
-      <Handle id="right-source" type="source" position={Position.Right} className="!w-3 !h-3 !bg-[hsl(var(--node-service))]" />
+      <Handle id="top-target" type="target" position={Position.Top} className={`!w-3 !h-3 !bg-[hsl(var(--node-service))] ${selected ? '' : '!opacity-0 !pointer-events-none'}`} />
+      <Handle id="top-source" type="source" position={Position.Top} className={`!w-3 !h-3 !bg-[hsl(var(--node-service))] ${selected ? '' : '!opacity-0 !pointer-events-none'}`} />
+      <Handle id="bottom-target" type="target" position={Position.Bottom} className={`!w-3 !h-3 !bg-[hsl(var(--node-service))] ${selected ? '' : '!opacity-0 !pointer-events-none'}`} />
+      <Handle id="bottom-source" type="source" position={Position.Bottom} className={`!w-3 !h-3 !bg-[hsl(var(--node-service))] ${selected ? '' : '!opacity-0 !pointer-events-none'}`} />
+      <Handle id="left-target" type="target" position={Position.Left} className={`!w-3 !h-3 !bg-[hsl(var(--node-service))] ${selected ? '' : '!opacity-0 !pointer-events-none'}`} />
+      <Handle id="left-source" type="source" position={Position.Left} className={`!w-3 !h-3 !bg-[hsl(var(--node-service))] ${selected ? '' : '!opacity-0 !pointer-events-none'}`} />
+      <Handle id="right-target" type="target" position={Position.Right} className={`!w-3 !h-3 !bg-[hsl(var(--node-service))] ${selected ? '' : '!opacity-0 !pointer-events-none'}`} />
+      <Handle id="right-source" type="source" position={Position.Right} className={`!w-3 !h-3 !bg-[hsl(var(--node-service))] ${selected ? '' : '!opacity-0 !pointer-events-none'}`} />
 
       <div className="flex items-center gap-2 mb-1">
         <div className="rounded-md bg-[hsl(var(--node-service))]/15 p-1.5">
