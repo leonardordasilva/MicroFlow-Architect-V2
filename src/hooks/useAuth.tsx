@@ -28,11 +28,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    // Always require fresh login: sign out any persisted session on app start
+    const initAuth = async () => {
+      const { data: { session: existingSession } } = await supabase.auth.getSession();
+      if (existingSession) {
+        // There's a persisted session — sign out to force fresh login
+        await supabase.auth.signOut();
+        setSession(null);
+        setUser(null);
+      }
       setLoading(false);
-    });
+    };
+
+    initAuth();
 
     return () => subscription.unsubscribe();
   }, []);
