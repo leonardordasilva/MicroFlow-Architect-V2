@@ -25,7 +25,7 @@ const DatabaseNode = memo(({ data, id, selected }: NodeProps) => {
     );
   };
 
-  const handleStyle = { background: color };
+  const handleStyle = { background: color, ...(selected ? {} : { opacity: 0, pointerEvents: 'none' as const }) };
 
   return (
     <div
