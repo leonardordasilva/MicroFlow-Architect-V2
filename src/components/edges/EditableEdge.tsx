@@ -93,6 +93,30 @@ export default function EditableEdge({
     allPoints.push(source, target);
   }
 
+  // Guarantee the final segment has enough length so the arrow marker
+  // orients correctly toward the target.  When the last waypoint is too
+  // close to the target the SVG marker direction becomes undefined.
+  // We fix this by ensuring a minimum-length approach segment.
+  const MIN_ARROW_SEG = 8;
+  if (allPoints.length >= 2) {
+    const last = allPoints[allPoints.length - 1];
+    const prev = allPoints[allPoints.length - 2];
+    const dx = last.x - prev.x;
+    const dy = last.y - prev.y;
+    const len = Math.hypot(dx, dy);
+    if (len < MIN_ARROW_SEG && len > 0) {
+      // Extend the second-to-last point away from target to guarantee direction
+      const scale = MIN_ARROW_SEG / len;
+      allPoints[allPoints.length - 2] = {
+        x: last.x - dx * scale,
+        y: last.y - dy * scale,
+      };
+    } else if (len === 0 && allPoints.length >= 3) {
+      // Remove the duplicate penultimate point
+      allPoints.splice(allPoints.length - 2, 1);
+    }
+  }
+
   const edgePath = buildOrthogonalPath(allPoints);
 
   // Label at midpoint
