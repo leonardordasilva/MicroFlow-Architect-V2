@@ -33,6 +33,7 @@ interface EditableEdgeData {
   protocol?: EdgeProtocol;
   sourceNodeType?: NodeType;
   sourceNodeSubType?: string;
+  isQueueConnection?: boolean;
   [key: string]: unknown;
 }
 
@@ -93,8 +94,8 @@ export default function EditableEdge({
 
   const protocol = edgeData?.protocol;
   const protocolConfig = protocol ? PROTOCOL_CONFIGS[protocol] : undefined;
-  const sourceColor = getSourceNodeColor(edgeData?.sourceNodeType, edgeData?.sourceNodeSubType);
-  const isQueueSource = edgeData?.sourceNodeType === 'queue';
+  const isQueueConn = edgeData?.isQueueConnection ?? edgeData?.sourceNodeType === 'queue';
+  const sourceColor = isQueueConn ? 'hsl(157, 52%, 49%)' : getSourceNodeColor(edgeData?.sourceNodeType, edgeData?.sourceNodeSubType);
 
   const source: Point = { x: sourceX, y: sourceY };
   const target: Point = { x: targetX, y: targetY };
@@ -280,7 +281,7 @@ export default function EditableEdge({
           ...style,
           pointerEvents: 'none',
           ...(sourceColor ? { stroke: sourceColor } : {}),
-          ...(isQueueSource ? { strokeDasharray: '8 4' } : {}),
+          ...(isQueueConn ? { strokeDasharray: '8 4' } : {}),
           ...(protocolConfig ? {
             stroke: protocolConfig.color,
             strokeDasharray: protocolConfig.dashArray || undefined,

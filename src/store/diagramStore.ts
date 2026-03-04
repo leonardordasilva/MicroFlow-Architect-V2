@@ -109,6 +109,11 @@ export const useDiagramStore = create<DiagramStore>()(
         const sourceType = sourceNode?.type as NodeType | undefined;
         const sourceSubType = (sourceNode?.data as DiagramNodeData | undefined)?.subType;
         const isQueue = sourceType === 'queue';
+        const targetNode = nodes.find((n) => n.id === connection.target);
+        const targetType = targetNode?.type as NodeType | undefined;
+        // Queue connections are always green
+        const isQueueConnection = sourceType === 'queue' || targetType === 'queue';
+        const edgeColor = isQueueConnection ? 'hsl(157, 52%, 49%)' : getNodeColor(sourceType, sourceSubType);
         set((state) => ({
           edges: addEdge(
             {
@@ -116,8 +121,8 @@ export const useDiagramStore = create<DiagramStore>()(
               type: 'editable',
               animated: false,
               style: { strokeWidth: 2 },
-              markerEnd: { type: MarkerType.ArrowClosed, color: getNodeColor(sourceType, sourceSubType) },
-              data: { waypoints: undefined, sourceNodeType: sourceType, sourceNodeSubType: sourceSubType },
+              markerEnd: { type: MarkerType.ArrowClosed, color: edgeColor },
+              data: { waypoints: undefined, sourceNodeType: sourceType, sourceNodeSubType: sourceSubType, isQueueConnection },
             },
             state.edges,
           ) as DiagramEdge[],
