@@ -12,6 +12,17 @@ import {
 import type { DiagramNode, DiagramEdge, DiagramNodeData, NodeType } from '@/types/diagram';
 
 import { getLayoutedElements, getELKLayoutedElements, type LayoutDirection } from '@/services/layoutService';
+import { getDbColor } from '@/constants/databaseColors';
+
+function getNodeColor(type?: NodeType, subType?: string): string {
+  switch (type) {
+    case 'service': return 'hsl(217, 91%, 60%)';
+    case 'database': return getDbColor(subType);
+    case 'queue': return 'hsl(157, 52%, 49%)';
+    case 'external': return 'hsl(220, 9%, 46%)';
+    default: return '#888';
+  }
+}
 
 const createNodeId = () => `node_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
@@ -93,6 +104,10 @@ export const useDiagramStore = create<DiagramStore>()(
       },
 
       onConnect: (connection) => {
+        const { nodes } = get();
+        const sourceNode = nodes.find((n) => n.id === connection.source);
+        const sourceType = sourceNode?.type as NodeType | undefined;
+        const sourceSubType = (sourceNode?.data as DiagramNodeData | undefined)?.subType;
         set((state) => ({
           edges: addEdge(
             {
@@ -100,8 +115,8 @@ export const useDiagramStore = create<DiagramStore>()(
               type: 'editable',
               animated: true,
               style: { strokeWidth: 2 },
-              markerEnd: { type: MarkerType.ArrowClosed },
-              data: { waypoints: undefined },
+              markerEnd: { type: MarkerType.ArrowClosed, color: getNodeColor(sourceType, sourceSubType) },
+              data: { waypoints: undefined, sourceNodeType: sourceType, sourceNodeSubType: sourceSubType },
             },
             state.edges,
           ) as DiagramEdge[],

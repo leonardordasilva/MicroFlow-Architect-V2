@@ -4,16 +4,35 @@ import {
   useReactFlow,
   type EdgeProps,
 } from '@xyflow/react';
-import { PROTOCOL_CONFIGS, type EdgeProtocol } from '@/types/diagram';
+import { PROTOCOL_CONFIGS, type EdgeProtocol, type NodeType } from '@/types/diagram';
+import { getDbColor } from '@/constants/databaseColors';
 
 interface Point {
   x: number;
   y: number;
 }
 
+/** Resolve the dominant color for a given source node type */
+function getSourceNodeColor(sourceNodeType?: NodeType, sourceNodeSubType?: string): string | undefined {
+  switch (sourceNodeType) {
+    case 'service':
+      return 'hsl(217, 91%, 60%)';
+    case 'database':
+      return getDbColor(sourceNodeSubType);
+    case 'queue':
+      return 'hsl(157, 52%, 49%)';
+    case 'external':
+      return 'hsl(220, 9%, 46%)';
+    default:
+      return undefined;
+  }
+}
+
 interface EditableEdgeData {
   waypoints?: Point[];
   protocol?: EdgeProtocol;
+  sourceNodeType?: NodeType;
+  sourceNodeSubType?: string;
   [key: string]: unknown;
 }
 
@@ -74,6 +93,8 @@ export default function EditableEdge({
 
   const protocol = edgeData?.protocol;
   const protocolConfig = protocol ? PROTOCOL_CONFIGS[protocol] : undefined;
+  const sourceColor = getSourceNodeColor(edgeData?.sourceNodeType, edgeData?.sourceNodeSubType);
+  const isQueueSource = edgeData?.sourceNodeType === 'queue';
 
   const source: Point = { x: sourceX, y: sourceY };
   const target: Point = { x: targetX, y: targetY };
@@ -258,6 +279,8 @@ export default function EditableEdge({
         style={{
           ...style,
           pointerEvents: 'none',
+          ...(sourceColor ? { stroke: sourceColor } : {}),
+          ...(isQueueSource ? { strokeDasharray: '8 4' } : {}),
           ...(protocolConfig ? {
             stroke: protocolConfig.color,
             strokeDasharray: protocolConfig.dashArray || undefined,
