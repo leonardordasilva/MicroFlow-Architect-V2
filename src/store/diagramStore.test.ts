@@ -108,6 +108,62 @@ describe('diagramStore', () => {
       expect(parsed.nodes).toHaveLength(1);
       expect(parsed.edges).toHaveLength(0);
     });
+
+    it('should exclude volatile fields (selected, dragging, measured) from exported nodes', () => {
+      getState().addNode('service');
+      // Simulate React Flow adding volatile properties
+      const nodesWithVolatile = getState().nodes.map((n) => ({
+        ...n,
+        selected: true,
+        dragging: false,
+        measured: { width: 200, height: 100 },
+        resizing: false,
+      }));
+      getState().loadDiagram(nodesWithVolatile as any, []);
+
+      const json = getState().exportJSON();
+      const parsed = JSON.parse(json);
+      const exportedNode = parsed.nodes[0];
+
+      // Only essential fields should be present
+      expect(exportedNode).toHaveProperty('id');
+      expect(exportedNode).toHaveProperty('type');
+      expect(exportedNode).toHaveProperty('position');
+      expect(exportedNode).toHaveProperty('data');
+
+      // Volatile fields must NOT be present
+      expect(exportedNode).not.toHaveProperty('selected');
+      expect(exportedNode).not.toHaveProperty('dragging');
+      expect(exportedNode).not.toHaveProperty('measured');
+      expect(exportedNode).not.toHaveProperty('resizing');
+    });
+
+    it('should exclude volatile fields from exported edges', () => {
+      getState().addNode('service');
+      getState().addNode('database');
+      const nodes = getState().nodes;
+      // Manually add an edge with volatile fields
+      const edgeWithVolatile = {
+        id: 'e-test',
+        source: nodes[0].id,
+        target: nodes[1].id,
+        type: 'default',
+        data: { protocol: 'REST' },
+        selected: true,
+        interactionWidth: 20,
+      };
+      getState().loadDiagram(nodes, [edgeWithVolatile] as any);
+
+      const json = getState().exportJSON();
+      const parsed = JSON.parse(json);
+      const exportedEdge = parsed.edges[0];
+
+      expect(exportedEdge).toHaveProperty('id');
+      expect(exportedEdge).toHaveProperty('source');
+      expect(exportedEdge).toHaveProperty('target');
+      expect(exportedEdge).not.toHaveProperty('selected');
+      expect(exportedEdge).not.toHaveProperty('interactionWidth');
+    });
   });
 
   describe('loadDiagram', () => {
