@@ -79,8 +79,14 @@ export const useDiagramStore = create<DiagramStore>()(
       isCollaborator: false,
 
       // Setters
-      setNodes: (nodes) => set({ nodes }),
-      setEdges: (edges) => set({ edges }),
+      setNodes: (nodes) => {
+        if (!Array.isArray(nodes)) { console.error('[Store] setNodes called with non-array:', typeof nodes, nodes); set({ nodes: [] }); return; }
+        set({ nodes });
+      },
+      setEdges: (edges) => {
+        if (!Array.isArray(edges)) { console.error('[Store] setEdges called with non-array:', typeof edges, edges); set({ edges: [] }); return; }
+        set({ edges });
+      },
       setDiagramName: (diagramName) => set({ diagramName }),
       setCurrentDiagramId: (currentDiagramId) => set({ currentDiagramId }),
       setIsAnalyzing: (isAnalyzing) => set({ isAnalyzing }),
@@ -116,8 +122,8 @@ export const useDiagramStore = create<DiagramStore>()(
         // Queue connections are always green
         const isQueueConnection = sourceType === 'queue' || targetType === 'queue';
         const edgeColor = isQueueConnection ? 'hsl(157, 52%, 49%)' : getNodeColor(sourceType, sourceSubType);
-        set((state) => ({
-          edges: addEdge(
+        set((state) => {
+          const result = addEdge(
             {
               ...connection,
               type: 'editable',
@@ -127,18 +133,23 @@ export const useDiagramStore = create<DiagramStore>()(
               data: { waypoints: undefined, sourceNodeType: sourceType, sourceNodeSubType: sourceSubType, isQueueConnection },
             },
             state.edges,
-          ) as DiagramEdge[],
-        }));
+          ) as DiagramEdge[];
+          if (!Array.isArray(result)) { console.error('[Store] addEdge returned non-array:', typeof result, result); return { edges: state.edges }; }
+          return { edges: result };
+        });
       },
 
       onNodeDragHandler: (_event, node) => {
-        set((state) => ({
-          edges: state.edges.map((edge) => {
-            const connected = edge.source === node.id || edge.target === node.id;
-            if (!connected || !edge.data?.waypoints?.length) return edge;
-            return { ...edge, data: { ...edge.data, waypoints: undefined } };
-          }),
-        }));
+        set((state) => {
+          if (!Array.isArray(state.edges)) return { edges: [] };
+          return {
+            edges: state.edges.map((edge) => {
+              const connected = edge.source === node.id || edge.target === node.id;
+              if (!connected || !edge.data?.waypoints?.length) return edge;
+              return { ...edge, data: { ...edge.data, waypoints: undefined } };
+            }),
+          };
+        });
       },
 
       // Actions
@@ -224,10 +235,12 @@ export const useDiagramStore = create<DiagramStore>()(
 
       deleteSelected: () => {
         set((state) => {
-          const selectedNodeIds = new Set(state.nodes.filter((n) => n.selected).map((n) => n.id));
+          const safeNodes = Array.isArray(state.nodes) ? state.nodes : [];
+          const safeEdges = Array.isArray(state.edges) ? state.edges : [];
+          const selectedNodeIds = new Set(safeNodes.filter((n) => n.selected).map((n) => n.id));
           return {
-            nodes: state.nodes.filter((n) => !n.selected),
-            edges: state.edges.filter(
+            nodes: safeNodes.filter((n) => !n.selected),
+            edges: safeEdges.filter(
               (e) => !e.selected && !selectedNodeIds.has(e.source) && !selectedNodeIds.has(e.target)
             ),
           };
@@ -237,13 +250,13 @@ export const useDiagramStore = create<DiagramStore>()(
       autoLayout: (direction: LayoutDirection = 'LR') => {
         const { nodes, edges } = get();
         const { nodes: layoutedNodes, edges: layoutedEdges } = getLayoutedElements(nodes, edges, direction as 'TB' | 'LR');
-        set({ nodes: layoutedNodes, edges: layoutedEdges });
+        set({ nodes: Array.isArray(layoutedNodes) ? layoutedNodes : [], edges: Array.isArray(layoutedEdges) ? layoutedEdges : [] });
       },
 
       autoLayoutELK: async (direction: LayoutDirection = 'LR') => {
         const { nodes, edges } = get();
         const { nodes: layoutedNodes, edges: layoutedEdges } = await getELKLayoutedElements(nodes, edges, direction);
-        set({ nodes: layoutedNodes, edges: layoutedEdges });
+        set({ nodes: Array.isArray(layoutedNodes) ? layoutedNodes : [], edges: Array.isArray(layoutedEdges) ? layoutedEdges : [] });
       },
 
       clearCanvas: () => set({ nodes: [], edges: [], isCollaborator: false }),
