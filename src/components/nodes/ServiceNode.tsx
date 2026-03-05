@@ -76,8 +76,8 @@ const ServiceNode = memo(({ data, id, selected }: NodeProps) => {
 
   return (
     <div
-      className={`relative min-w-[160px] rounded-lg border-2 bg-card p-3 shadow-md transition-all ${
-        selected ? 'border-[hsl(var(--node-service))] shadow-lg ring-2 ring-[hsl(var(--node-service))]/30' : 'border-border'
+      className={`relative min-w-[160px] rounded-lg border-2 border-[hsl(var(--node-service))] bg-card p-3 shadow-md transition-all ${
+        selected ? 'shadow-lg ring-2 ring-[hsl(var(--node-service))]/30' : ''
       }`}
     >
       <Handle id="top-target" type="target" position={Position.Top} className={`!w-3 !h-3 !bg-[hsl(var(--node-service))] ${selected ? '' : '!opacity-0 !pointer-events-none'}`} />

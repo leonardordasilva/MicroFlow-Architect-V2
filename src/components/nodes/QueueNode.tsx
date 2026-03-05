@@ -33,8 +33,8 @@ const QueueNode = memo(({ data, id, selected }: NodeProps) => {
 
   return (
     <div
-      className={`relative min-w-[160px] rounded-lg border-2 bg-card p-3 shadow-md transition-all ${
-        selected ? 'border-[hsl(var(--node-queue))] shadow-lg ring-2 ring-[hsl(var(--node-queue))]/30' : 'border-border'
+      className={`relative min-w-[160px] rounded-lg border-2 border-[hsl(var(--node-queue))] bg-card p-3 shadow-md transition-all ${
+        selected ? 'shadow-lg ring-2 ring-[hsl(var(--node-queue))]/30' : ''
       }`}
     >
       <Handle id="top-target" type="target" position={Position.Top} className={`!w-3 !h-3 !bg-[hsl(var(--node-queue))] ${selected ? '' : '!opacity-0 !pointer-events-none'}`} />
