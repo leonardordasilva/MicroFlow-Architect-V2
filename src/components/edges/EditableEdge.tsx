@@ -1,7 +1,5 @@
-import { useCallback, useRef } from 'react';
 import {
   BaseEdge,
-  useReactFlow,
   type EdgeProps,
 } from '@xyflow/react';
 import { PROTOCOL_CONFIGS, type EdgeProtocol, type NodeType } from '@/types/diagram';
@@ -12,7 +10,6 @@ interface Point {
   y: number;
 }
 
-/** Resolve the dominant color for a given source node type */
 function getSourceNodeColor(sourceNodeType?: NodeType, sourceNodeSubType?: string): string | undefined {
   switch (sourceNodeType) {
     case 'service':
@@ -37,34 +34,9 @@ interface EditableEdgeData {
   [key: string]: unknown;
 }
 
-function computeDefaultWaypoints(
-  sx: number,
-  sy: number,
-  tx: number,
-  ty: number
-): Point[] {
-  const mx = (sx + tx) / 2;
-  return [
-    { x: mx, y: sy },
-    { x: mx, y: ty },
-  ];
-}
-
 function buildOrthogonalPath(points: Point[]): string {
   if (points.length < 2) return '';
   return points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ');
-}
-
-function isHorizontal(a: Point, b: Point): boolean {
-  return Math.abs(a.y - b.y) < 2;
-}
-
-function isVertical(a: Point, b: Point): boolean {
-  return Math.abs(a.x - b.x) < 2;
-}
-
-function segmentLength(a: Point, b: Point): number {
-  return Math.hypot(b.x - a.x, b.y - a.y);
 }
 
 export default function EditableEdge({
@@ -80,17 +52,7 @@ export default function EditableEdge({
   labelStyle,
   data,
 }: EdgeProps) {
-  const { setEdges } = useReactFlow();
-  const draggingRef = useRef<{
-    segmentIndex: number;
-    orientation: 'h' | 'v';
-    initialWaypoints: Point[];
-    startSvg: Point;
-  } | null>(null);
-
   const edgeData = data as EditableEdgeData | undefined;
-  const waypoints: Point[] =
-    edgeData?.waypoints ?? computeDefaultWaypoints(sourceX, sourceY, targetX, targetY);
 
   const protocol = edgeData?.protocol;
   const protocolConfig = protocol ? PROTOCOL_CONFIGS[protocol] : undefined;
@@ -100,214 +62,69 @@ export default function EditableEdge({
   const source: Point = { x: sourceX, y: sourceY };
   const target: Point = { x: targetX, y: targetY };
 
-  // Deduplicate consecutive points to avoid zero-length segments (which break arrow markers)
-  const rawPoints: Point[] = [source, ...waypoints, target];
-  const allPoints: Point[] = [rawPoints[0]];
-  for (let i = 1; i < rawPoints.length; i++) {
-    const prev = allPoints[allPoints.length - 1];
-    if (Math.abs(rawPoints[i].x - prev.x) > 0.5 || Math.abs(rawPoints[i].y - prev.y) > 0.5) {
-      allPoints.push(rawPoints[i]);
+  // Simple orthogonal path via midpoint
+  const mx = (sourceX + targetX) / 2;
+  const allPoints: Point[] = [
+    source,
+    { x: mx, y: sourceY },
+    { x: mx, y: targetY },
+    target,
+  ];
+
+  // Deduplicate consecutive points
+  const deduped: Point[] = [allPoints[0]];
+  for (let i = 1; i < allPoints.length; i++) {
+    const prev = deduped[deduped.length - 1];
+    if (Math.abs(allPoints[i].x - prev.x) > 0.5 || Math.abs(allPoints[i].y - prev.y) > 0.5) {
+      deduped.push(allPoints[i]);
     }
   }
-  // Ensure we always have at least source and target
-  if (allPoints.length < 2) {
-    allPoints.length = 0;
-    allPoints.push(source, target);
+  if (deduped.length < 2) {
+    deduped.length = 0;
+    deduped.push(source, target);
   }
 
-  // Guarantee the final segment has enough length so the arrow marker
-  // orients correctly toward the target.  When the last waypoint is too
-  // close to the target the SVG marker direction becomes undefined.
-  // We fix this by ensuring a minimum-length approach segment.
+  // Ensure final segment has enough length for arrow orientation
   const MIN_ARROW_SEG = 8;
-  if (allPoints.length >= 2) {
-    const last = allPoints[allPoints.length - 1];
-    const prev = allPoints[allPoints.length - 2];
+  if (deduped.length >= 2) {
+    const last = deduped[deduped.length - 1];
+    const prev = deduped[deduped.length - 2];
     const dx = last.x - prev.x;
     const dy = last.y - prev.y;
     const len = Math.hypot(dx, dy);
     if (len < MIN_ARROW_SEG && len > 0) {
-      // Extend the second-to-last point away from target to guarantee direction
       const scale = MIN_ARROW_SEG / len;
-      allPoints[allPoints.length - 2] = {
+      deduped[deduped.length - 2] = {
         x: last.x - dx * scale,
         y: last.y - dy * scale,
       };
-    } else if (len === 0 && allPoints.length >= 3) {
-      // Remove the duplicate penultimate point
-      allPoints.splice(allPoints.length - 2, 1);
     }
   }
 
-  const edgePath = buildOrthogonalPath(allPoints);
+  const edgePath = buildOrthogonalPath(deduped);
 
-  // Label at midpoint
-  const midIdx = Math.floor(allPoints.length / 2);
-  const labelX = (allPoints[midIdx - 1].x + allPoints[midIdx].x) / 2;
-  const labelY = (allPoints[midIdx - 1].y + allPoints[midIdx].y) / 2;
-
-  const updateWaypoints = useCallback(
-    (newWp: Point[]) => {
-      setEdges((edges) =>
-        edges.map((e) =>
-          e.id === id ? { ...e, data: { ...e.data, waypoints: newWp } } : e
-        )
-      );
-    },
-    [id, setEdges]
-  );
-
-  const handleSegmentPointerDown = useCallback(
-    (segIdx: number, orientation: 'h' | 'v') =>
-      (evt: React.PointerEvent) => {
-        // Don't stop propagation so ReactFlow can still select the edge
-        evt.preventDefault();
-
-        const svg = (evt.target as Element).closest('svg') as SVGSVGElement;
-        if (!svg) return;
-
-        const ctm = svg.getScreenCTM()?.inverse();
-        if (!ctm) return;
-
-        const startPt = svg.createSVGPoint();
-        startPt.x = evt.clientX;
-        startPt.y = evt.clientY;
-        const startSvg = startPt.matrixTransform(ctm);
-
-        // Prepare working waypoints — insert new ones for first/last segments
-        let workingWaypoints = waypoints.map((p) => ({ ...p }));
-        let dragSegIdx = segIdx;
-        const totalPoints = allPoints.length;
-
-        if (segIdx === 0) {
-          // First segment: insert waypoint at source position to make it internal
-          workingWaypoints = [{ x: sourceX, y: sourceY }, ...workingWaypoints];
-          dragSegIdx = 1;
-        } else if (segIdx === totalPoints - 2) {
-          // Last segment: insert waypoint at target position
-          workingWaypoints = [...workingWaypoints, { x: targetX, y: targetY }];
-          // dragSegIdx stays the same
-        }
-
-        const initialWp = workingWaypoints.map((p) => ({ ...p }));
-
-        // Persist the expanded waypoints immediately
-        updateWaypoints(workingWaypoints);
-
-        draggingRef.current = {
-          segmentIndex: dragSegIdx,
-          orientation,
-          initialWaypoints: initialWp,
-          startSvg: { x: startSvg.x, y: startSvg.y },
-        };
-
-        const onMove = (e: PointerEvent) => {
-          if (!draggingRef.current) return;
-
-          const pt = svg.createSVGPoint();
-          pt.x = e.clientX;
-          pt.y = e.clientY;
-          const currentCtm = svg.getScreenCTM()?.inverse();
-          if (!currentCtm) return;
-          const svgPt = pt.matrixTransform(currentCtm);
-
-          const dx = svgPt.x - draggingRef.current.startSvg.x;
-          const dy = svgPt.y - draggingRef.current.startSvg.y;
-
-          const { initialWaypoints: iwp, segmentIndex: si, orientation: ori } = draggingRef.current;
-
-          // Waypoint indices for the segment endpoints in allPoints
-          // allPoints[i] corresponds to waypoints[i-1] for i in [1..allPoints.length-2]
-          const wpIdx1 = si - 1;
-          const wpIdx2 = si;
-
-          const newWp = iwp.map((p) => ({ ...p }));
-
-          if (ori === 'h') {
-            // Horizontal segment → drag vertically
-            if (wpIdx1 >= 0 && wpIdx1 < newWp.length)
-              newWp[wpIdx1] = { ...newWp[wpIdx1], y: iwp[wpIdx1].y + dy };
-            if (wpIdx2 >= 0 && wpIdx2 < newWp.length)
-              newWp[wpIdx2] = { ...newWp[wpIdx2], y: iwp[wpIdx2].y + dy };
-          } else {
-            // Vertical segment → drag horizontally
-            if (wpIdx1 >= 0 && wpIdx1 < newWp.length)
-              newWp[wpIdx1] = { ...newWp[wpIdx1], x: iwp[wpIdx1].x + dx };
-            if (wpIdx2 >= 0 && wpIdx2 < newWp.length)
-              newWp[wpIdx2] = { ...newWp[wpIdx2], x: iwp[wpIdx2].x + dx };
-          }
-
-          updateWaypoints(newWp);
-        };
-
-        const onUp = () => {
-          draggingRef.current = null;
-          document.removeEventListener('pointermove', onMove);
-          document.removeEventListener('pointerup', onUp);
-        };
-
-        document.addEventListener('pointermove', onMove);
-        document.addEventListener('pointerup', onUp);
-      },
-    [waypoints, allPoints, sourceX, sourceY, targetX, targetY, updateWaypoints]
-  );
-
-  // Build interactive segments
-  const segments: {
-    index: number;
-    p1: Point;
-    p2: Point;
-    orientation: 'h' | 'v';
-  }[] = [];
-
-  for (let i = 0; i < allPoints.length - 1; i++) {
-    const p1 = allPoints[i];
-    const p2 = allPoints[i + 1];
-    // Only render hit area for segments with meaningful length
-    if (segmentLength(p1, p2) < 5) continue;
-    let ori: 'h' | 'v' | null = null;
-    if (isHorizontal(p1, p2)) ori = 'h';
-    else if (isVertical(p1, p2)) ori = 'v';
-    if (ori) segments.push({ index: i, p1, p2, orientation: ori });
-  }
+  const midIdx = Math.floor(deduped.length / 2);
+  const labelX = (deduped[midIdx - 1].x + deduped[midIdx].x) / 2;
+  const labelY = (deduped[midIdx - 1].y + deduped[midIdx].y) / 2;
 
   return (
-    <>
-      <BaseEdge
-        path={edgePath}
-        markerEnd={markerEnd}
-        markerStart={markerStart}
-        style={{
-          ...style,
-          pointerEvents: 'none',
-          ...(sourceColor ? { stroke: sourceColor } : {}),
-          ...(isQueueConn ? { strokeDasharray: '8 4' } : {}),
-          ...(protocolConfig ? {
-            stroke: protocolConfig.color,
-            strokeDasharray: protocolConfig.dashArray || undefined,
-          } : {}),
-        }}
-        labelX={labelX}
-        labelY={labelY}
-        label={label}
-        labelStyle={labelStyle}
-      />
-      {/* Invisible hit areas for each segment */}
-      {segments.map((seg) => (
-        <line
-          key={seg.index}
-          x1={seg.p1.x}
-          y1={seg.p1.y}
-          x2={seg.p2.x}
-          y2={seg.p2.y}
-          stroke="transparent"
-          strokeWidth={16}
-          style={{
-            cursor: seg.orientation === 'h' ? 'ns-resize' : 'ew-resize',
-          }}
-          onPointerDown={handleSegmentPointerDown(seg.index, seg.orientation)}
-        />
-      ))}
-    </>
+    <BaseEdge
+      path={edgePath}
+      markerEnd={markerEnd}
+      markerStart={markerStart}
+      style={{
+        ...style,
+        ...(sourceColor ? { stroke: sourceColor } : {}),
+        ...(isQueueConn ? { strokeDasharray: '8 4' } : {}),
+        ...(protocolConfig ? {
+          stroke: protocolConfig.color,
+          strokeDasharray: protocolConfig.dashArray || undefined,
+        } : {}),
+      }}
+      labelX={labelX}
+      labelY={labelY}
+      label={label}
+      labelStyle={labelStyle}
+    />
   );
 }
