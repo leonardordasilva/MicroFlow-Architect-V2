@@ -76,6 +76,16 @@ export const useDiagramStore = create<DiagramStore>()(
         set((state) => {
           // Build a map of node id → node for quick lookup
           const nodeMap = new Map(safeNodes.map((n) => [n.id, n]));
+
+          // R5-PERF-01: Skip edge mapping if no subType actually changed
+          const hasSubTypeChange = state.edges.some((edge) => {
+            const sourceNode = nodeMap.get(edge.source);
+            if (!sourceNode) return false;
+            const newSubType = (sourceNode.data as DiagramNodeData | undefined)?.subType;
+            return newSubType !== edge.data?.sourceNodeSubType;
+          });
+          if (!hasSubTypeChange) return { nodes: safeNodes };
+
           const updatedEdges = state.edges.map((edge) => {
             const sourceNode = nodeMap.get(edge.source);
             if (!sourceNode) return edge;
@@ -277,7 +287,7 @@ export const useDiagramStore = create<DiagramStore>()(
         set({ nodes: Array.isArray(layoutedNodes) ? layoutedNodes : [], edges: Array.isArray(layoutedEdges) ? layoutedEdges : [] });
       },
 
-      clearCanvas: () => set({ nodes: [], edges: [], isCollaborator: false }),
+      clearCanvas: () => set({ nodes: [], edges: [], isCollaborator: false, currentDiagramId: undefined }),
 
       loadDiagram: (nodes, edges) => set({ nodes: Array.isArray(nodes) ? nodes : [], edges: Array.isArray(edges) ? edges : [], isCollaborator: false }),
 
@@ -303,7 +313,7 @@ export const useDiagramStore = create<DiagramStore>()(
           nodes: state.nodes,
           edges: state.edges,
           diagramName: state.diagramName,
-        } as unknown as DiagramStore), // zundo: partialize requer o tipo completo do store; apenas UndoSlice é rastreado
+        } as unknown as DiagramStore), // zundo exige o tipo completo DiagramStore; apenas UndoSlice é rastreado
     },
   ),
 );

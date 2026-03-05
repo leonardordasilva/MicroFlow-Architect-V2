@@ -18,6 +18,19 @@ function getCorsHeaders(req: Request) {
 
 // ─── Helpers ────────────────────────────────────────────────
 
+// R5-SEC-01: Iterative Uint8Array to Base64 (no spread operator)
+function uint8ToBase64(buf: Uint8Array): string {
+  const CHUNK = 8192;
+  let binary = '';
+  for (let i = 0; i < buf.length; i += CHUNK) {
+    const slice = buf.subarray(i, i + CHUNK);
+    for (let j = 0; j < slice.length; j++) {
+      binary += String.fromCharCode(slice[j]);
+    }
+  }
+  return btoa(binary);
+}
+
 function getKeyBytes(): Uint8Array {
   const raw = Deno.env.get("DIAGRAM_ENCRYPTION_KEY");
   if (!raw) throw new Error("DIAGRAM_ENCRYPTION_KEY not configured");
@@ -48,10 +61,8 @@ async function encrypt(
     encoded,
   );
   return {
-    iv: btoa(String.fromCharCode(...iv)),
-    ciphertext: btoa(
-      String.fromCharCode(...new Uint8Array(encrypted)),
-    ),
+    iv: uint8ToBase64(iv),
+    ciphertext: uint8ToBase64(new Uint8Array(encrypted)),
   };
 }
 
@@ -105,9 +116,8 @@ serve(async (req) => {
       { global: { headers: { Authorization: authHeader } } },
     );
 
-    const token = authHeader.replace("Bearer ", "");
-    const { data: claimsData, error: claimsError } = await supabaseClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims) {
+    const { data: userData, error: userError } = await supabaseClient.auth.getUser();
+    if (userError || !userData?.user) {
       return new Response(
         JSON.stringify({ error: "Invalid token" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } },

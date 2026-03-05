@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { getAutoSave, clearAutoSave, type AutoSaveData } from '@/hooks/useAutoSave';
 import { useDiagramStore } from '@/store/diagramStore';
+import { DbDiagramNodesSchema, DbDiagramEdgesSchema } from '@/schemas/diagramSchema';
+import type { DiagramNode, DiagramEdge } from '@/types/diagram';
+import { toast } from '@/hooks/use-toast';
 import { X, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -38,8 +41,16 @@ export default function RecoveryBanner() {
   });
 
   const handleRestore = () => {
+    const nodesParsed = DbDiagramNodesSchema.safeParse(savedData.nodes);
+    const edgesParsed = DbDiagramEdgesSchema.safeParse(savedData.edges);
+    if (!nodesParsed.success || !edgesParsed.success) {
+      toast({ title: 'Dados do diagrama salvo estão corrompidos.', variant: 'destructive' });
+      clearAutoSave();
+      setDismissed(true);
+      return;
+    }
     const { loadDiagram, setDiagramName } = useDiagramStore.getState();
-    loadDiagram(savedData.nodes, savedData.edges);
+    loadDiagram(nodesParsed.data as DiagramNode[], edgesParsed.data as DiagramEdge[]);
     if (savedData.title) setDiagramName(savedData.title);
     setDismissed(true);
   };

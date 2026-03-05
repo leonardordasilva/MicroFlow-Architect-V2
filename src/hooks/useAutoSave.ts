@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { z } from 'zod';
 import { useDiagramStore } from '@/store/diagramStore';
 import { toast } from '@/hooks/use-toast';
 
@@ -7,6 +8,14 @@ const LEGACY_STORAGE_KEY = 'microflow_autosave_v1';
 const DEBOUNCE_MS = 1500;
 
 import type { DiagramNode, DiagramEdge } from '@/types/diagram';
+
+// R5-SEC-03: Schema for legacy autosave validation
+const LegacyAutoSaveSchema = z.object({
+  nodes: z.array(z.unknown()),
+  edges: z.array(z.unknown()),
+  title: z.string().optional(),
+  savedAt: z.string().optional(),
+});
 
 export interface AutoSaveData {
   nodes: DiagramNode[];
@@ -18,8 +27,14 @@ export interface AutoSaveData {
 
 export type SaveStatus = 'idle' | 'saving' | 'saved';
 
+// R5-FUNC-02: Check CompressionStream availability
+const SUPPORTS_COMPRESSION = typeof CompressionStream !== 'undefined';
+
 // PERF-06: Compress string using CompressionStream
 async function compressString(input: string): Promise<string> {
+  if (!SUPPORTS_COMPRESSION) {
+    return btoa(unescape(encodeURIComponent(input)));
+  }
   const blob = new Blob([input]);
   const stream = blob.stream().pipeThrough(new CompressionStream('gzip'));
   const reader = stream.getReader();
@@ -51,6 +66,9 @@ async function compressString(input: string): Promise<string> {
 
 // PERF-06: Decompress base64-encoded gzip string
 async function decompressString(base64: string): Promise<string> {
+  if (!SUPPORTS_COMPRESSION) {
+    return decodeURIComponent(escape(atob(base64)));
+  }
   const binary = atob(base64);
   const bytes = new Uint8Array(binary.length);
   for (let i = 0; i < binary.length; i++) {
@@ -130,9 +148,18 @@ export async function getAutoSave(): Promise<AutoSaveData | null> {
     // Fallback: try legacy uncompressed format (v1)
     const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
     if (raw) {
-      const data = JSON.parse(raw) as any;
-      if (!data.nodes || !data.edges) return null;
-      return { ...data, version: '2' } as AutoSaveData;
+      const rawData = JSON.parse(raw);
+      const parsed = LegacyAutoSaveSchema.safeParse(rawData);
+      if (!parsed.success) return null;
+      const data: AutoSaveData = {
+        nodes: parsed.data.nodes as DiagramNode[],
+        edges: parsed.data.edges as DiagramEdge[],
+        title: parsed.data.title ?? 'Sem título',
+        savedAt: parsed.data.savedAt ?? new Date().toISOString(),
+        version: '2',
+      };
+      if (!data.nodes.length && !data.edges.length) return null;
+      return data;
     }
 
     return null;
