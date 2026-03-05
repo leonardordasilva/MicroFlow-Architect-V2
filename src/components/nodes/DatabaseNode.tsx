@@ -30,9 +30,9 @@ const DatabaseNode = memo(({ data, id, selected }: NodeProps) => {
   return (
     <div
       className={`relative min-w-[160px] rounded-lg border-2 bg-card p-3 shadow-md transition-all ${
-        selected ? 'shadow-lg ring-2' : 'border-border'
+        selected ? 'shadow-lg ring-2' : ''
       }`}
-      style={selected ? { borderColor: color, '--tw-ring-color': `${color}4D` } as React.CSSProperties : undefined}
+      style={{ borderColor: color, '--tw-ring-color': `${color}4D` } as React.CSSProperties}
     >
       <Handle id="top-target" type="target" position={Position.Top} className="!w-3 !h-3" style={handleStyle} />
       <Handle id="top-source" type="source" position={Position.Top} className="!w-3 !h-3" style={handleStyle} />

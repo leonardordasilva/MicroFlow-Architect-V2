@@ -50,8 +50,8 @@ const ExternalNode = memo(({ data, id, selected }: NodeProps) => {
 
   return (
     <div
-      className={`relative min-w-[160px] rounded-lg border-2 border-dashed bg-card p-3 shadow-md transition-all ${
-        selected ? 'border-[hsl(var(--node-external))] shadow-lg ring-2 ring-[hsl(var(--node-external))]/30' : 'border-border'
+      className={`relative min-w-[160px] rounded-lg border-2 border-dashed border-[hsl(var(--node-external))] bg-card p-3 shadow-md transition-all ${
+        selected ? 'shadow-lg ring-2 ring-[hsl(var(--node-external))]/30' : ''
       }`}
     >
       <Handle id="top-target" type="target" position={Position.Top} className={`!w-3 !h-3 !bg-[hsl(var(--node-external))] ${selected ? '' : '!opacity-0 !pointer-events-none'}`} />
