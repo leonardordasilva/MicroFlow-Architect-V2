@@ -101,18 +101,29 @@ export default function EditableEdge({
   const sy = sourceY + sourceOffsetY;
   const ty = targetY + targetOffsetY;
 
-  // Build 5-segment path when offsets cause extra bends, otherwise 3-segment
+  // When nodes are nearly vertically aligned and no manual midOffset, use straight vertical path
+  const VERTICAL_SNAP = 20;
+  const isVerticallyAligned = Math.abs(sourceX - targetX) < VERTICAL_SNAP && Math.abs(midOffsetX) < 1;
+
   const rawPoints: Point[] = [];
-  rawPoints.push({ x: sourceX, y: sourceY });
-  if (Math.abs(sourceOffsetY) > 0.5) {
-    rawPoints.push({ x: sourceX, y: sy });
+  if (isVerticallyAligned && Math.abs(sourceOffsetY) < 1 && Math.abs(targetOffsetY) < 1) {
+    // Straight vertical line — snap both to center X
+    const cx = (sourceX + targetX) / 2;
+    rawPoints.push({ x: cx, y: sourceY });
+    rawPoints.push({ x: cx, y: targetY });
+  } else {
+    // Build 5-segment orthogonal path
+    rawPoints.push({ x: sourceX, y: sourceY });
+    if (Math.abs(sourceOffsetY) > 0.5) {
+      rawPoints.push({ x: sourceX, y: sy });
+    }
+    rawPoints.push({ x: mx, y: sy });
+    rawPoints.push({ x: mx, y: ty });
+    if (Math.abs(targetOffsetY) > 0.5) {
+      rawPoints.push({ x: targetX, y: ty });
+    }
+    rawPoints.push({ x: targetX, y: targetY });
   }
-  rawPoints.push({ x: mx, y: sy });
-  rawPoints.push({ x: mx, y: ty });
-  if (Math.abs(targetOffsetY) > 0.5) {
-    rawPoints.push({ x: targetX, y: ty });
-  }
-  rawPoints.push({ x: targetX, y: targetY });
 
   // Deduplicate consecutive points
   const allPoints: Point[] = [rawPoints[0]];
