@@ -75,6 +75,7 @@ export default function EditableEdge({
     initialOffsetMidX: number;
     axis: DragAxis;
     mode: 'horizontal' | 'vertical';
+    locked: boolean; // true when sourceOffsetY === targetOffsetY at drag start
   } | null>(null);
 
   const edgeData = data as EditableEdgeData | undefined;
@@ -168,6 +169,7 @@ export default function EditableEdge({
           initialOffsetMidX: midOffsetX,
           axis: role === 'midX' ? 'x' : 'y',
           mode: role === 'midX' ? 'horizontal' : 'vertical',
+          locked: Math.abs(sourceOffsetY - targetOffsetY) < 2,
         };
 
         const currentRole = role;
@@ -194,14 +196,21 @@ export default function EditableEdge({
             const dy = svgPt.y - draggingRef.current.startSvg.y;
             const SNAP_THRESHOLD = 8;
 
-            if (currentRole === 'sourceY') {
+            // If locked (were aligned at drag start), move both together
+            if (draggingRef.current.locked) {
               const newSourceY = draggingRef.current.initialOffsetSourceY + dy;
-              // Get current targetOffsetY from the edge
+              const newTargetY = draggingRef.current.initialOffsetTargetY + dy;
+              setEdges((edges) =>
+                edges.map((edge) =>
+                  edge.id === id ? { ...edge, data: { ...edge.data, sourceOffsetY: newSourceY, targetOffsetY: newTargetY } } : edge
+                )
+              );
+            } else if (currentRole === 'sourceY') {
+              const newSourceY = draggingRef.current.initialOffsetSourceY + dy;
               setEdges((edges) =>
                 edges.map((edge) => {
                   if (edge.id !== id) return edge;
                   const curTargetY = (edge.data as any)?.targetOffsetY ?? 0;
-                  // If close to target, snap both to same value
                   if (Math.abs(newSourceY - curTargetY) < SNAP_THRESHOLD) {
                     return { ...edge, data: { ...edge.data, sourceOffsetY: curTargetY, targetOffsetY: curTargetY } };
                   }
