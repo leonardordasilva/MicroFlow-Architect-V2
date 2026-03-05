@@ -169,7 +169,7 @@ export default function EditableEdge({
           initialOffsetMidX: midOffsetX,
           axis: role === 'midX' ? 'x' : 'y',
           mode: role === 'midX' ? 'horizontal' : 'vertical',
-          locked: (Math.abs(sourceOffsetY) > 0.5 || Math.abs(targetOffsetY) > 0.5) && Math.abs(sourceOffsetY - targetOffsetY) < 2,
+          locked: !!(edgeData as any)?.offsetsLocked,
         };
 
         const currentRole = role;
@@ -212,9 +212,9 @@ export default function EditableEdge({
                   if (edge.id !== id) return edge;
                   const curTargetY = (edge.data as any)?.targetOffsetY ?? 0;
                   if (Math.abs(newSourceY - curTargetY) < SNAP_THRESHOLD) {
-                    return { ...edge, data: { ...edge.data, sourceOffsetY: curTargetY, targetOffsetY: curTargetY } };
+                    return { ...edge, data: { ...edge.data, sourceOffsetY: curTargetY, targetOffsetY: curTargetY, offsetsLocked: true } };
                   }
-                  return { ...edge, data: { ...edge.data, sourceOffsetY: newSourceY } };
+                  return { ...edge, data: { ...edge.data, sourceOffsetY: newSourceY, offsetsLocked: false } };
                 })
               );
             } else {
@@ -224,9 +224,9 @@ export default function EditableEdge({
                   if (edge.id !== id) return edge;
                   const curSourceY = (edge.data as any)?.sourceOffsetY ?? 0;
                   if (Math.abs(newTargetY - curSourceY) < SNAP_THRESHOLD) {
-                    return { ...edge, data: { ...edge.data, sourceOffsetY: curSourceY, targetOffsetY: curSourceY } };
+                    return { ...edge, data: { ...edge.data, sourceOffsetY: curSourceY, targetOffsetY: curSourceY, offsetsLocked: true } };
                   }
-                  return { ...edge, data: { ...edge.data, targetOffsetY: newTargetY } };
+                  return { ...edge, data: { ...edge.data, targetOffsetY: newTargetY, offsetsLocked: false } };
                 })
               );
             }
