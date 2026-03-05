@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useDiagramStore } from './diagramStore';
-import type { ExternalCategory } from '@/types/diagram';
+import type { ExternalCategory, DiagramNodeData } from '@/types/diagram';
 import {
   deleteDiagram,
   renameDiagram,
@@ -32,23 +32,23 @@ describe('diagramStore', () => {
       getState().addNode('database', 'Redis');
       const node = getState().nodes[0];
       expect(node.type).toBe('database');
-      expect((node.data as any).subType).toBe('Redis');
+      expect((node.data as DiagramNodeData).subType).toBe('Redis');
     });
 
     it('should add a queue node with Kafka subType', () => {
       getState().addNode('queue', 'Kafka');
       const node = getState().nodes[0];
       expect(node.type).toBe('queue');
-      expect((node.data as any).subType).toBe('Kafka');
-      expect((node.data as any).label).toBe('Kafka');
+      expect((node.data as DiagramNodeData).subType).toBe('Kafka');
+      expect((node.data as DiagramNodeData).label).toBe('Kafka');
     });
 
     it('should add an external node with gRPC subType', () => {
       getState().addNode('external', 'gRPC');
       const node = getState().nodes[0];
       expect(node.type).toBe('external');
-      expect((node.data as any).subType).toBe('gRPC');
-      expect((node.data as any).label).toBe('gRPC');
+      expect((node.data as DiagramNodeData).subType).toBe('gRPC');
+      expect((node.data as DiagramNodeData).label).toBe('gRPC');
     });
   });
 
@@ -82,6 +82,12 @@ describe('diagramStore', () => {
       getState().clearCanvas();
       expect(getState().nodes).toHaveLength(0);
       expect(getState().edges).toHaveLength(0);
+    });
+
+    it('deve resetar currentDiagramId para undefined', () => {
+      getState().setCurrentDiagramId('diag-123');
+      getState().clearCanvas();
+      expect(getState().currentDiagramId).toBeUndefined();
     });
   });
 
@@ -161,7 +167,7 @@ describe('diagramStore', () => {
 
       getState().addNodesFromSource(source.id, 'database', 1, 'Oracle');
       expect(getState().nodes).toHaveLength(1);
-      expect((getState().nodes[0].data as any).internalDatabases).toHaveLength(1);
+      expect((getState().nodes[0].data as DiagramNodeData).internalDatabases).toHaveLength(1);
       expect(getState().edges).toHaveLength(0);
     });
   });
@@ -238,15 +244,15 @@ describe('diagramStore', () => {
     it('should capture label change in undo history', () => {
       getState().addNode('service');
       const node = getState().nodes[0];
-      const originalLabel = (node.data as any).label;
+      const originalLabel = (node.data as DiagramNodeData).label;
       getState().setNodes(
         getState().nodes.map((n) =>
           n.id === node.id ? { ...n, data: { ...n.data, label: 'Novo Nome' } } : n
         )
       );
-      expect((getState().nodes[0].data as any).label).toBe('Novo Nome');
+      expect((getState().nodes[0].data as DiagramNodeData).label).toBe('Novo Nome');
       useDiagramStore.temporal.getState().undo();
-      expect((getState().nodes[0].data as any).label).toBe(originalLabel);
+      expect((getState().nodes[0].data as DiagramNodeData).label).toBe(originalLabel);
     });
   });
 
@@ -287,13 +293,13 @@ describe('diagramStore', () => {
           n.id === nodeId ? { ...n, data: { ...n.data, externalCategory: 'Payment' } } : n
         )
       );
-      expect((getState().nodes[0].data as any).externalCategory).toBe('Payment');
+      expect((getState().nodes[0].data as DiagramNodeData).externalCategory).toBe('Payment');
 
       useDiagramStore.temporal.getState().undo();
-      expect((getState().nodes[0].data as any).externalCategory).toBeUndefined();
+      expect((getState().nodes[0].data as DiagramNodeData).externalCategory).toBeUndefined();
 
       useDiagramStore.temporal.getState().redo();
-      expect((getState().nodes[0].data as any).externalCategory).toBe('Payment');
+      expect((getState().nodes[0].data as DiagramNodeData).externalCategory).toBe('Payment');
     });
 
     it('captura múltiplas mudanças de externalCategory consecutivas', () => {
@@ -311,10 +317,10 @@ describe('diagramStore', () => {
       setCategory('Auth');
       setCategory('CDN');
 
-      expect((getState().nodes[0].data as any).externalCategory).toBe('CDN');
+      expect((getState().nodes[0].data as DiagramNodeData).externalCategory).toBe('CDN');
 
       useDiagramStore.temporal.getState().undo();
-      expect((getState().nodes[0].data as any).externalCategory).toBe('Auth');
+      expect((getState().nodes[0].data as DiagramNodeData).externalCategory).toBe('Auth');
     });
   });
 
@@ -328,20 +334,20 @@ describe('diagramStore', () => {
           n.id === nodeId ? { ...n, data: { ...n.data, label: 'Nome Atualizado' } } : n
         )
       );
-      expect((getState().nodes[0].data as any).label).toBe('Nome Atualizado');
+      expect((getState().nodes[0].data as DiagramNodeData).label).toBe('Nome Atualizado');
     });
 
     it('undo restaura label anterior no store', () => {
       getState().addNode('service');
       const nodeId = getState().nodes[0].id;
-      const originalLabel = (getState().nodes[0].data as any).label;
+      const originalLabel = (getState().nodes[0].data as DiagramNodeData).label;
       getState().setNodes(
         getState().nodes.map((n) =>
           n.id === nodeId ? { ...n, data: { ...n.data, label: 'Novo Label' } } : n
         )
       );
       useDiagramStore.temporal.getState().undo();
-      expect((getState().nodes[0].data as any).label).toBe(originalLabel);
+      expect((getState().nodes[0].data as DiagramNodeData).label).toBe(originalLabel);
     });
   });
 
@@ -357,11 +363,11 @@ describe('diagramStore', () => {
       );
       useDiagramStore.temporal.getState().resume();
 
-      expect((getState().nodes[0].data as any).label).toBe('Atualização Remota');
+      expect((getState().nodes[0].data as DiagramNodeData).label).toBe('Atualização Remota');
 
       useDiagramStore.temporal.getState().undo();
       // Label should remain because the change was not recorded in history
-      expect((getState().nodes[0].data as any).label).toBe('Atualização Remota');
+      expect((getState().nodes[0].data as DiagramNodeData).label).toBe('Atualização Remota');
     });
   });
 

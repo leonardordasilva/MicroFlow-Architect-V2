@@ -39,6 +39,9 @@ async function toDiagramRecord(row: DiagramRow): Promise<DiagramRecord> {
   return {
     id: row.id,
     title: row.title,
+    // Cast necessário: PersistedNode (Zod-inferred) não é structurally assignable a DiagramNode
+    // (Node<DiagramNodeData> do @xyflow/react), pois o React Flow adiciona campos internos
+    // ausentes no schema Zod. Os dados foram validados pelo Zod acima; o cast é seguro.
     nodes: nodesParsed.data as DiagramNode[],
     edges: edgesParsed.data as DiagramEdge[],
     owner_id: row.owner_id,

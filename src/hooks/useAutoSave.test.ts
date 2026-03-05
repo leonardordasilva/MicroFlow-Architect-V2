@@ -51,11 +51,11 @@ describe('getAutoSave edge cases', () => {
     localStorage.clear();
   });
 
-  it('should return null when version is missing', async () => {
+  it('should return null when nodes and edges are empty arrays', async () => {
     localStorage.setItem(LEGACY_STORAGE_KEY, JSON.stringify({ nodes: [], edges: [], title: 'T' }));
     const result = await getAutoSave();
-    // Still returns data since version isn't validated in getAutoSave
-    expect(result).not.toBeNull();
+    // With Zod validation, empty arrays return null (no meaningful data)
+    expect(result).toBeNull();
   });
 
   it('should handle quota exceeded gracefully (empty storage)', async () => {

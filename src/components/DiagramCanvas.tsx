@@ -18,6 +18,7 @@ import {
   BackgroundVariant,
   SelectionMode,
   useReactFlow,
+  type Connection,
 } from '@xyflow/react';
 import { useSnapGuides } from '@/hooks/useSnapGuides';
 import SnapGuideLines from '@/components/SnapGuideLines';
@@ -68,6 +69,14 @@ const nodeTypes = {
 
 const edgeTypes = {
   editable: EditableEdge,
+};
+
+// R5-PERF-02: Static minimap color map (outside component)
+const MINIMAP_NODE_COLORS: Record<string, string> = {
+  service:  'hsl(217, 91%, 60%)',
+  database: 'hsl(142, 71%, 45%)',
+  queue:    'hsl(45, 93%, 47%)',
+  external: 'hsl(220, 9%, 46%)',
 };
 
 interface DiagramCanvasProps {
@@ -261,12 +270,12 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
     [deleteSelected, undo, redo]
   );
 
-  const handleNodeClick = useCallback((_event: React.MouseEvent, node: any) => {
+  const handleNodeClick = useCallback((_event: React.MouseEvent, node: DiagramNode) => {
     setSelectedNodeId(node.id);
   }, []);
 
   const handleNodeContextMenu = useCallback(
-    (event: React.MouseEvent, node: any) => {
+    (event: React.MouseEvent, node: DiagramNode) => {
       event.preventDefault();
       if (node.type === 'database' || node.type === 'external') return;
       const nodeData = node.data as DiagramNodeData;
@@ -287,7 +296,7 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
 
   // Connection validation
   const handleConnect = useCallback(
-    (connection: any) => {
+    (connection: Connection) => {
       const sourceNode = nodes.find((n) => n.id === connection.source);
       const targetNode = nodes.find((n) => n.id === connection.target);
       const srcType = (sourceNode?.type ?? 'service') as NodeType;
@@ -520,15 +529,7 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
           </div>
           <MiniMap
             className="!bg-card !border-border"
-            nodeColor={(node) => {
-              const colorMap: Record<string, string> = {
-                service: 'hsl(217, 91%, 60%)',
-                database: 'hsl(142, 71%, 45%)',
-                queue: 'hsl(45, 93%, 47%)',
-                external: 'hsl(220, 9%, 46%)',
-              };
-              return colorMap[node.type || ''] || '#888';
-            }}
+            nodeColor={(node) => MINIMAP_NODE_COLORS[node.type || ''] || '#888'}
           />
         </ReactFlow>
 
