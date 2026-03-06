@@ -517,7 +517,7 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
           <Controls className="!bg-card !border-border !shadow-md [&>button]:!bg-card [&>button]:!border-border [&>button]:!text-foreground" />
 
           {/* Pan / Select mode toggle */}
-          <div className="absolute top-3 left-3 z-10 flex gap-1 rounded-lg border bg-card p-1 shadow-md">
+          <div className="export-exclude absolute top-3 left-3 z-10 flex gap-1 rounded-lg border bg-card p-1 shadow-md">
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
