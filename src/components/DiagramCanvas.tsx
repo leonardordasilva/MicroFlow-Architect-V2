@@ -194,17 +194,17 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
   }, []);
 
   /** Filter out UI controls (toolbar, zoom, minimap, panels) from image export */
-  const exportFilter = useCallback((node: HTMLElement) => {
+  const exportFilter = useCallback((domNode: HTMLElement) => {
+    if (!domNode.classList) return true;
     const excludeClasses = [
       'react-flow__panel',
       'react-flow__controls',
       'react-flow__minimap',
       'react-flow__attribution',
+      'export-exclude',
     ];
-    if (node.classList) {
-      for (const cls of excludeClasses) {
-        if (node.classList.contains(cls)) return false;
-      }
+    for (const cls of excludeClasses) {
+      if (domNode.classList.contains(cls)) return false;
     }
     return true;
   }, []);
