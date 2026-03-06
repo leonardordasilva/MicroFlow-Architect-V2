@@ -22,67 +22,37 @@ const exportFilter = (domNode: HTMLElement) => {
 };
 
 /**
- * Calculate full diagram bounds including edge paths that extend beyond nodes.
- * Edges with sourceOffsetY/targetOffsetY/midOffsetX can draw lines outside node bounds.
+ * Calculate full diagram bounds by combining node bounds with actual rendered edge SVG paths.
+ * This ensures edges that extend beyond nodes (e.g. top/bottom handles, offsets) are included.
  */
-function getFullDiagramBounds(
-  flowNodes: any[],
-  edges: any[],
-  allNodes: any[],
-) {
+function getFullDiagramBounds(flowNodes: any[]) {
   const nodeBounds = getNodesBounds(flowNodes);
   let minX = nodeBounds.x;
   let minY = nodeBounds.y;
   let maxX = nodeBounds.x + nodeBounds.width;
   let maxY = nodeBounds.y + nodeBounds.height;
 
-  // Build a position map from store nodes (which have position data)
-  const nodeMap = new Map<string, { x: number; y: number; width: number; height: number }>();
-  for (const fn of flowNodes) {
-    nodeMap.set(fn.id, {
-      x: fn.position?.x ?? fn.positionAbsolute?.x ?? 0,
-      y: fn.position?.y ?? fn.positionAbsolute?.y ?? 0,
-      width: fn.measured?.width ?? fn.width ?? 200,
-      height: fn.measured?.height ?? fn.height ?? 80,
+  // Find all rendered edge paths and compute their bounding boxes in flow space
+  const edgeContainer = document.querySelector('.react-flow__edges');
+  if (edgeContainer) {
+    const paths = edgeContainer.querySelectorAll('path[d]');
+    paths.forEach((path) => {
+      try {
+        const svgPath = path as SVGPathElement;
+        if (typeof svgPath.getBBox !== 'function') return;
+        // Skip invisible hit-area paths (stroke="transparent")
+        const stroke = svgPath.getAttribute('stroke');
+        if (stroke === 'transparent' || stroke === 'none') return;
+        const bbox = svgPath.getBBox();
+        if (bbox.width === 0 && bbox.height === 0) return;
+        if (bbox.x < minX) minX = bbox.x;
+        if (bbox.y < minY) minY = bbox.y;
+        if (bbox.x + bbox.width > maxX) maxX = bbox.x + bbox.width;
+        if (bbox.y + bbox.height > maxY) maxY = bbox.y + bbox.height;
+      } catch {
+        // getBBox can throw on hidden elements
+      }
     });
-  }
-
-  for (const edge of edges) {
-    const sourceNode = nodeMap.get(edge.source);
-    const targetNode = nodeMap.get(edge.target);
-    if (!sourceNode || !targetNode) continue;
-
-    // Approximate source/target connection points (center right → center left)
-    const sourceX = sourceNode.x + sourceNode.width;
-    const sourceY = sourceNode.y + sourceNode.height / 2;
-    const targetX = targetNode.x;
-    const targetY = targetNode.y + targetNode.height / 2;
-
-    const data = edge.data ?? {};
-    const midOffsetX = data.midOffsetX ?? data.midOffset ?? 0;
-    const sourceOffsetY = data.sourceOffsetY ?? 0;
-    const targetOffsetY = data.targetOffsetY ?? 0;
-
-    const mx = (sourceX + targetX) / 2 + midOffsetX;
-    const sy = sourceY + sourceOffsetY;
-    const ty = targetY + targetOffsetY;
-
-    // All possible edge waypoints
-    const points = [
-      { x: sourceX, y: sourceY },
-      { x: sourceX, y: sy },
-      { x: mx, y: sy },
-      { x: mx, y: ty },
-      { x: targetX, y: ty },
-      { x: targetX, y: targetY },
-    ];
-
-    for (const p of points) {
-      if (p.x < minX) minX = p.x;
-      if (p.y < minY) minY = p.y;
-      if (p.x > maxX) maxX = p.x;
-      if (p.y > maxY) maxY = p.y;
-    }
   }
 
   return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
@@ -98,7 +68,7 @@ export function useExportHandlers(darkMode: boolean) {
   const handleExportPNG = useCallback(async () => {
     const flowNodes = getFlowNodes();
     if (flowNodes.length === 0) return;
-    const bounds = getFullDiagramBounds(flowNodes, edges, nodes);
+    const bounds = getFullDiagramBounds(flowNodes);
     const padding = 20;
     const imageWidth = Math.ceil(bounds.width + padding * 2);
     const imageHeight = Math.ceil(bounds.height + padding * 2);
@@ -127,12 +97,12 @@ export function useExportHandlers(darkMode: boolean) {
     } catch {
       toast({ title: 'Erro ao exportar PNG', variant: 'destructive' });
     }
-  }, [darkMode, diagramName, getFlowNodes, edges, nodes]);
+  }, [darkMode, diagramName, getFlowNodes]);
 
   const handleExportSVG = useCallback(async () => {
     const flowNodes = getFlowNodes();
     if (flowNodes.length === 0) return;
-    const bounds = getFullDiagramBounds(flowNodes, edges, nodes);
+    const bounds = getFullDiagramBounds(flowNodes);
     const padding = 20;
     const imageWidth = Math.ceil(bounds.width + padding * 2);
     const imageHeight = Math.ceil(bounds.height + padding * 2);
@@ -161,7 +131,7 @@ export function useExportHandlers(darkMode: boolean) {
     } catch {
       toast({ title: 'Erro ao exportar SVG', variant: 'destructive' });
     }
-  }, [darkMode, diagramName, getFlowNodes, edges, nodes]);
+  }, [darkMode, diagramName, getFlowNodes]);
 
   const handleExportMermaid = useCallback(() => {
     return exportToMermaid(nodes, edges);
