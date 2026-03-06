@@ -144,7 +144,14 @@ export default function MyDiagrams() {
             </Button>
             <h1 className="text-2xl font-bold text-foreground">Meus Diagramas</h1>
           </div>
-          <Button onClick={() => navigate('/')}>
+          <Button onClick={() => {
+            const store = useDiagramStore.getState();
+            store.clearCanvas();
+            store.setDiagramName('Novo Diagrama');
+            store.setCurrentDiagramId(undefined);
+            clearAutoSave();
+            navigate('/');
+          }}>
             <Plus className="mr-2 h-4 w-4" /> Novo Diagrama
           </Button>
         </div>
