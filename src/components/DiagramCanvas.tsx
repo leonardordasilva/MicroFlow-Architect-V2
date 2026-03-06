@@ -218,9 +218,11 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
     if (flowNodes.length === 0) return;
     const bounds = getNodesBounds(flowNodes);
     const padding = 20;
-    const imageWidth = bounds.width + padding * 2;
-    const imageHeight = bounds.height + padding * 2;
-    const viewport = getViewportForBounds(bounds, imageWidth, imageHeight, 0.5, 2, padding);
+    const imageWidth = Math.ceil(bounds.width + padding * 2);
+    const imageHeight = Math.ceil(bounds.height + padding * 2);
+    // Translate so top-left of bounds aligns to (padding, padding), zoom=1
+    const translateX = -bounds.x + padding;
+    const translateY = -bounds.y + padding;
 
     const el = document.querySelector('.react-flow__viewport') as HTMLElement;
     if (!el) return;
@@ -233,7 +235,7 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
         style: {
           width: `${imageWidth}px`,
           height: `${imageHeight}px`,
-          transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+          transform: `translate(${translateX}px, ${translateY}px) scale(1)`,
         },
       });
       const a = document.createElement('a');
@@ -251,9 +253,10 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
     if (flowNodes.length === 0) return;
     const bounds = getNodesBounds(flowNodes);
     const padding = 20;
-    const imageWidth = bounds.width + padding * 2;
-    const imageHeight = bounds.height + padding * 2;
-    const viewport = getViewportForBounds(bounds, imageWidth, imageHeight, 0.5, 2, padding);
+    const imageWidth = Math.ceil(bounds.width + padding * 2);
+    const imageHeight = Math.ceil(bounds.height + padding * 2);
+    const translateX = -bounds.x + padding;
+    const translateY = -bounds.y + padding;
 
     const el = document.querySelector('.react-flow__viewport') as HTMLElement;
     if (!el) return;
@@ -266,7 +269,7 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
         style: {
           width: `${imageWidth}px`,
           height: `${imageHeight}px`,
-          transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+          transform: `translate(${translateX}px, ${translateY}px) scale(1)`,
         },
       });
       const a = document.createElement('a');
