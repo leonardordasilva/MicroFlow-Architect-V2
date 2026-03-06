@@ -70,9 +70,11 @@ export type Database = {
       diagrams: {
         Row: {
           created_at: string
+          edge_count: number
           edges: Json
           id: string
           is_shared: boolean
+          node_count: number
           nodes: Json
           owner_id: string
           share_token: string | null
@@ -81,9 +83,11 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          edge_count?: number
           edges?: Json
           id?: string
           is_shared?: boolean
+          node_count?: number
           nodes?: Json
           owner_id: string
           share_token?: string | null
@@ -92,9 +96,11 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          edge_count?: number
           edges?: Json
           id?: string
           is_shared?: boolean
+          node_count?: number
           nodes?: Json
           owner_id?: string
           share_token?: string | null
@@ -130,9 +136,11 @@ export type Database = {
         Args: { token: string }
         Returns: {
           created_at: string
+          edge_count: number
           edges: Json
           id: string
           is_shared: boolean
+          node_count: number
           nodes: Json
           owner_id: string
           share_token: string | null

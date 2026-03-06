@@ -18,12 +18,10 @@ import {
   BackgroundVariant,
   SelectionMode,
   useReactFlow,
-  getNodesBounds,
   type Connection,
 } from '@xyflow/react';
 import { useSnapGuides } from '@/hooks/useSnapGuides';
 import SnapGuideLines from '@/components/SnapGuideLines';
-import { toPng, toSvg } from 'html-to-image';
 import { toast } from '@/hooks/use-toast';
 import { useDiagramStore } from '@/store/diagramStore';
 
@@ -39,7 +37,6 @@ import ImportJSONModal from '@/components/ImportJSONModal';
 import SpawnFromNodeModal from '@/components/SpawnFromNodeModal';
 import type { DiagramNodeData, DiagramNode, DiagramEdge, NodeType } from '@/types/diagram';
 import type { ImportDiagramInput } from '@/schemas/diagramSchema';
-import { exportToMermaid } from '@/services/exportService';
 import MermaidExportModal from '@/components/MermaidExportModal';
 
 import { useAuth } from '@/hooks/useAuth';
@@ -47,19 +44,18 @@ import { loadDiagramById } from '@/services/diagramService';
 import { useSaveDiagram } from '@/hooks/useSaveDiagram';
 import { useRealtimeCollab } from '@/hooks/useRealtimeCollab';
 import { useAutoSave } from '@/hooks/useAutoSave';
+import { useExportHandlers } from '@/hooks/useExportHandlers';
 import RecoveryBanner from '@/components/RecoveryBanner';
+import DiagramHeader from '@/components/DiagramHeader';
+import DiagramContextMenu from '@/components/DiagramContextMenu';
 
 import { canConnect, connectionErrorMessage } from '@/utils/connectionRules';
-import { Loader2, Save, LogOut, Keyboard, FolderOpen, RefreshCw, Hand, MousePointer2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { Keyboard, Hand, MousePointer2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import NodePropertiesPanel from '@/components/NodePropertiesPanel';
 import StatusBar from '@/components/StatusBar';
 import KeyboardShortcutsModal from '@/components/KeyboardShortcutsModal';
-
-import CollaboratorAvatars from '@/components/CollaboratorAvatars';
 
 const nodeTypes = {
   service: ServiceNode,
@@ -85,14 +81,12 @@ interface DiagramCanvasProps {
 }
 
 function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
-  const navigate = useNavigate();
   const nodes = useDiagramStore((s) => s.nodes);
   const edges = useDiagramStore((s) => s.edges);
   const diagramName = useDiagramStore((s) => s.diagramName);
   const diagramId = useDiagramStore((s) => s.currentDiagramId);
   const isCollaborator = useDiagramStore((s) => s.isCollaborator);
 
-  // PERF-01/QUA-03: Use stable action references directly from store (Zustand actions are stable by design)
   const setDiagramName = useDiagramStore((s) => s.setDiagramName);
   const onNodesChange = useDiagramStore((s) => s.onNodesChange);
   const onEdgesChange = useDiagramStore((s) => s.onEdgesChange);
@@ -105,15 +99,11 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
   const autoLayoutELK = useDiagramStore((s) => s.autoLayoutELK);
   const clearCanvas = useDiagramStore((s) => s.clearCanvas);
   const loadDiagram = useDiagramStore((s) => s.loadDiagram);
-  const exportJSON = useDiagramStore((s) => s.exportJSON);
-  const setDiagramId = useDiagramStore((s) => s.setCurrentDiagramId);
 
-  // QUA-03: Obtain temporal actions inside callbacks, not at module scope
   const undo = useCallback(() => useDiagramStore.temporal.getState().undo(), []);
   const redo = useCallback(() => useDiagramStore.temporal.getState().redo(), []);
 
   const { user, signOut } = useAuth();
-  // QUA-04: Save logic extracted to custom hook
   const { save: handleSaveToCloud, saving, saveRef: handleSaveToCloudRef } = useSaveDiagram({ shareToken });
 
   // UX-04: Initialize dark mode from localStorage or system preference
@@ -134,7 +124,6 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
 
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [showShortcuts, setShowShortcuts] = useState(false);
-  // FUNC-01: Persist interaction mode in localStorage
   const [interactionMode, setInteractionMode] = useState<'pan' | 'select'>(
     () => localStorage.getItem('microflow_interaction_mode') === 'select' ? 'select' : 'pan'
   );
@@ -148,6 +137,7 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
   const { broadcastChanges, collaborators } = useRealtimeCollab(shareToken || null);
   const { saveStatus } = useAutoSave();
   const { screenToFlowPosition } = useReactFlow();
+  const { handleExportPNG, handleExportSVG, handleExportMermaid, handleExportJSON } = useExportHandlers(darkMode);
 
   // Broadcast changes when nodes/edges update (only if in shared mode)
   useEffect(() => {
@@ -163,7 +153,6 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
     }
   }, [nodes, selectedNodeId]);
 
-  // UX-04: Persist dark mode and apply on mount/change
   const toggleDarkMode = useCallback(() => {
     setDarkMode((prev) => {
       const next = !prev;
@@ -173,7 +162,6 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
     });
   }, []);
 
-  // Apply dark mode on mount
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
   }, []);
@@ -194,111 +182,6 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
     };
   }, []);
 
-  /** Filter out UI controls (toolbar, zoom, minimap, panels) from image export */
-  const exportFilter = useCallback((domNode: HTMLElement) => {
-    if (!domNode.classList) return true;
-    const excludeClasses = [
-      'react-flow__panel',
-      'react-flow__controls',
-      'react-flow__minimap',
-      'react-flow__attribution',
-      'export-exclude',
-    ];
-    for (const cls of excludeClasses) {
-      if (domNode.classList.contains(cls)) return false;
-    }
-    return true;
-  }, []);
-
-  const { getNodes: getFlowNodes } = useReactFlow();
-
-  const handleExportPNG = useCallback(async () => {
-    const flowNodes = getFlowNodes();
-    if (flowNodes.length === 0) return;
-    const bounds = getNodesBounds(flowNodes);
-    const padding = 20;
-    const imageWidth = Math.ceil(bounds.width + padding * 2);
-    const imageHeight = Math.ceil(bounds.height + padding * 2);
-    // Translate so top-left of bounds aligns to (padding, padding), zoom=1
-    const translateX = -bounds.x + padding;
-    const translateY = -bounds.y + padding;
-
-    const el = document.querySelector('.react-flow__viewport') as HTMLElement;
-    if (!el) return;
-    try {
-      const dataUrl = await toPng(el, {
-        backgroundColor: darkMode ? '#0f1520' : '#f5f7fa',
-        filter: exportFilter,
-        width: imageWidth,
-        height: imageHeight,
-        style: {
-          width: `${imageWidth}px`,
-          height: `${imageHeight}px`,
-          transform: `translate(${translateX}px, ${translateY}px) scale(1)`,
-        },
-      });
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = `${diagramName || 'diagram'}.png`;
-      a.click();
-      toast({ title: 'PNG exportado com sucesso!' });
-    } catch {
-      toast({ title: 'Erro ao exportar PNG', variant: 'destructive' });
-    }
-  }, [darkMode, diagramName, exportFilter, getFlowNodes]);
-
-  const handleExportSVG = useCallback(async () => {
-    const flowNodes = getFlowNodes();
-    if (flowNodes.length === 0) return;
-    const bounds = getNodesBounds(flowNodes);
-    const padding = 20;
-    const imageWidth = Math.ceil(bounds.width + padding * 2);
-    const imageHeight = Math.ceil(bounds.height + padding * 2);
-    const translateX = -bounds.x + padding;
-    const translateY = -bounds.y + padding;
-
-    const el = document.querySelector('.react-flow__viewport') as HTMLElement;
-    if (!el) return;
-    try {
-      const dataUrl = await toSvg(el, {
-        backgroundColor: darkMode ? '#0f1520' : '#f5f7fa',
-        filter: exportFilter,
-        width: imageWidth,
-        height: imageHeight,
-        style: {
-          width: `${imageWidth}px`,
-          height: `${imageHeight}px`,
-          transform: `translate(${translateX}px, ${translateY}px) scale(1)`,
-        },
-      });
-      const a = document.createElement('a');
-      a.href = dataUrl;
-      a.download = `${diagramName || 'diagram'}.svg`;
-      a.click();
-      toast({ title: 'SVG exportado com sucesso!' });
-    } catch {
-      toast({ title: 'Erro ao exportar SVG', variant: 'destructive' });
-    }
-  }, [darkMode, diagramName, exportFilter, getFlowNodes]);
-
-  const handleExportMermaid = useCallback(() => {
-    const code = exportToMermaid(nodes, edges);
-    setMermaidCode(code);
-  }, [nodes, edges]);
-
-  const handleExportJSON = useCallback(() => {
-    const json = exportJSON();
-    const blob = new Blob([json], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${diagramName || 'diagram'}.json`;
-    a.click();
-    URL.revokeObjectURL(url);
-    toast({ title: 'JSON exportado com sucesso!' });
-  }, [exportJSON, diagramName]);
-
-  // SEC-04 / QUA-06: Typed import handler
   const handleImport = useCallback(
     (data: ImportDiagramInput) => {
       loadDiagram(data.nodes as DiagramNode[], data.edges as DiagramEdge[]);
@@ -311,7 +194,6 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      // FUNC-04: Clear selectedNodeId on delete
       if (e.key === 'Delete') { deleteSelected(); setSelectedNodeId(null); }
       if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
       if (e.ctrlKey && e.key === 'y') { e.preventDefault(); redo(); }
@@ -350,7 +232,6 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
     setSelectedNodeId(null);
   }, []);
 
-  // Connection validation
   const handleConnect = useCallback(
     (connection: Connection) => {
       const sourceNode = nodes.find((n) => n.id === connection.source);
@@ -386,7 +267,6 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
         const temporal = useDiagramStore.temporal.getState();
         temporal.pause();
         loadDiagram(record.nodes, record.edges);
-        // FUNC-05: Sync title on refresh
         if (record.title && record.title !== diagramName) {
           setDiagramName(record.title);
         }
@@ -401,7 +281,6 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
     }
   }, [diagramId, loadDiagram, diagramName, setDiagramName]);
 
-  // Smart node positioning using viewport center
   const handleAddNode = useCallback(
     (type: NodeType, subType?: string) => {
       const wrapper = reactFlowWrapper.current;
@@ -420,6 +299,11 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
     },
     [screenToFlowPosition, addNode]
   );
+
+  const onMermaidExport = useCallback(() => {
+    const code = handleExportMermaid();
+    setMermaidCode(code);
+  }, [handleExportMermaid]);
 
   return (
     <div className="flex h-screen w-screen flex-col bg-background" onKeyDown={handleKeyDown} tabIndex={0} role="application" aria-label="Editor de diagramas de arquitetura">
@@ -441,7 +325,7 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
           }}
           onExportPNG={handleExportPNG}
           onExportSVG={handleExportSVG}
-          onExportMermaid={handleExportMermaid}
+          onExportMermaid={onMermaidExport}
           onExportJSON={handleExportJSON}
           onImportJSON={() => setShowImportJSON(true)}
           onOpenAIGenerate={() => setShowAIGenerate(true)}
@@ -452,59 +336,18 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
           onToggleDarkMode={toggleDarkMode}
         />
 
-        {shareToken && !diagramId && (
-          <Badge variant="outline" className="text-xs">
-            Visualizando diagrama compartilhado
-          </Badge>
-        )}
-        {shareToken && diagramId && (
-          <Badge variant="secondary" className="text-xs">
-            ✓ Cópia salva em Meus Diagramas
-          </Badge>
-        )}
-        {isCollaborator && (
-          <Badge variant="outline" className="text-xs border-blue-500/30 text-blue-600 dark:text-blue-400">
-            Editando diagrama compartilhado
-          </Badge>
-        )}
-
-        {user && (
-          <div className="flex items-center gap-2 ml-auto">
-            <CollaboratorAvatars collaborators={collaborators} />
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate('/my-diagrams')} aria-label="Meus Diagramas">
-                  <FolderOpen className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Meus Diagramas</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleRefreshDiagram} disabled={refreshing} aria-label="Atualizar diagrama">
-                  {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Atualizar diagrama</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleSaveToCloud} disabled={saving} aria-label="Salvar na nuvem">
-                  {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Salvar na nuvem</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={signOut} aria-label="Sair">
-                  <LogOut className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Sair</TooltipContent>
-            </Tooltip>
-          </div>
-        )}
+        <DiagramHeader
+          shareToken={shareToken}
+          diagramId={diagramId}
+          isCollaborator={isCollaborator}
+          user={user}
+          collaborators={collaborators}
+          saving={saving}
+          refreshing={refreshing}
+          onSave={handleSaveToCloud}
+          onRefresh={handleRefreshDiagram}
+          onSignOut={signOut}
+        />
         <Tooltip>
           <TooltipTrigger asChild>
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowShortcuts(true)} aria-label="Atalhos de teclado">
@@ -590,21 +433,12 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
         </ReactFlow>
 
         {contextMenu && (
-          <div
-            className="fixed z-50 rounded-md border bg-popover p-1 shadow-md min-w-[180px]"
-            style={{ top: contextMenu.y, left: contextMenu.x }}
-          >
-            <button
-              className="flex w-full items-center gap-2 rounded-sm px-3 py-2 text-sm text-popover-foreground hover:bg-accent hover:text-accent-foreground"
-              onClick={() => {
-                const nd = nodes.find((n) => n.id === contextMenu.nodeId);
-                setSpawnSource({ id: contextMenu.nodeId, label: contextMenu.nodeLabel, nodeType: nd?.type || '' });
-                setContextMenu(null);
-              }}
-            >
-              Criar objetos a partir deste
-            </button>
-          </div>
+          <DiagramContextMenu
+            contextMenu={contextMenu}
+            nodes={nodes}
+            onSpawn={(source) => setSpawnSource(source)}
+            onClose={() => setContextMenu(null)}
+          />
         )}
 
         {selectedNodeId && (
@@ -613,7 +447,6 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
             onClose={() => setSelectedNodeId(null)}
           />
         )}
-
       </div>
 
       <StatusBar nodes={nodes} edges={edges} saveStatus={saveStatus} />
