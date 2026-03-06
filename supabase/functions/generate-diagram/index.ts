@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") || "").split(",").map((o) => o.trim()).filter(Boolean);
 
@@ -53,7 +54,7 @@ async function callWithFallback(apiKey: string, messages: { role: string; conten
 const RATE_LIMIT_PER_MINUTE = parseInt(Deno.env.get("AI_RATE_LIMIT_PER_MINUTE") || "10", 10);
 
 async function checkRateLimit(
-  supabaseClient: ReturnType<typeof createClient>,
+  supabaseClient: any,
   userId: string,
   functionName: string,
   corsHeaders: Record<string, string>,
@@ -226,28 +227,50 @@ Rules:
     let content = result.data.choices?.[0]?.message?.content || "";
     content = content.replace(/```json\s*/g, "").replace(/```\s*/g, "").trim();
 
-    const diagram = JSON.parse(content);
+    const AiNodeSchema = z.object({
+      id: z.string(),
+      type: z.enum(["service", "database", "queue", "external"]),
+      position: z.object({ x: z.number(), y: z.number() }),
+      data: z.object({
+        label: z.string(),
+        type: z.enum(["service", "database", "queue", "external"]),
+      }).passthrough(),
+    });
+    const AiEdgeSchema = z.object({
+      id: z.string(),
+      source: z.string(),
+      target: z.string(),
+    }).passthrough();
+    const AiDiagramSchema = z.object({
+      nodes: z.array(AiNodeSchema),
+      edges: z.array(AiEdgeSchema),
+    });
 
-    // Fallback: ensure every edge has a protocol
-    const validProtocols = ['REST','gRPC','GraphQL','WebSocket','Kafka','AMQP','MQTT','HTTPS','TCP','UDP'];
-    if (diagram.edges && Array.isArray(diagram.edges)) {
-      diagram.edges = diagram.edges.map((edge: Record<string, unknown>) => {
-        const edgeData = (edge.data ?? {}) as Record<string, unknown>;
-        if (!edgeData.protocol) {
-          const labelProtocol = validProtocols.includes(edge.label as string) ? edge.label : 'REST';
-          return {
-            ...edge,
-            type: edge.type === 'smoothstep' ? 'editable' : (edge.type || 'editable'),
-            data: { ...edgeData, protocol: labelProtocol },
-            label: labelProtocol,
-          };
-        }
-        // Ensure edge type is 'editable'
-        return { ...edge, type: edge.type === 'smoothstep' ? 'editable' : (edge.type || 'editable') };
+    const validationResult = AiDiagramSchema.safeParse(diagram);
+    if (!validationResult.success) {
+      return new Response(JSON.stringify({ error: "AI returned invalid diagram structure.", details: validationResult.error.flatten() }), {
+        status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    return new Response(JSON.stringify(diagram), {
+    const diagram2 = validationResult.data;
+
+    const validProtocols = ['REST','gRPC','GraphQL','WebSocket','Kafka','AMQP','MQTT','HTTPS','TCP','UDP'];
+    const finalEdges = (diagram2.edges as any[]).map((edge: Record<string, unknown>) => {
+      const edgeData = (edge.data ?? {}) as Record<string, unknown>;
+      if (!edgeData.protocol) {
+        const labelProtocol = validProtocols.includes(edge.label as string) ? edge.label : 'REST';
+        return {
+          ...edge,
+          type: edge.type === 'smoothstep' ? 'editable' : (edge.type || 'editable'),
+          data: { ...edgeData, protocol: labelProtocol },
+          label: labelProtocol,
+        };
+      }
+      return { ...edge, type: edge.type === 'smoothstep' ? 'editable' : (edge.type || 'editable') };
+    });
+
+    return new Response(JSON.stringify({ nodes: diagram2.nodes, edges: finalEdges }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {

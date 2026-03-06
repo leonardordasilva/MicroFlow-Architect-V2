@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { z } from "https://deno.land/x/zod@v3.22.4/mod.ts";
 
 const ALLOWED_ORIGINS = (Deno.env.get("ALLOWED_ORIGINS") || "").split(",").map((o) => o.trim()).filter(Boolean);
 
@@ -53,7 +54,7 @@ async function callWithFallback(apiKey: string, messages: { role: string; conten
 const RATE_LIMIT_PER_MINUTE = parseInt(Deno.env.get("AI_RATE_LIMIT_PER_MINUTE") || "10", 10);
 
 async function checkRateLimit(
-  supabaseClient: ReturnType<typeof createClient>,
+  supabaseClient: any,
   userId: string,
   functionName: string,
   corsHeaders: Record<string, string>,
@@ -173,9 +174,18 @@ Be specific and actionable. Reference actual services by name.`;
       });
     }
 
-    const analysis = result.data.choices?.[0]?.message?.content || "Sem análise disponível.";
+    const analysis = result.data.choices?.[0]?.message?.content || "";
 
-    return new Response(JSON.stringify({ analysis }), {
+    // Zod validation: ensure analysis is a non-empty string
+    const AnalysisSchema = z.string().min(1);
+    const parsed = AnalysisSchema.safeParse(analysis);
+    if (!parsed.success) {
+      return new Response(JSON.stringify({ error: "AI returned empty or invalid analysis." }), {
+        status: 422, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    return new Response(JSON.stringify({ analysis: parsed.data }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
