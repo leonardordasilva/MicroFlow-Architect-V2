@@ -69,6 +69,8 @@ export async function saveDiagram(
       title,
       nodes: encrypted.nodes as unknown as Tables<'diagrams'>['nodes'],
       edges: encrypted.edges as unknown as Tables<'diagrams'>['edges'],
+      node_count: nodes.length,
+      edge_count: edges.length,
       updated_at: new Date().toISOString(),
     };
     const { data, error } = await supabase
@@ -96,6 +98,8 @@ export async function saveDiagram(
     title,
     nodes: encrypted.nodes as unknown as Tables<'diagrams'>['nodes'],
     edges: encrypted.edges as unknown as Tables<'diagrams'>['edges'],
+    node_count: nodes.length,
+    edge_count: edges.length,
     owner_id: ownerId,
   };
   const { data, error } = await supabase
