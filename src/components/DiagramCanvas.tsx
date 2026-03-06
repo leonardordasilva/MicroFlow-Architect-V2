@@ -212,12 +212,25 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
   }, []);
 
   const handleExportPNG = useCallback(async () => {
-    const el = document.querySelector('.react-flow') as HTMLElement;
+    const nodesBounds = getNodesBounds(nodes);
+    const padding = 40;
+    const imageWidth = nodesBounds.width + padding * 2;
+    const imageHeight = nodesBounds.height + padding * 2;
+    const viewport = getViewportForBounds(nodesBounds, imageWidth, imageHeight, 0.5, 2, padding);
+
+    const el = document.querySelector('.react-flow__viewport') as HTMLElement;
     if (!el) return;
     try {
       const dataUrl = await toPng(el, {
         backgroundColor: darkMode ? '#0f1520' : '#f5f7fa',
         filter: exportFilter,
+        width: imageWidth,
+        height: imageHeight,
+        style: {
+          width: `${imageWidth}px`,
+          height: `${imageHeight}px`,
+          transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+        },
       });
       const a = document.createElement('a');
       a.href = dataUrl;
@@ -227,15 +240,28 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
     } catch {
       toast({ title: 'Erro ao exportar PNG', variant: 'destructive' });
     }
-  }, [darkMode, diagramName, exportFilter]);
+  }, [darkMode, diagramName, exportFilter, nodes]);
 
   const handleExportSVG = useCallback(async () => {
-    const el = document.querySelector('.react-flow') as HTMLElement;
+    const nodesBounds = getNodesBounds(nodes);
+    const padding = 40;
+    const imageWidth = nodesBounds.width + padding * 2;
+    const imageHeight = nodesBounds.height + padding * 2;
+    const viewport = getViewportForBounds(nodesBounds, imageWidth, imageHeight, 0.5, 2, padding);
+
+    const el = document.querySelector('.react-flow__viewport') as HTMLElement;
     if (!el) return;
     try {
       const dataUrl = await toSvg(el, {
         backgroundColor: darkMode ? '#0f1520' : '#f5f7fa',
         filter: exportFilter,
+        width: imageWidth,
+        height: imageHeight,
+        style: {
+          width: `${imageWidth}px`,
+          height: `${imageHeight}px`,
+          transform: `translate(${viewport.x}px, ${viewport.y}px) scale(${viewport.zoom})`,
+        },
       });
       const a = document.createElement('a');
       a.href = dataUrl;
@@ -245,7 +271,7 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
     } catch {
       toast({ title: 'Erro ao exportar SVG', variant: 'destructive' });
     }
-  }, [darkMode, diagramName, exportFilter]);
+  }, [darkMode, diagramName, exportFilter, nodes]);
 
   const handleExportMermaid = useCallback(() => {
     const code = exportToMermaid(nodes, edges);
