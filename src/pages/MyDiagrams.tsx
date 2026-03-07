@@ -99,6 +99,15 @@ export default function MyDiagrams() {
     onError: () => toast({ title: 'Erro ao renomear', variant: 'destructive' }),
   });
 
+  const duplicateMutation = useMutation({
+    mutationFn: ({ id }: { id: string }) => duplicateDiagram(id, user!.id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['diagrams', user?.id] });
+      toast({ title: 'Diagrama duplicado com sucesso' });
+    },
+    onError: () => toast({ title: 'Erro ao duplicar', variant: 'destructive' }),
+  });
+
   const handleDelete = () => {
     if (deleteTarget) deleteMutation.mutate(deleteTarget);
   };
