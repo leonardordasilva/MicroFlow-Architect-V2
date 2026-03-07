@@ -197,10 +197,10 @@ export default function MyDiagrams() {
                 {diagrams.map((d) => (
                   <div
                     key={d.id}
-                    className="group relative flex cursor-pointer flex-col rounded-xl border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
+                    className="group flex cursor-pointer flex-col rounded-xl border bg-card p-4 shadow-sm transition-shadow hover:shadow-md"
                     onClick={() => handleLoad(d)}
                   >
-                    <div className="mb-2 flex items-center justify-between pr-28">
+                    <div className="mb-2">
                       {editingId === d.id ? (
                         <Input
                           autoFocus
@@ -215,7 +215,7 @@ export default function MyDiagrams() {
                           className="h-7 text-sm"
                         />
                       ) : (
-                        <h3 className="truncate font-semibold text-foreground">{d.title}</h3>
+                        <h3 className="font-semibold text-foreground break-words">{d.title}</h3>
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -225,7 +225,7 @@ export default function MyDiagrams() {
                       Atualizado em {format(new Date(d.updated_at), 'dd/MM/yyyy HH:mm')}
                     </p>
                     <TooltipProvider delayDuration={300}>
-                      <div className="absolute right-2 top-2 flex gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                      <div className="mt-2 flex justify-end gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                         <Tooltip>
                           <TooltipTrigger asChild>
                             <Button
