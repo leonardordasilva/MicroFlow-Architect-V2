@@ -1,21 +1,26 @@
 
 
-## Testing the Complete Flow
+## Corrigir Layout: Título Completo + Ícones Sem Sobreposição
 
-I'm currently in **plan mode** (read-only), so I cannot make code changes or enable auto-confirm for email signups. To test the full flow with browser automation, we need to:
+### Problema
+O título está com `truncate` (corta com "...") e `pr-28` reserva espaço fixo para os ícones, mas o título continua truncado. O usuário quer o título sempre completo.
 
-### Step 1: Enable auto-confirm for email signups
-This requires switching to implementation mode to use the `configure-auth` tool to enable auto-confirm, allowing me to create a test account programmatically.
+### Solução
+Mudar o layout do card para que o título ocupe toda a largura sem truncamento, e os ícones de ação fiquem em uma linha separada abaixo do conteúdo do card (ou no canto inferior direito).
 
-### Step 2: Automated test sequence
-Once auto-confirm is enabled, I will:
-1. Navigate to the app and create a test account (signup with email/password)
-2. Add 2-3 nodes (service, database, queue) via the toolbar
-3. Connect nodes by dragging edges between them
-4. Click "Save" to persist to the cloud
-5. Reload the page and verify the diagram loads with all nodes and edges intact
-6. Export as JSON and verify the output does not contain `selected` or `dragging` fields
+**Arquivo: `src/pages/MyDiagrams.tsx`**
 
-### What I need
-Approve this plan so I can switch to implementation mode, enable auto-confirm, and run the automated browser test.
+1. **Título**: Remover `truncate` e `pr-28` do container do título — deixar o título quebrar linha naturalmente
+2. **Ícones**: Mover de `absolute right-2 top-2` para uma linha própria no final do card, alinhada à direita, visível apenas no hover. Usar `flex justify-end` em vez de posicionamento absoluto.
+
+Layout resultante do card:
+```text
+┌─────────────────────────────┐
+│ Novo Selic - Eventos        │
+│ Temporários                 │
+│ 7 nós · 6 conexões          │
+│ Atualizado em 07/03/2026    │
+│          🔗 📋 ✏️ 🗑️       │  ← linha de ações (hover only)
+└─────────────────────────────┘
+```
 
