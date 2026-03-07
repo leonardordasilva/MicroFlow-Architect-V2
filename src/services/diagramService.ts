@@ -253,6 +253,18 @@ export async function renameDiagram(id: string, title: string, ownerId: string):
   if (error) throw error;
 }
 
+export async function duplicateDiagram(id: string, ownerId: string): Promise<DiagramRecord> {
+  const original = await loadDiagramById(id);
+  if (!original) throw new Error('Diagrama original não encontrado');
+
+  return saveDiagram(
+    `Cópia de ${original.title}`,
+    original.nodes,
+    original.edges,
+    ownerId,
+  );
+}
+
 export async function shareDiagram(diagramId: string): Promise<string | null> {
   const { data, error } = await supabase.functions.invoke('share-diagram', {
     body: { diagramId },
