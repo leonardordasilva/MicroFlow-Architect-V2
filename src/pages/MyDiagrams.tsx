@@ -8,6 +8,7 @@ import {
   loadUserDiagrams,
   deleteDiagram,
   renameDiagram,
+  duplicateDiagram,
   type DiagramRecord,
 } from '@/services/diagramService';
 import { loadSharedWithMe } from '@/services/shareService';
