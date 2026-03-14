@@ -104,8 +104,19 @@ serve(async (req) => {
 
   try {
     const authHeader = req.headers.get("Authorization");
+    console.log("Auth Header present:", !!authHeader);
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY");
+    console.log("SUPABASE_URL configured:", !!SUPABASE_URL);
+    console.log("SUPABASE_ANON_KEY configured:", !!SUPABASE_ANON_KEY);
+
     if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      console.error("Missing or invalid Authorization header");
+      return new Response(JSON.stringify({
+        error: "Unauthorized",
+        details: "Missing Bearer token",
+        headers_received: Array.from(req.headers.keys())
+      }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
@@ -118,10 +129,17 @@ serve(async (req) => {
 
     const { data: userData, error: userError } = await supabaseClient.auth.getUser();
     if (userError || !userData?.user) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
+      console.error("Auth helper error:", userError?.message || "No user found");
+      return new Response(JSON.stringify({
+        error: "Invalid token",
+        details: userError?.message || "User not found in session",
+        project: SUPABASE_URL
+      }), {
         status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+
+    console.log("Authenticated user:", userData.user.id);
 
     const userId = userData.user.id;
 
@@ -232,7 +250,7 @@ Rules:
       label: z.string().min(1).max(100),
       type: z.enum(['service', 'database', 'queue', 'external']),
       subType: z.string().optional(),
-      externalCategory: z.enum(['API','CDN','Auth','Payment','Storage','Analytics','Other']).optional(),
+      externalCategory: z.enum(['API', 'CDN', 'Auth', 'Payment', 'Storage', 'Analytics', 'Other']).optional(),
       internalDatabases: z.array(z.unknown()).optional().default([]),
       internalServices: z.array(z.unknown()).optional().default([]),
     }).passthrough();
@@ -282,7 +300,7 @@ Rules:
     }
 
     // Normalização de edges
-    const validProtocols = ['REST','gRPC','GraphQL','WebSocket','Kafka','AMQP','MQTT','HTTPS','TCP','UDP'];
+    const validProtocols = ['REST', 'gRPC', 'GraphQL', 'WebSocket', 'Kafka', 'AMQP', 'MQTT', 'HTTPS', 'TCP', 'UDP'];
     const finalEdges = (diagram.edges as any[]).map((edge: Record<string, unknown>) => {
       const edgeData = (edge.data ?? {}) as Record<string, unknown>;
       if (!edgeData.protocol) {

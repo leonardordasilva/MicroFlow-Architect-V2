@@ -24,8 +24,12 @@ export default function AIGenerateModal({ open, onOpenChange, onGenerate }: AIGe
     setLoading(true);
 
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const { data, error } = await supabase.functions.invoke('generate-diagram', {
         body: { description: prompt },
+        headers: {
+          Authorization: `Bearer ${session?.access_token}`,
+        },
       });
 
       if (error) throw error;
