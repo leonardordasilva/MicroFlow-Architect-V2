@@ -19,9 +19,9 @@ O **MicroFlow Architect** é um editor visual interativo para criar diagramas de
 - **Undo/Redo completo** com histórico de até 50 estados (Ctrl+Z / Ctrl+Y)
 - **Exportação para PNG, SVG, Mermaid e JSON**
 - **Importação de JSON** com validação via Zod
-- **Autenticação e persistência na nuvem**
+- **Autenticação e persistência na nuvem** (Supabase)
 - **Compartilhamento com colaboradores** via link ou e-mail
-- **Colaboração em tempo real** via WebSocket
+- **Colaboração em tempo real** via WebSocket (Supabase Realtime)
 - **Dark/Light Mode** com persistência
 - **Auto-save comprimido** com recuperação automática
 
@@ -36,31 +36,37 @@ O **MicroFlow Architect** é um editor visual interativo para criar diagramas de
 | **Dagre + ELK** | Algoritmos de layout automático de grafos |
 | **Tailwind CSS** | Estilização (Dark Mode, responsivo) |
 | **Zod** | Validação de schemas |
-| **Lovable Cloud** | Backend (autenticação, banco de dados, Edge Functions) |
+| **Supabase** | Backend (autenticação, banco de dados, Edge Functions) |
 | **html-to-image** | Exportação para PNG/SVG |
 | **Vite 5** | Build tool e dev server |
 | **Vitest** | Testes unitários |
 
-## Variáveis de Ambiente
+## 🌐 Deploy (Vercel + Supabase)
 
-### Cliente (Frontend)
+Esta aplicação foi projetada para ser hospedada na **Vercel** utilizando uma instância externa do **Supabase**.
 
-Copie `.env.example` para `.env` e preencha os valores:
+### 1. Configuração do Supabase
+- Crie um novo projeto no [Supabase](https://supabase.com/).
+- Execute as migrações localizadas na pasta `/supabase/migrations`.
+- Configure as Edge Functions se necessário (`/supabase/functions`).
 
+### 2. Configuração na Vercel
+Adicione as seguintes variáveis de ambiente no painel da Vercel:
+- `VITE_SUPABASE_URL`: Sua URL do Supabase.
+- `VITE_SUPABASE_PUBLISHABLE_KEY`: Sua chave pública do Supabase.
+- `VITE_SUPABASE_PROJECT_ID`: O ID do seu projeto Supabase.
+
+### 3. Configuração de Secrets (Supabase CLI ou Painel)
+Para as Edge Functions funcionarem corretamente (especialmente a criptografia de diagramas), você deve configurar os seguintes secrets no Supabase:
+- `DIAGRAM_ENCRYPTION_KEY`: Uma chave de 32 bytes codificada em Base64.
+- `ALLOWED_ORIGINS`: (Opcional) Lista de domínios permitidos separada por vírgula.
+
+Você pode configurar via CLI:
+```sh
+supabase secrets set DIAGRAM_ENCRYPTION_KEY="sua-chave-base64"
 ```
-VITE_SUPABASE_URL="https://<project-id>.supabase.co"
-VITE_SUPABASE_PUBLISHABLE_KEY="eyJ..."
-VITE_SUPABASE_PROJECT_ID="<project-id>"
-```
 
-### Edge Functions (Backend)
-
-As variáveis de ambiente das Edge Functions devem ser configuradas como **secrets** no painel do projeto (Lovable Cloud → Backend → Secrets). Consulte `supabase/functions/.env.example` para a lista completa:
-
-- `LOVABLE_API_KEY` — Chave da API do gateway Lovable
-- `ALLOWED_ORIGINS` — Origens permitidas para CORS
-- `SUPABASE_URL` — URL do backend
-- `SUPABASE_ANON_KEY` — Chave pública do backend
-- `AI_RATE_LIMIT_PER_MINUTE` — Limite de requisições de IA por usuário por minuto (padrão: 10)
+### 4. Variáveis de Ambiente Locais
+Copie `.env.example` para `.env` e preencha com suas credenciais.
 
 ---

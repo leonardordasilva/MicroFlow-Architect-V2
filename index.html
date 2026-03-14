@@ -1,30 +1,36 @@
 <!doctype html>
 <html lang="pt-BR">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- CSP: Chamadas à API Gemini são feitas via Edge Functions no servidor (supabase/functions/).
-         O domínio generativelanguage.googleapis.com foi intencionalmente excluído do connect-src
-         após migração para o gateway Lovable (ai.gateway.lovable.dev).
-         NÃO adicione generativelanguage.googleapis.com ao connect-src. -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co https://ai.gateway.lovable.dev wss://*.supabase.co; img-src 'self' data: blob: https://storage.googleapis.com https://*.supabase.co; worker-src 'self' blob:;" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <title>MicroFlow Architect</title>
-    <meta name="description" content="Ferramenta visual para criar e analisar diagramas de arquitetura de microsserviços. Gere, edite e exporte diagramas com análise inteligente de IA para projetar sistemas escaláveis e resilientes." />
-    <meta name="author" content="MicroFlow Architect" />
 
-    <meta property="og:type" content="website" />
-    <meta property="og:title" content="MicroFlow Architect" />
-    <meta property="og:description" content="Ferramenta visual para criar e analisar diagramas de arquitetura de microsserviços. Gere, edite e exporte diagramas com análise inteligente de IA para projetar sistemas escaláveis e resilientes." />
-    <meta property="og:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/S399UYL9rpdG8qIz8xC8chHS3fB3/social-images/social-1771787546006-Technical_social_media_banner_for_MicroFlow_Archi-1771787159613.webp" />
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- CSP: Chamar as APIs via Supabase Edge Functions. -->
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; img-src 'self' data: blob: https://storage.googleapis.com https://*.supabase.co; worker-src 'self' blob:;" />
+  <link rel="icon" type="image/png" href="/favicon.png" />
+  <title>MicroFlow Architect</title>
+  <meta name="description"
+    content="Ferramenta visual para criar e analisar diagramas de arquitetura de microsserviços. Gere, edite e exporte diagramas com análise inteligente de IA para projetar sistemas escaláveis e resilientes." />
+  <meta name="author" content="MicroFlow Architect" />
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="MicroFlow Architect" />
-    <meta name="twitter:description" content="Ferramenta visual para criar e analisar diagramas de arquitetura de microsserviços. Gere, edite e exporte diagramas com análise inteligente de IA para projetar sistemas escaláveis e resilientes." />
-    <meta name="twitter:image" content="https://storage.googleapis.com/gpt-engineer-file-uploads/S399UYL9rpdG8qIz8xC8chHS3fB3/social-images/social-1771787546006-Technical_social_media_banner_for_MicroFlow_Archi-1771787159613.webp" />
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="MicroFlow Architect" />
+  <meta property="og:description"
+    content="Ferramenta visual para criar e analisar diagramas de arquitetura de microsserviços. Gere, edite e exporte diagramas com análise inteligente de IA para projetar sistemas escaláveis e resilientes." />
+  <meta property="og:image"
+    content="https://storage.googleapis.com/gpt-engineer-file-uploads/S399UYL9rpdG8qIz8xC8chHS3fB3/social-images/social-1771787546006-Technical_social_media_banner_for_MicroFlow_Archi-1771787159613.webp" />
+
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="MicroFlow Architect" />
+  <meta name="twitter:description"
+    content="Ferramenta visual para criar e analisar diagramas de arquitetura de microsserviços. Gere, edite e exporte diagramas com análise inteligente de IA para projetar sistemas escaláveis e resilientes." />
+  <meta name="twitter:image"
+    content="https://storage.googleapis.com/gpt-engineer-file-uploads/S399UYL9rpdG8qIz8xC8chHS3fB3/social-images/social-1771787546006-Technical_social_media_banner_for_MicroFlow_Archi-1771787159613.webp" />
+</head>
+
+<body>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
+</body>
+
 </html>
