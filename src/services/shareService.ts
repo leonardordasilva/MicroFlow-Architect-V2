@@ -1,5 +1,7 @@
 import { supabase } from '@/integrations/supabase/client';
 import type { DiagramNode, DiagramEdge } from '@/types/diagram';
+import { decryptDiagramData } from '@/services/cryptoService';
+import { DbDiagramNodesSchema, DbDiagramEdgesSchema } from '@/schemas/diagramSchema';
 
 export interface ShareRecord {
   id: string;
@@ -15,8 +17,9 @@ export async function searchUsersByEmail(
   query: string,
   excludeUserId: string,
 ): Promise<{ id: string; email: string }[]> {
-  const trimmed = query.trim().toLowerCase();
-  if (!trimmed) return [];
+  // R9: Sanitize ilike wildcards to prevent pattern injection / user enumeration
+  const trimmed = query.trim().toLowerCase().replace(/[%_\\]/g, '');
+  if (!trimmed || trimmed.length < 3) return [];          // requires ≥ 3 chars
   const { data, error } = await supabase
     .from('profiles')
     .select('id, email')
@@ -112,12 +115,37 @@ export async function loadSharedWithMe(userId: string): Promise<
 
   const emailMap = new Map((profiles || []).map((p: any) => [p.id, p.email]));
 
-  return (diagrams || []).map((d: any) => ({
-    diagram_id: d.id,
-    title: d.title,
-    owner_email: emailMap.get(d.owner_id) || 'Desconhecido',
-    updated_at: d.updated_at,
-    nodes: d.nodes,
-    edges: d.edges,
-  }));
+  const results: { diagram_id: string; title: string; owner_email: string; updated_at: string; nodes: DiagramNode[]; edges: DiagramEdge[] }[] = [];
+
+  for (const d of (diagrams || []) as any[]) {
+    try {
+      // Decrypt nodes/edges (handles both encrypted envelopes and plain arrays)
+      const { nodes: rawNodes, edges: rawEdges } = await decryptDiagramData(
+        d.nodes ?? [],
+        d.edges ?? [],
+      );
+
+      // Validate with Zod schemas
+      const nodesParsed = DbDiagramNodesSchema.safeParse(rawNodes);
+      const edgesParsed = DbDiagramEdgesSchema.safeParse(rawEdges);
+
+      if (!nodesParsed.success || !edgesParsed.success) {
+        console.warn(`Diagrama compartilhado corrompido ignorado (ID: ${d.id})`);
+        continue;
+      }
+
+      results.push({
+        diagram_id: d.id,
+        title: d.title,
+        owner_email: emailMap.get(d.owner_id) || 'Desconhecido',
+        updated_at: d.updated_at,
+        nodes: nodesParsed.data as DiagramNode[],
+        edges: edgesParsed.data as DiagramEdge[],
+      });
+    } catch (err) {
+      console.warn(`Falha ao descriptografar diagrama compartilhado (ID: ${d.id}):`, err);
+    }
+  }
+
+  return results;
 }

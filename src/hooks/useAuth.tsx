@@ -28,14 +28,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setLoading(false);
     });
 
-    // Always require fresh login: sign out any persisted session on app start
+    // R13 fix: restore persisted session instead of destroying it
     const initAuth = async () => {
       const { data: { session: existingSession } } = await supabase.auth.getSession();
       if (existingSession) {
-        // There's a persisted session — sign out to force fresh login
-        await supabase.auth.signOut();
-        setSession(null);
-        setUser(null);
+        setSession(existingSession);
+        setUser(existingSession.user);
       }
       setLoading(false);
     };

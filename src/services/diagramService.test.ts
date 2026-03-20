@@ -157,9 +157,8 @@ describe('diagramService', () => {
   });
 
   describe('deleteDiagram', () => {
-    it('calls delete with id and owner_id', async () => {
+    it('R9: performs soft delete (update deleted_at) instead of hard delete', async () => {
       const chain = chainable();
-      // Override the last eq to resolve
       let eqCount = 0;
       (chain.eq as ReturnType<typeof vi.fn>).mockImplementation(() => {
         eqCount++;
@@ -170,7 +169,11 @@ describe('diagramService', () => {
 
       await deleteDiagram('diag-1', 'user-1');
       expect(supabase.from).toHaveBeenCalledWith('diagrams');
-      expect(chain.delete).toHaveBeenCalled();
+      // R9: must use update (soft delete), NOT delete
+      expect(chain.update).toHaveBeenCalledWith(
+        expect.objectContaining({ deleted_at: expect.any(String) }),
+      );
+      expect(chain.delete).not.toHaveBeenCalled();
     });
   });
 

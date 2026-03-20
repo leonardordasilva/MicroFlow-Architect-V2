@@ -13,6 +13,10 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  // R11: CSP nonce — Vite replaces 'nonce-placeholder' with the real nonce at build time
+  html: {
+    cspNonce: 'placeholder',
+  },
   worker: { format: 'es' },
   build: {
     rollupOptions: {

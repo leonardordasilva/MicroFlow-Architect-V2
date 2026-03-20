@@ -70,6 +70,7 @@ export type Database = {
       diagrams: {
         Row: {
           created_at: string
+          deleted_at: string | null
           edge_count: number
           edges: Json
           id: string
@@ -83,6 +84,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          deleted_at?: string | null
           edge_count?: number
           edges?: Json
           id?: string
@@ -96,6 +98,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          deleted_at?: string | null
           edge_count?: number
           edges?: Json
           id?: string

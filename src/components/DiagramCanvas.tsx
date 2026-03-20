@@ -1,15 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
-import {
   ReactFlow,
   ReactFlowProvider,
   Background,
@@ -31,11 +21,9 @@ import QueueNode from '@/components/nodes/QueueNode';
 import ExternalNode from '@/components/nodes/ExternalNode';
 import EditableEdge from '@/components/edges/EditableEdge';
 import Toolbar from '@/components/Toolbar';
-import ImportJSONModal from '@/components/ImportJSONModal';
-import SpawnFromNodeModal from '@/components/SpawnFromNodeModal';
 import type { DiagramNodeData, DiagramNode, DiagramEdge, NodeType } from '@/types/diagram';
-import type { ImportDiagramInput } from '@/schemas/diagramSchema';
-import MermaidExportModal from '@/components/MermaidExportModal';
+import { DiagramModals, type DiagramModalsHandle } from '@/components/DiagramModals';
+import { CanvasOverlays, type CanvasOverlaysHandle } from '@/components/CanvasOverlays';
 
 import { useAuth } from '@/hooks/useAuth';
 import { loadDiagramById } from '@/services/diagramService';
@@ -45,15 +33,12 @@ import { useAutoSave } from '@/hooks/useAutoSave';
 import { useExportHandlers } from '@/hooks/useExportHandlers';
 import RecoveryBanner from '@/components/RecoveryBanner';
 import DiagramHeader from '@/components/DiagramHeader';
-import DiagramContextMenu from '@/components/DiagramContextMenu';
 
 import { canConnect, connectionErrorMessage } from '@/utils/connectionRules';
-import { Keyboard, Hand, MousePointer2 } from 'lucide-react';
+import { Keyboard } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import NodePropertiesPanel from '@/components/NodePropertiesPanel';
 import StatusBar from '@/components/StatusBar';
-import KeyboardShortcutsModal from '@/components/KeyboardShortcutsModal';
 
 const nodeTypes = {
   service: ServiceNode,
@@ -62,9 +47,7 @@ const nodeTypes = {
   external: ExternalNode,
 };
 
-const edgeTypes = {
-  editable: EditableEdge,
-};
+const edgeTypes = { editable: EditableEdge };
 
 // R5-PERF-02: Static minimap color map (outside component)
 const MINIMAP_NODE_COLORS: Record<string, string> = {
@@ -84,7 +67,6 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
   const diagramName = useDiagramStore((s) => s.diagramName);
   const diagramId = useDiagramStore((s) => s.currentDiagramId);
   const isCollaborator = useDiagramStore((s) => s.isCollaborator);
-
   const setDiagramName = useDiagramStore((s) => s.setDiagramName);
   const onNodesChange = useDiagramStore((s) => s.onNodesChange);
   const onEdgesChange = useDiagramStore((s) => s.onEdgesChange);
@@ -110,44 +92,29 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
     if (saved !== null) return saved === 'dark';
     return window.matchMedia('(prefers-color-scheme: dark)').matches;
   });
-  const [showImportJSON, setShowImportJSON] = useState(false);
-  const [spawnSource, setSpawnSource] = useState<{ id: string; label: string; nodeType: string } | null>(null);
-  const [contextMenu, setContextMenu] = useState<{ x: number; y: number; nodeId: string; nodeLabel: string } | null>(null);
-  const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [mermaidCode, setMermaidCode] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const lastLoadedUpdatedAtRef = useRef<string | null>(null);
-
-  const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const [showShortcuts, setShowShortcuts] = useState(false);
   const [interactionMode, setInteractionMode] = useState<'pan' | 'select'>(
-    () => localStorage.getItem('microflow_interaction_mode') === 'select' ? 'select' : 'pan'
+    () => localStorage.getItem('microflow_interaction_mode') === 'select' ? 'select' : 'pan',
   );
-  const handleSetInteractionMode = useCallback((mode: 'pan' | 'select') => {
-    setInteractionMode(mode);
-    localStorage.setItem('microflow_interaction_mode', mode);
-  }, []);
 
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const lastLoadedUpdatedAtRef = useRef<string | null>(null);
+  const modalsRef = useRef<DiagramModalsHandle>(null);
+  const overlaysRef = useRef<CanvasOverlaysHandle>(null);
+
   const { guides, onNodeDrag, onNodeDragStop } = useSnapGuides(nodes);
   const { broadcastChanges, collaborators } = useRealtimeCollab(shareToken || null);
   const { saveStatus } = useAutoSave();
   const { screenToFlowPosition } = useReactFlow();
   const { handleExportPNG, handleExportSVG, handleExportMermaid, handleExportJSON } = useExportHandlers(darkMode);
 
-  // Broadcast changes when nodes/edges update (only if in shared mode)
   useEffect(() => {
-    if (shareToken) {
-      broadcastChanges(nodes, edges);
-    }
-  }, [nodes, edges, shareToken, broadcastChanges]);
+    document.documentElement.classList.toggle('dark', darkMode);
+  }, []);
 
-  // FUNC-04: Clear selectedNodeId if the selected node was removed
   useEffect(() => {
-    if (selectedNodeId && !nodes.find((n) => n.id === selectedNodeId)) {
-      setSelectedNodeId(null);
-    }
-  }, [nodes, selectedNodeId]);
+    if (shareToken) broadcastChanges(nodes, edges);
+  }, [nodes, edges, shareToken, broadcastChanges]);
 
   const toggleDarkMode = useCallback(() => {
     setDarkMode((prev) => {
@@ -158,148 +125,83 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
     });
   }, []);
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', darkMode);
+  const handleSetInteractionMode = useCallback((mode: 'pan' | 'select') => {
+    setInteractionMode(mode);
+    localStorage.setItem('microflow_interaction_mode', mode);
   }, []);
 
-  // UX-03: Close context menu on scroll, window blur, and Escape
-  useEffect(() => {
-    const closeContextMenu = () => setContextMenu(null);
-    window.addEventListener('blur', closeContextMenu);
-    const wrapper = reactFlowWrapper.current;
-    if (wrapper) {
-      wrapper.addEventListener('scroll', closeContextMenu, true);
-    }
-    return () => {
-      window.removeEventListener('blur', closeContextMenu);
-      if (wrapper) {
-        wrapper.removeEventListener('scroll', closeContextMenu, true);
-      }
-    };
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Delete') { deleteSelected(); overlaysRef.current?.clearSelectedNode(); }
+    if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
+    if (e.ctrlKey && e.key === 'y') { e.preventDefault(); redo(); }
+    if (e.ctrlKey && e.shiftKey && e.key === 'Z') { e.preventDefault(); redo(); }
+    if (e.ctrlKey && e.key === 's') { e.preventDefault(); handleSaveToCloudRef.current(); }
+    if (e.key === '?') modalsRef.current?.openShortcuts();
+    if (e.key === 'Escape') { overlaysRef.current?.clearSelectedNode(); overlaysRef.current?.clearContextMenu(); }
+  }, [deleteSelected, undo, redo]);
+
+  const handleNodeContextMenu = useCallback((event: React.MouseEvent, node: DiagramNode) => {
+    event.preventDefault();
+    if (node.type === 'database' || node.type === 'external') return;
+    const nodeData = node.data as DiagramNodeData;
+    overlaysRef.current?.setContextMenu({ x: event.clientX, y: event.clientY, nodeId: node.id, nodeLabel: nodeData.label });
   }, []);
-
-  const handleImport = useCallback(
-    (data: ImportDiagramInput) => {
-      loadDiagram(data.nodes as DiagramNode[], data.edges as DiagramEdge[]);
-      if (data.name) setDiagramName(data.name);
-      lastLoadedUpdatedAtRef.current = null;
-      toast({ title: 'Diagrama importado com sucesso!' });
-    },
-    [loadDiagram, setDiagramName]
-  );
-
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent) => {
-      if (e.key === 'Delete') { deleteSelected(); setSelectedNodeId(null); }
-      if (e.ctrlKey && e.key === 'z') { e.preventDefault(); undo(); }
-      if (e.ctrlKey && e.key === 'y') { e.preventDefault(); redo(); }
-      if (e.ctrlKey && e.shiftKey && e.key === 'Z') { e.preventDefault(); redo(); }
-      if (e.ctrlKey && e.key === 's') { e.preventDefault(); handleSaveToCloudRef.current(); }
-      if (e.key === '?') setShowShortcuts(true);
-      if (e.key === 'Escape') {
-        setSelectedNodeId(null);
-        setContextMenu(null);
-      }
-    },
-    [deleteSelected, undo, redo]
-  );
 
   const handleNodeClick = useCallback((_event: React.MouseEvent, node: DiagramNode) => {
-    setSelectedNodeId(node.id);
+    overlaysRef.current?.setSelectedNodeId(node.id);
   }, []);
-
-  const handleNodeContextMenu = useCallback(
-    (event: React.MouseEvent, node: DiagramNode) => {
-      event.preventDefault();
-      if (node.type === 'database' || node.type === 'external') return;
-      const nodeData = node.data as DiagramNodeData;
-      setContextMenu({
-        x: event.clientX,
-        y: event.clientY,
-        nodeId: node.id,
-        nodeLabel: nodeData.label,
-      });
-    },
-    []
-  );
 
   const handlePaneClick = useCallback(() => {
-    setContextMenu(null);
-    setSelectedNodeId(null);
+    overlaysRef.current?.clearContextMenu();
+    overlaysRef.current?.clearSelectedNode();
   }, []);
 
-  const handleConnect = useCallback(
-    (connection: Connection) => {
-      const sourceNode = nodes.find((n) => n.id === connection.source);
-      const targetNode = nodes.find((n) => n.id === connection.target);
-      const srcType = (sourceNode?.type ?? 'service') as NodeType;
-      const tgtType = (targetNode?.type ?? 'service') as NodeType;
-
-      if (!canConnect(srcType, tgtType)) {
-        toast({ title: connectionErrorMessage(srcType, tgtType), variant: 'destructive' });
-        return;
-      }
-
-      onConnectAction(connection);
-    },
-    [onConnectAction, nodes]
-  );
-
-  const handleRefreshDiagram = useCallback(async () => {
-    if (!diagramId) {
-      toast({ title: 'Salve o diagrama primeiro para poder atualizar.' });
+  const handleConnect = useCallback((connection: Connection) => {
+    const sourceNode = nodes.find((n) => n.id === connection.source);
+    const targetNode = nodes.find((n) => n.id === connection.target);
+    const srcType = (sourceNode?.type ?? 'service') as NodeType;
+    const tgtType = (targetNode?.type ?? 'service') as NodeType;
+    if (!canConnect(srcType, tgtType)) {
+      toast({ title: connectionErrorMessage(srcType, tgtType), variant: 'destructive' });
       return;
     }
+    onConnectAction(connection);
+  }, [onConnectAction, nodes]);
+
+  const handleRefreshDiagram = useCallback(async () => {
+    if (!diagramId) { toast({ title: 'Salve o diagrama primeiro para poder atualizar.' }); return; }
     setRefreshing(true);
     try {
       const record = await loadDiagramById(diagramId);
-      if (!record) {
-        toast({ title: 'Diagrama não encontrado', variant: 'destructive' });
-        return;
-      }
+      if (!record) { toast({ title: 'Diagrama não encontrado', variant: 'destructive' }); return; }
       if (record.updated_at === lastLoadedUpdatedAtRef.current) {
         toast({ title: 'Diagrama já está atualizado.' });
       } else {
         const temporal = useDiagramStore.temporal.getState();
         temporal.pause();
         loadDiagram(record.nodes, record.edges);
-        if (record.title && record.title !== diagramName) {
-          setDiagramName(record.title);
-        }
+        if (record.title && record.title !== diagramName) setDiagramName(record.title);
         temporal.resume();
         lastLoadedUpdatedAtRef.current = record.updated_at;
         toast({ title: 'Diagrama atualizado com sucesso!' });
       }
-    } catch {
-      toast({ title: 'Erro ao atualizar diagrama', variant: 'destructive' });
-    } finally {
-      setRefreshing(false);
-    }
+    } catch { toast({ title: 'Erro ao atualizar diagrama', variant: 'destructive' }); }
+    finally { setRefreshing(false); }
   }, [diagramId, loadDiagram, diagramName, setDiagramName]);
 
-  const handleAddNode = useCallback(
-    (type: NodeType, subType?: string) => {
-      const wrapper = reactFlowWrapper.current;
-      if (wrapper) {
-        const rect = wrapper.getBoundingClientRect();
-        const jx = (Math.random() - 0.5) * 80;
-        const jy = (Math.random() - 0.5) * 80;
-        const pos = screenToFlowPosition({
-          x: rect.left + rect.width / 2 + jx,
-          y: rect.top + rect.height / 2 + jy,
-        });
-        addNode(type, subType, pos);
-      } else {
-        addNode(type, subType);
-      }
-    },
-    [screenToFlowPosition, addNode]
-  );
-
-  const onMermaidExport = useCallback(() => {
-    const code = handleExportMermaid();
-    setMermaidCode(code);
-  }, [handleExportMermaid]);
+  const handleAddNode = useCallback((type: NodeType, subType?: string) => {
+    const wrapper = reactFlowWrapper.current;
+    if (wrapper) {
+      const rect = wrapper.getBoundingClientRect();
+      const pos = screenToFlowPosition({
+        x: rect.left + rect.width / 2 + (Math.random() - 0.5) * 80,
+        y: rect.top + rect.height / 2 + (Math.random() - 0.5) * 80,
+      });
+      addNode(type, subType, pos);
+    } else {
+      addNode(type, subType);
+    }
+  }, [screenToFlowPosition, addNode]);
 
   return (
     <div className="flex h-screen w-screen flex-col bg-background" onKeyDown={handleKeyDown} tabIndex={0} role="application" aria-label="Editor de diagramas de arquitetura">
@@ -307,29 +209,26 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
         <Toolbar
           onAddNode={handleAddNode}
           onDelete={deleteSelected}
-          onClearCanvas={() => setShowClearConfirm(true)}
+          onClearCanvas={() => modalsRef.current?.openClearConfirm()}
           onUndo={undo}
           onRedo={redo}
           onAutoLayout={(engine, direction) => {
             if (engine === 'elk') {
-              autoLayoutELK(direction as any).catch(() => {
-                toast({ title: 'Erro ao aplicar layout automático. Tente novamente.', variant: 'destructive' });
-              });
+              autoLayoutELK(direction as any).catch(() => toast({ title: 'Erro ao aplicar layout automático. Tente novamente.', variant: 'destructive' }));
             } else {
               autoLayout(direction as any);
             }
           }}
           onExportPNG={handleExportPNG}
           onExportSVG={handleExportSVG}
-          onExportMermaid={onMermaidExport}
+          onExportMermaid={() => modalsRef.current?.openMermaid()}
           onExportJSON={handleExportJSON}
-          onImportJSON={() => setShowImportJSON(true)}
+          onImportJSON={() => modalsRef.current?.openImportJSON()}
           diagramName={diagramName}
           onDiagramNameChange={setDiagramName}
           darkMode={darkMode}
           onToggleDarkMode={toggleDarkMode}
         />
-
         <DiagramHeader
           shareToken={shareToken}
           diagramId={diagramId}
@@ -344,7 +243,7 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
         />
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setShowShortcuts(true)} aria-label="Atalhos de teclado">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => modalsRef.current?.openShortcuts()} aria-label="Atalhos de teclado">
               <Keyboard className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
@@ -352,19 +251,15 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
         </Tooltip>
       </header>
 
-      <div className="flex-1 relative" ref={reactFlowWrapper}>
+      <div className="relative flex-1" ref={reactFlowWrapper}>
         <RecoveryBanner />
-
         <ReactFlow
           nodes={nodes}
           edges={edges}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onConnect={handleConnect}
-          onNodeDrag={(event, node) => {
-            onNodeDrag(event, node);
-            onNodeDragHandler(event, node as any);
-          }}
+          onNodeDrag={(event, node) => { onNodeDrag(event, node); onNodeDragHandler(event, node as any); }}
           onNodeDragStop={onNodeDragStop}
           onNodeContextMenu={handleNodeContextMenu}
           onPaneClick={handlePaneClick}
@@ -377,115 +272,34 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
           selectionOnDrag={interactionMode === 'select'}
           panOnDrag={interactionMode === 'select' ? [1, 2] : [0, 1, 2]}
           selectionMode={SelectionMode.Partial}
-          defaultEdgeOptions={{
-            type: 'editable',
-            animated: true,
-            style: { strokeWidth: 2 },
-            data: { waypoints: undefined },
-          }}
+          defaultEdgeOptions={{ type: 'editable', animated: true, style: { strokeWidth: 2 }, data: { waypoints: undefined } }}
           proOptions={{ hideAttribution: true }}
         >
           <SnapGuideLines guides={guides} />
           <Background variant={BackgroundVariant.Dots} gap={20} size={1} />
           <Controls className="!bg-card !border-border !shadow-md [&>button]:!bg-card [&>button]:!border-border [&>button]:!text-foreground" />
-
-          {/* Pan / Select mode toggle */}
-          <div className="export-exclude absolute top-3 left-3 z-10 flex gap-1 rounded-lg border bg-card p-1 shadow-md">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={interactionMode === 'pan' ? 'default' : 'ghost'}
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => handleSetInteractionMode('pan')}
-                  aria-label="Mover canvas"
-                >
-                  <Hand className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Mover canvas (arrastar)</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant={interactionMode === 'select' ? 'default' : 'ghost'}
-                  size="icon"
-                  className="h-8 w-8"
-                  onClick={() => handleSetInteractionMode('select')}
-                  aria-label="Selecionar objetos"
-                >
-                  <MousePointer2 className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="bottom" className="text-xs">Selecionar objetos (arrastar)</TooltipContent>
-            </Tooltip>
-          </div>
-          <MiniMap
-            className="!bg-card !border-border"
-            nodeColor={(node) => MINIMAP_NODE_COLORS[node.type || ''] || '#888'}
-          />
+          <MiniMap className="!bg-card !border-border" nodeColor={(node) => MINIMAP_NODE_COLORS[node.type || ''] || '#888'} />
         </ReactFlow>
 
-        {contextMenu && (
-          <DiagramContextMenu
-            contextMenu={contextMenu}
-            nodes={nodes}
-            onSpawn={(source) => setSpawnSource(source)}
-            onClose={() => setContextMenu(null)}
-          />
-        )}
-
-        {selectedNodeId && (
-          <NodePropertiesPanel
-            nodeId={selectedNodeId}
-            onClose={() => setSelectedNodeId(null)}
-          />
-        )}
+        <CanvasOverlays
+          ref={overlaysRef}
+          nodes={nodes}
+          interactionMode={interactionMode}
+          onInteractionModeChange={handleSetInteractionMode}
+          onSpawn={(source) => modalsRef.current?.openSpawn(source)}
+        />
       </div>
 
       <StatusBar nodes={nodes} edges={edges} saveStatus={saveStatus} />
 
-      <ImportJSONModal
-        open={showImportJSON}
-        onOpenChange={setShowImportJSON}
-        onImport={handleImport}
-      />
-
-      <SpawnFromNodeModal
-        open={!!spawnSource}
-        onOpenChange={(open) => { if (!open) setSpawnSource(null); }}
-        sourceNodeLabel={spawnSource?.label || ''}
-        sourceNodeType={spawnSource?.nodeType || ''}
-        onConfirm={(type, count, subType) => {
-          if (spawnSource) {
-            addNodesFromSource(spawnSource.id, type, count, subType);
-          }
-        }}
-      />
-      <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Limpar diagrama</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja limpar todo o diagrama? Esta ação pode ser desfeita com Ctrl+Z.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={clearCanvas}>Limpar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <MermaidExportModal
-        open={!!mermaidCode}
-        onOpenChange={(open) => { if (!open) setMermaidCode(null); }}
-        code={mermaidCode || ''}
-      />
-
-      <KeyboardShortcutsModal
-        open={showShortcuts}
-        onOpenChange={setShowShortcuts}
+      <DiagramModals
+        ref={modalsRef}
+        addNodesFromSource={addNodesFromSource}
+        loadDiagram={loadDiagram}
+        setDiagramName={setDiagramName}
+        clearCanvas={clearCanvas}
+        handleExportMermaid={handleExportMermaid}
+        onAfterImport={() => { lastLoadedUpdatedAtRef.current = null; }}
       />
     </div>
   );

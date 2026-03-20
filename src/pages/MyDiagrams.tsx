@@ -60,7 +60,8 @@ export default function MyDiagrams() {
     getNextPageParam: (lastPage, _allPages, lastPageParam) =>
       lastPage.hasMore ? lastPageParam + 1 : undefined,
     enabled: !!user,
-    staleTime: 30_000,
+    staleTime: 60_000,  // R8: 60s — diagrams change infrequently in listing view
+    gcTime: 600_000,    // R8: 10 min cache after unmount to avoid re-decrypt on quick navigation
   });
 
   const diagrams = data?.pages.flatMap((p) => p.diagrams) ?? [];

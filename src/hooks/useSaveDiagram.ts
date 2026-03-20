@@ -3,6 +3,9 @@ import { useDiagramStore } from '@/store/diagramStore';
 import { useAuth } from '@/hooks/useAuth';
 import { saveDiagram, saveSharedDiagram } from '@/services/diagramService';
 import { clearAutoSave } from '@/hooks/useAutoSave';
+
+/** R12 — Minimum interval between successive saves (ms) */
+const SAVE_COOLDOWN_MS = 1500;
 import { toast } from '@/hooks/use-toast';
 
 interface UseSaveDiagramOptions {
@@ -23,6 +26,7 @@ export function useSaveDiagram({ shareToken }: UseSaveDiagramOptions = {}): UseS
   // PERF-05: Read store state at call time instead of subscribing — avoids unnecessary callback recreation
   const save = useCallback(async () => {
     if (!user) return;
+    if (saving) return; // R12: guard against concurrent saves
 
     // Snapshot current store state at the moment of save
     const { nodes, edges, diagramName, currentDiagramId: diagramId, isCollaborator } = useDiagramStore.getState();
@@ -55,7 +59,7 @@ export function useSaveDiagram({ shareToken }: UseSaveDiagramOptions = {}): UseS
     } finally {
       setSaving(false);
     }
-  }, [user, shareToken]); // Minimal deps — store state read at call time
+  }, [user, shareToken, saving]); // saving included so ref stays current when guard state changes
 
   // PERF-05: Stable ref always pointing to latest save
   const saveRef = useRef<() => void>(() => {});

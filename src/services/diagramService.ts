@@ -195,7 +195,12 @@ export async function loadDiagramById(id: string): Promise<DiagramRecord | null>
 }
 
 export async function deleteDiagram(id: string, ownerId: string): Promise<void> {
-  const { error } = await supabase.from('diagrams').delete().eq('id', id).eq('owner_id', ownerId);
+  // R9: Soft delete — set deleted_at instead of hard DELETE for recoverability
+  const { error } = await supabase
+    .from('diagrams')
+    .update({ deleted_at: new Date().toISOString() } satisfies TablesUpdate<'diagrams'>)
+    .eq('id', id)
+    .eq('owner_id', ownerId);
   if (error) throw error;
 }
 

@@ -7,6 +7,11 @@ const STORAGE_KEY = 'microflow_autosave_v2';
 const LEGACY_STORAGE_KEY = 'microflow_autosave_v1';
 const DEBOUNCE_MS = 1500;
 
+// R15: IndexedDB constants
+const IDB_NAME = 'microflow_autosave';
+const IDB_STORE = 'diagrams';
+const IDB_KEY = 'current';
+
 import type { DiagramNode, DiagramEdge } from '@/types/diagram';
 
 // R5-SEC-03: Schema for legacy autosave validation
@@ -46,7 +51,6 @@ async function compressString(input: string): Promise<string> {
     chunks.push(value);
     totalLength += value.length;
   }
-  // Merge chunks into a single Uint8Array, then convert to base64
   const merged = new Uint8Array(totalLength);
   let offset = 0;
   for (const chunk of chunks) {
@@ -56,10 +60,7 @@ async function compressString(input: string): Promise<string> {
   const CHUNK = 8192;
   let binary = '';
   for (let i = 0; i < merged.length; i += CHUNK) {
-    binary += String.fromCharCode.apply(
-      null,
-      Array.from(merged.subarray(i, i + CHUNK))
-    );
+    binary += String.fromCharCode.apply(null, Array.from(merged.subarray(i, i + CHUNK)));
   }
   return btoa(binary);
 }
@@ -77,6 +78,48 @@ async function decompressString(base64: string): Promise<string> {
   const blob = new Blob([bytes]);
   const stream = blob.stream().pipeThrough(new DecompressionStream('gzip'));
   return await new Response(stream).text();
+}
+
+// R15: IndexedDB helpers
+function openIDB(): Promise<IDBDatabase> {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(IDB_NAME, 1);
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore(IDB_STORE);
+    };
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function saveToIDB(data: string): Promise<void> {
+  const db = await openIDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).put(data, IDB_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function loadFromIDB(): Promise<string | null> {
+  const db = await openIDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, 'readonly');
+    const req = tx.objectStore(IDB_STORE).get(IDB_KEY);
+    req.onsuccess = () => resolve(req.result ?? null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function clearIDB(): Promise<void> {
+  const db = await openIDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(IDB_STORE, 'readwrite');
+    tx.objectStore(IDB_STORE).delete(IDB_KEY);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
 }
 
 export function useAutoSave() {
@@ -111,10 +154,17 @@ export function useAutoSave() {
       try {
         const json = JSON.stringify(data);
         const compressed = await compressString(json);
-        localStorage.setItem(STORAGE_KEY, compressed);
+
+        // R15: Try IndexedDB first; fall back to localStorage on error
+        try {
+          await saveToIDB(compressed);
+        } catch {
+          localStorage.setItem(STORAGE_KEY, compressed);
+        }
+
         setSaveStatus('saved');
       } catch (e: any) {
-        // PERF-06: Handle localStorage quota exceeded
+        // PERF-06: Handle storage quota exceeded
         if (e?.name === 'QuotaExceededError' || e?.code === 22) {
           toast({
             title: 'Armazenamento local cheio',
@@ -136,7 +186,19 @@ export function useAutoSave() {
 
 export async function getAutoSave(): Promise<AutoSaveData | null> {
   try {
-    // Try compressed format (v2) first
+    // R15: Check IndexedDB first
+    try {
+      const idbData = await loadFromIDB();
+      if (idbData) {
+        const json = await decompressString(idbData);
+        const data = JSON.parse(json) as AutoSaveData;
+        if (data.nodes && data.edges) return data;
+      }
+    } catch {
+      // IDB unavailable — fall through to localStorage
+    }
+
+    // Fallback: compressed localStorage format (v2)
     const compressed = localStorage.getItem(STORAGE_KEY);
     if (compressed) {
       const json = await decompressString(compressed);
@@ -145,7 +207,7 @@ export async function getAutoSave(): Promise<AutoSaveData | null> {
       return data;
     }
 
-    // Fallback: try legacy uncompressed format (v1)
+    // Fallback: legacy uncompressed format (v1)
     const raw = localStorage.getItem(LEGACY_STORAGE_KEY);
     if (raw) {
       const rawData = JSON.parse(raw);
@@ -169,6 +231,8 @@ export async function getAutoSave(): Promise<AutoSaveData | null> {
 }
 
 export function clearAutoSave() {
+  // R15: Clear both IndexedDB and localStorage
+  clearIDB().catch(() => {});
   localStorage.removeItem(STORAGE_KEY);
   localStorage.removeItem(LEGACY_STORAGE_KEY);
 }

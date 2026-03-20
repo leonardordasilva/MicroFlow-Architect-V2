@@ -32,7 +32,7 @@ export const NodeSchema = z.object({
     externalCategory: z.enum(EXTERNAL_CATEGORIES).optional(),
     internalDatabases: z.array(InternalItemSchema).optional(),
     internalServices: z.array(InternalItemSchema).optional(),
-  }).passthrough(),
+  }),
 }).passthrough();
 
 export const EdgeSchema = z.object({
@@ -41,14 +41,14 @@ export const EdgeSchema = z.object({
   target: z.string().min(1, 'Target é obrigatório'),
   data: z.object({
     protocol: z.enum(EDGE_PROTOCOLS).optional(),
-  }).passthrough().optional(),
+  }).optional(),
 }).passthrough();
 
 export const ImportDiagramSchema = z.object({
   nodes: z.array(NodeSchema).min(1, 'O diagrama deve ter pelo menos 1 nó'),
   edges: z.array(EdgeSchema),
   name: z.string().optional(),
-}).passthrough();
+});
 
 export type ImportDiagramInput = z.infer<typeof ImportDiagramSchema>;
 
