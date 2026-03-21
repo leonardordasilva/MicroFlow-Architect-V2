@@ -3,7 +3,17 @@
     "allow": [
       "Bash(npm run:*)",
       "Bash(npm test:*)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(python skills/ui-ux-pro-max/scripts/search.py \"SaaS developer tools landing page microservices architecture professional dark\" --design-system -p \"MicroFlow Architect\")",
+      "Bash(where python3:*)",
+      "Bash(where python:*)",
+      "Bash(ls /c/Python*)",
+      "Read(//c/Users/leona/AppData/Local/Programs/**)",
+      "Bash(/c/Users/leona/AppData/Local/Microsoft/WindowsApps/python3.exe skills/ui-ux-pro-max/scripts/search.py \"SaaS developer tools landing page microservices architecture professional dark\" --design-system -p \"MicroFlow Architect\")",
+      "Bash(Get-Command python*)",
+      "Bash(powershell.exe -Command \"Get-Command python*\")",
+      "Read(//c/Program Files/**)",
+      "Bash(ls \"/c/Users/leona/AppData/Local/Programs/\"*)"
     ]
   }
 }

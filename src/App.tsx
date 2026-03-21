@@ -15,6 +15,7 @@ const ResetPassword = lazy(() => import('./pages/ResetPassword'));
 const MyDiagrams = lazy(() => import('./pages/MyDiagrams'));
 const SharedDiagram = lazy(() => import('./pages/SharedDiagram'));
 const NotFound = lazy(() => import('./pages/NotFound'));
+const Landing = lazy(() => import('./pages/Landing'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -44,6 +45,7 @@ const App = () => (
                 <Route path="/my-diagrams" element={<ProtectedRoute><MyDiagrams /></ProtectedRoute>} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/diagram/:shareToken" element={<SharedDiagram />} />
+                <Route path="/landing" element={<Landing />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
