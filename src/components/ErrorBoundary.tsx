@@ -1,4 +1,5 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import i18n from '@/i18n';
 import { toast } from '@/hooks/use-toast';
 
 interface Props {
@@ -31,8 +32,8 @@ export class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, info: ErrorInfo) {
     console.error('[ErrorBoundary]', error, info.componentStack);
     toast({
-      title: 'Erro inesperado',
-      description: 'Algo deu errado. Tente recarregar a página.',
+      title: i18n.t('errors.unexpected'),
+      description: i18n.t('errors.unexpectedDesc'),
       variant: 'destructive',
     });
   }
@@ -41,7 +42,7 @@ export class ErrorBoundary extends Component<Props, State> {
     if (this.state.hasError) {
       return (
         <div style={{ padding: 32, textAlign: 'center' }}>
-          <h2>Algo deu errado.</h2>
+          <h2>{i18n.t('errors.somethingWrong')}</h2>
           <button
             style={{
               marginTop: 16,
@@ -54,7 +55,7 @@ export class ErrorBoundary extends Component<Props, State> {
             }}
             onClick={() => this.setState({ hasError: false })}
           >
-            Tentar novamente
+            {i18n.t('common.tryAgain')}
           </button>
         </div>
       );
@@ -69,9 +70,9 @@ if (typeof window !== 'undefined') {
   window.addEventListener('unhandledrejection', (event) => {
     console.error('[UnhandledRejection]', event.reason);
     toast({
-      title: 'Erro de rede ou operação',
+      title: i18n.t('errors.networkOp'),
       description:
-        event.reason?.message ?? 'Uma operação assíncrona falhou.',
+        event.reason?.message ?? i18n.t('errors.asyncFailed'),
       variant: 'destructive',
     });
   });

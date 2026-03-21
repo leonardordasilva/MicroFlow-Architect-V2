@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { Collaborator } from '@/hooks/useRealtimeCollab';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -7,6 +8,7 @@ interface CollaboratorAvatarsProps {
 }
 
 function CollaboratorAvatars({ collaborators }: CollaboratorAvatarsProps) {
+  const { t } = useTranslation();
   if (collaborators.length === 0) return null;
 
   return (
@@ -22,7 +24,7 @@ function CollaboratorAvatars({ collaborators }: CollaboratorAvatarsProps) {
             </div>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="text-xs">
-            {c.email || 'Anônimo'}
+            {c.email || t('collaborators.anonymous')}
           </TooltipContent>
         </Tooltip>
       ))}

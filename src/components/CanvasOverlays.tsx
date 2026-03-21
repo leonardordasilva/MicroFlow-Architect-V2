@@ -1,4 +1,5 @@
 import { useState, forwardRef, useImperativeHandle, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Hand, MousePointer2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -35,6 +36,7 @@ export interface CanvasOverlaysHandle {
 
 export const CanvasOverlays = forwardRef<CanvasOverlaysHandle, CanvasOverlaysProps>(
   ({ nodes, interactionMode, onInteractionModeChange, onSpawn }, ref) => {
+    const { t } = useTranslation();
     const [contextMenu, setContextMenu] = useState<ContextMenuState | null>(null);
     const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
 
@@ -74,12 +76,12 @@ export const CanvasOverlays = forwardRef<CanvasOverlaysHandle, CanvasOverlaysPro
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => onInteractionModeChange('pan')}
-                aria-label="Mover canvas"
+                aria-label={t('overlays.moveCanvas')}
               >
                 <Hand className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">Mover canvas (arrastar)</TooltipContent>
+            <TooltipContent side="bottom" className="text-xs">{t('overlays.moveCanvasDrag')}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
@@ -88,12 +90,12 @@ export const CanvasOverlays = forwardRef<CanvasOverlaysHandle, CanvasOverlaysPro
                 size="icon"
                 className="h-8 w-8"
                 onClick={() => onInteractionModeChange('select')}
-                aria-label="Selecionar objetos"
+                aria-label={t('overlays.selectObjects')}
               >
                 <MousePointer2 className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">Selecionar objetos (arrastar)</TooltipContent>
+            <TooltipContent side="bottom" className="text-xs">{t('overlays.selectObjectsDrag')}</TooltipContent>
           </Tooltip>
         </div>
 

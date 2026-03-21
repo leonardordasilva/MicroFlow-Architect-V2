@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter,
 } from '@/components/ui/dialog';
@@ -16,6 +17,7 @@ interface ImportJSONModalProps {
 }
 
 export default function ImportJSONModal({ open, onOpenChange, onImport }: ImportJSONModalProps) {
+  const { t } = useTranslation();
   const [jsonText, setJsonText] = useState('');
   const [dragging, setDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -30,16 +32,16 @@ export default function ImportJSONModal({ open, onOpenChange, onImport }: Import
     } catch (err: any) {
       if (err instanceof ZodError) {
         const messages = err.errors.map((e) => `${e.path.join('.')}: ${e.message}`).join('\n');
-        toast({ title: 'Validação falhou', description: messages, variant: 'destructive' });
+        toast({ title: t('importModal.validationFailed'), description: messages, variant: 'destructive' });
       } else {
-        toast({ title: 'JSON inválido', description: err.message, variant: 'destructive' });
+        toast({ title: t('importModal.invalidJSON'), description: err.message, variant: 'destructive' });
       }
     }
   };
 
   const processFile = (file: File) => {
     if (!file.name.endsWith('.json')) {
-      toast({ title: 'Formato inválido', description: 'Apenas arquivos .json são aceitos', variant: 'destructive' });
+      toast({ title: t('importModal.invalidFormat'), description: t('importModal.jsonOnly'), variant: 'destructive' });
       return;
     }
     const reader = new FileReader();
@@ -65,9 +67,9 @@ export default function ImportJSONModal({ open, onOpenChange, onImport }: Import
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Upload className="h-5 w-5" />
-            Importar Diagrama JSON
+            {t('importModal.title')}
           </DialogTitle>
-          <DialogDescription>Arraste um arquivo .json ou cole o conteúdo abaixo.</DialogDescription>
+          <DialogDescription>{t('importModal.description')}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-3">
@@ -84,7 +86,7 @@ export default function ImportJSONModal({ open, onOpenChange, onImport }: Import
           >
             <FileJson className="h-8 w-8 text-muted-foreground mb-2" />
             <p className="text-sm text-muted-foreground">
-              {dragging ? 'Solte o arquivo aqui' : 'Arraste um .json ou clique para selecionar'}
+              {dragging ? t('importModal.dropHere') : t('importModal.dragOrClick')}
             </p>
             <input
               ref={fileInputRef}
@@ -105,8 +107,8 @@ export default function ImportJSONModal({ open, onOpenChange, onImport }: Import
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleImport} disabled={!jsonText.trim()}>Importar</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('importModal.cancel')}</Button>
+          <Button onClick={handleImport} disabled={!jsonText.trim()}>{t('importModal.import')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

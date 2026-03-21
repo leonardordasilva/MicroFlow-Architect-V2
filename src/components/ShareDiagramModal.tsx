@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from '@/components/ui/dialog';
@@ -24,6 +25,7 @@ interface UserResult {
 }
 
 export default function ShareDiagramModal({ open, onOpenChange, diagramId, ownerId }: Props) {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UserResult[]>([]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -80,10 +82,10 @@ export default function ShareDiagramModal({ open, onOpenChange, diagramId, owner
       }
     }
     if (successCount > 0) {
-      toast({ title: `Diagrama compartilhado com ${successCount} usuário(s)!` });
+      toast({ title: t('shareDiagramModal.shareSuccess', { count: successCount }) });
     }
     if (errorCount > 0) {
-      toast({ title: `${errorCount} erro(s) ao compartilhar`, variant: 'destructive' });
+      toast({ title: t('shareDiagramModal.shareErrors', { count: errorCount }), variant: 'destructive' });
     }
     setSelected(new Set());
     const updated = await listDiagramShares(diagramId);
@@ -95,9 +97,9 @@ export default function ShareDiagramModal({ open, onOpenChange, diagramId, owner
     try {
       await revokeShare(share.id);
       setShares((prev) => prev.filter((s) => s.id !== share.id));
-      toast({ title: 'Acesso revogado', description: `${share.shared_with_email} perdeu o acesso.` });
+      toast({ title: t('shareDiagramModal.revokeSuccess'), description: t('shareDiagramModal.revokeDesc', { email: share.shared_with_email }) });
     } catch {
-      toast({ title: 'Erro ao revogar', variant: 'destructive' });
+      toast({ title: t('shareDiagramModal.revokeError'), variant: 'destructive' });
     }
   };
 
@@ -123,7 +125,7 @@ export default function ShareDiagramModal({ open, onOpenChange, diagramId, owner
         />
         <span className="truncate flex-1">{user.email}</span>
         {alreadyShared && (
-          <span className="text-xs text-muted-foreground shrink-0">Já tem acesso</span>
+          <span className="text-xs text-muted-foreground shrink-0">{t('shareDiagramModal.alreadyHasAccess')}</span>
         )}
       </label>
     );
@@ -133,7 +135,7 @@ export default function ShareDiagramModal({ open, onOpenChange, diagramId, owner
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[520px] max-h-[85vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-base">Compartilhar Diagrama</DialogTitle>
+          <DialogTitle className="text-base">{t('shareDiagramModal.title')}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
@@ -141,7 +143,7 @@ export default function ShareDiagramModal({ open, onOpenChange, diagramId, owner
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Buscar usuários por e-mail..."
+              placeholder={t('shareDiagramModal.searchPlaceholder')}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               className="pl-9"
@@ -156,7 +158,7 @@ export default function ShareDiagramModal({ open, onOpenChange, diagramId, owner
               </div>
             ) : displayUsers.length === 0 ? (
               <p className="text-xs text-muted-foreground text-center py-6">
-                {query.trim() === '' ? 'Digite um e-mail para buscar usuários' : 'Nenhum usuário encontrado'}
+                {query.trim() === '' ? t('shareDiagramModal.typeEmail') : t('shareDiagramModal.noResults')}
               </p>
             ) : (
               displayUsers.map(renderUserRow)
@@ -167,7 +169,7 @@ export default function ShareDiagramModal({ open, onOpenChange, diagramId, owner
           {selected.size > 0 && (
             <Button onClick={handleShareSelected} disabled={sharing} className="w-full">
               {sharing && <Loader2 className="h-4 w-4 animate-spin mr-2" />}
-              Compartilhar com {selected.size} usuário(s)
+              {t('shareDiagramModal.shareWith', { count: selected.size })}
             </Button>
           )}
 
@@ -179,7 +181,7 @@ export default function ShareDiagramModal({ open, onOpenChange, diagramId, owner
               </div>
             ) : shares.length > 0 ? (
               <div className="space-y-2">
-                <p className="text-xs font-medium text-muted-foreground">Usuários com acesso:</p>
+                <p className="text-xs font-medium text-muted-foreground">{t('shareDiagramModal.usersWithAccess')}</p>
                 {shares.map((s) => (
                   <div key={s.id} className="flex items-center justify-between rounded-md border px-3 py-2">
                     <span className="text-sm truncate">{s.shared_with_email}</span>
@@ -187,7 +189,7 @@ export default function ShareDiagramModal({ open, onOpenChange, diagramId, owner
                       variant="ghost" size="icon"
                       className="h-7 w-7 text-destructive hover:text-destructive shrink-0"
                       onClick={() => handleRevoke(s)}
-                      aria-label="Revogar acesso"
+                      aria-label={t('shareDiagramModal.revokeAccess')}
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                     </Button>
@@ -196,14 +198,14 @@ export default function ShareDiagramModal({ open, onOpenChange, diagramId, owner
               </div>
             ) : (
               <p className="text-xs text-muted-foreground text-center py-2">
-                Nenhum usuário com acesso compartilhado.
+                {t('shareDiagramModal.noSharedUsers')}
               </p>
             )}
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('shareDiagramModal.close')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

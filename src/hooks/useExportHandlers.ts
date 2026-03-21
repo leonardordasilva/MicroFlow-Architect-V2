@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useReactFlow, getNodesBounds } from '@xyflow/react';
 import { toPng, toSvg } from 'html-to-image';
 import { toast } from '@/hooks/use-toast';
@@ -59,6 +60,7 @@ function getFullDiagramBounds(flowNodes: any[]) {
 }
 
 export function useExportHandlers(darkMode: boolean) {
+  const { t } = useTranslation();
   const { getNodes: getFlowNodes } = useReactFlow();
   const nodes = useDiagramStore((s) => s.nodes);
   const edges = useDiagramStore((s) => s.edges);
@@ -93,9 +95,9 @@ export function useExportHandlers(darkMode: boolean) {
       a.href = dataUrl;
       a.download = `${diagramName || 'diagram'}.png`;
       a.click();
-      toast({ title: 'PNG exportado com sucesso!' });
+      toast({ title: t('export.pngSuccess') });
     } catch {
-      toast({ title: 'Erro ao exportar PNG', variant: 'destructive' });
+      toast({ title: t('export.pngError'), variant: 'destructive' });
     }
   }, [darkMode, diagramName, getFlowNodes]);
 
@@ -127,9 +129,9 @@ export function useExportHandlers(darkMode: boolean) {
       a.href = dataUrl;
       a.download = `${diagramName || 'diagram'}.svg`;
       a.click();
-      toast({ title: 'SVG exportado com sucesso!' });
+      toast({ title: t('export.svgSuccess') });
     } catch {
-      toast({ title: 'Erro ao exportar SVG', variant: 'destructive' });
+      toast({ title: t('export.svgError'), variant: 'destructive' });
     }
   }, [darkMode, diagramName, getFlowNodes]);
 
@@ -146,7 +148,7 @@ export function useExportHandlers(darkMode: boolean) {
     a.download = `${diagramName || 'diagram'}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    toast({ title: 'JSON exportado com sucesso!' });
+    toast({ title: t('export.jsonSuccess') });
   }, [exportJSON, diagramName]);
 
   return { handleExportPNG, handleExportSVG, handleExportMermaid, handleExportJSON };

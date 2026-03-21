@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,7 @@ interface MermaidExportModalProps {
 }
 
 export default function MermaidExportModal({ open, onOpenChange, code }: MermaidExportModalProps) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -29,15 +31,15 @@ export default function MermaidExportModal({ open, onOpenChange, code }: Mermaid
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[560px]">
         <DialogHeader>
-          <DialogTitle className="text-base">Exportar Mermaid.js</DialogTitle>
+          <DialogTitle className="text-base">{t('mermaidModal.title')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-2">
           <p className="text-xs text-muted-foreground">
-            Cole este código em{' '}
+            {t('mermaidModal.description')}{' '}
             <a href="https://mermaid.live" target="_blank" rel="noopener noreferrer" className="underline text-primary">
               mermaid.live
             </a>{' '}
-            ou em qualquer markdown que suporte Mermaid.
+            {t('mermaidModal.descriptionSuffix')}
           </p>
           <Textarea
             value={code}
@@ -48,11 +50,11 @@ export default function MermaidExportModal({ open, onOpenChange, code }: Mermaid
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Fechar
+            {t('mermaidModal.close')}
           </Button>
           <Button onClick={handleCopy} className="gap-1.5">
             {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
-            {copied ? 'Copiado!' : 'Copiar código'}
+            {copied ? t('mermaidModal.copied') : t('mermaidModal.copyCode')}
           </Button>
         </DialogFooter>
       </DialogContent>

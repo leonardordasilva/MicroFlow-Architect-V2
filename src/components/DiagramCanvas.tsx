@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   ReactFlow,
   ReactFlowProvider,
@@ -62,6 +63,7 @@ interface DiagramCanvasProps {
 }
 
 function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
+  const { t } = useTranslation();
   const nodes = useDiagramStore((s) => s.nodes);
   const edges = useDiagramStore((s) => s.edges);
   const diagramName = useDiagramStore((s) => s.diagramName);
@@ -169,13 +171,13 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
   }, [onConnectAction, nodes]);
 
   const handleRefreshDiagram = useCallback(async () => {
-    if (!diagramId) { toast({ title: 'Salve o diagrama primeiro para poder atualizar.' }); return; }
+    if (!diagramId) { toast({ title: t('canvas.saveFirst') }); return; }
     setRefreshing(true);
     try {
       const record = await loadDiagramById(diagramId);
-      if (!record) { toast({ title: 'Diagrama não encontrado', variant: 'destructive' }); return; }
+      if (!record) { toast({ title: t('canvas.notFound'), variant: 'destructive' }); return; }
       if (record.updated_at === lastLoadedUpdatedAtRef.current) {
-        toast({ title: 'Diagrama já está atualizado.' });
+        toast({ title: t('canvas.alreadyUpdated') });
       } else {
         const temporal = useDiagramStore.temporal.getState();
         temporal.pause();
@@ -183,9 +185,9 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
         if (record.title && record.title !== diagramName) setDiagramName(record.title);
         temporal.resume();
         lastLoadedUpdatedAtRef.current = record.updated_at;
-        toast({ title: 'Diagrama atualizado com sucesso!' });
+        toast({ title: t('canvas.updateSuccess') });
       }
-    } catch { toast({ title: 'Erro ao atualizar diagrama', variant: 'destructive' }); }
+    } catch { toast({ title: t('canvas.updateError'), variant: 'destructive' }); }
     finally { setRefreshing(false); }
   }, [diagramId, loadDiagram, diagramName, setDiagramName]);
 
@@ -214,7 +216,7 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
           onRedo={redo}
           onAutoLayout={(engine, direction) => {
             if (engine === 'elk') {
-              autoLayoutELK(direction as any).catch(() => toast({ title: 'Erro ao aplicar layout automático. Tente novamente.', variant: 'destructive' }));
+              autoLayoutELK(direction as any).catch(() => toast({ title: t('canvas.layoutError'), variant: 'destructive' }));
             } else {
               autoLayout(direction as any);
             }
@@ -243,11 +245,11 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
         />
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => modalsRef.current?.openShortcuts()} aria-label="Atalhos de teclado">
+            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => modalsRef.current?.openShortcuts()} aria-label={t('canvas.keyboardShortcuts')}>
               <Keyboard className="h-4 w-4" />
             </Button>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs">Atalhos (?)</TooltipContent>
+          <TooltipContent side="bottom" className="text-xs">{t('canvas.keyboardShortcutsBtn')}</TooltipContent>
         </Tooltip>
       </header>
 

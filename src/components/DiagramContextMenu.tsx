@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import type { DiagramNode, DiagramNodeData } from '@/types/diagram';
 
 interface ContextMenuState {
@@ -16,6 +17,7 @@ interface DiagramContextMenuProps {
 }
 
 function DiagramContextMenu({ contextMenu, nodes, onSpawn, onClose }: DiagramContextMenuProps) {
+  const { t } = useTranslation();
   return (
     <div
       className="fixed z-50 rounded-md border bg-popover p-1 shadow-md min-w-[180px]"
@@ -29,7 +31,7 @@ function DiagramContextMenu({ contextMenu, nodes, onSpawn, onClose }: DiagramCon
           onClose();
         }}
       >
-        Criar objetos a partir deste
+        {t('contextMenu.createFrom')}
       </button>
     </div>
   );

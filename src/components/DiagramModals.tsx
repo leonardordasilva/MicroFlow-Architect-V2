@@ -1,4 +1,5 @@
 import { useState, useCallback, forwardRef, useImperativeHandle } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -42,6 +43,7 @@ export interface DiagramModalsHandle {
 
 export const DiagramModals = forwardRef<DiagramModalsHandle, DiagramModalsProps>(
   ({ addNodesFromSource, loadDiagram, setDiagramName, clearCanvas, handleExportMermaid, onAfterImport }, ref) => {
+    const { t } = useTranslation();
     const [showImportJSON, setShowImportJSON] = useState(false);
     const [spawnSource, setSpawnSource] = useState<SpawnSource | null>(null);
     const [showClearConfirm, setShowClearConfirm] = useState(false);
@@ -60,7 +62,7 @@ export const DiagramModals = forwardRef<DiagramModalsHandle, DiagramModalsProps>
       loadDiagram(data.nodes as DiagramNode[], data.edges as DiagramEdge[]);
       if (data.name) setDiagramName(data.name);
       onAfterImport?.();
-      toast({ title: 'Diagrama importado com sucesso!' });
+      toast({ title: t('modals.importSuccess') });
     }, [loadDiagram, setDiagramName, onAfterImport]);
 
     return (
@@ -80,14 +82,14 @@ export const DiagramModals = forwardRef<DiagramModalsHandle, DiagramModalsProps>
         <AlertDialog open={showClearConfirm} onOpenChange={setShowClearConfirm}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle>Limpar diagrama</AlertDialogTitle>
+              <AlertDialogTitle>{t('modals.clearTitle')}</AlertDialogTitle>
               <AlertDialogDescription>
-                Tem certeza que deseja limpar todo o diagrama? Esta ação pode ser desfeita com Ctrl+Z.
+                {t('modals.clearDesc')}
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={clearCanvas}>Limpar</AlertDialogAction>
+              <AlertDialogCancel>{t('modals.cancel')}</AlertDialogCancel>
+              <AlertDialogAction onClick={clearCanvas}>{t('modals.clear')}</AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>

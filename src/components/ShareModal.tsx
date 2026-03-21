@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,7 @@ interface ShareModalProps {
 }
 
 export default function ShareModal({ open, onOpenChange, shareUrl }: ShareModalProps) {
+  const { t } = useTranslation();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = async () => {
@@ -29,11 +31,11 @@ export default function ShareModal({ open, onOpenChange, shareUrl }: ShareModalP
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[440px]">
         <DialogHeader>
-          <DialogTitle className="text-base">Compartilhar Diagrama</DialogTitle>
+          <DialogTitle className="text-base">{t('shareModal.title')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-2">
           <p className="text-sm text-muted-foreground">
-            Qualquer pessoa com este link pode visualizar e colaborar no diagrama em tempo real.
+            {t('shareModal.description')}
           </p>
           <div className="flex gap-2">
             <Input value={shareUrl} readOnly className="font-mono text-xs" />
@@ -43,7 +45,7 @@ export default function ShareModal({ open, onOpenChange, shareUrl }: ShareModalP
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Fechar</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('shareModal.close')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

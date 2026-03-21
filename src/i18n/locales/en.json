@@ -6,7 +6,20 @@
     "loading": "Loading...",
     "error": "Error",
     "success": "Success",
-    "tryAgain": "Try again"
+    "tryAgain": "Try again",
+    "close": "Close",
+    "waiting": "Please wait...",
+    "back": "Back"
+  },
+  "errors": {
+    "unexpected": "Unexpected error",
+    "unexpectedDesc": "Something went wrong. Try reloading the page.",
+    "networkOp": "Network or operation error",
+    "asyncFailed": "An async operation failed.",
+    "somethingWrong": "Something went wrong.",
+    "diagramRender": "Error rendering diagram",
+    "diagramRenderDesc": "An unexpected error occurred. Your data has been preserved in local auto-save.",
+    "reload": "Reload page"
   },
   "auth": {
     "login": "Sign in",
@@ -24,7 +37,44 @@
     "signupError": "Sign up failed",
     "signupSuccess": "Account created! Check your email.",
     "resetSent": "Reset link sent! Check your email.",
-    "resetError": "Failed to send reset link"
+    "resetError": "Failed to send reset link",
+    "emailPlaceholder": "your@email.com",
+    "passwordPlaceholder": "••••••••",
+    "waiting": "Please wait...",
+    "loginBtn": "Sign in",
+    "createAccountBtn": "Sign up",
+    "sendRecoveryBtn": "Send recovery link",
+    "forgotPasswordLink": "Forgot your password?",
+    "noAccountPrompt": "Don't have an account?",
+    "hasAccountPrompt": "Already have an account?",
+    "doLogin": "Sign in",
+    "emailSent": "Email sent!",
+    "emailSentDesc": "Check your inbox to reset your password.",
+    "loginSuccess": "Signed in successfully!",
+    "signupSuccessMsg": "Account created successfully!",
+    "invalidCredentials": "Invalid credentials. Check your email and password.",
+    "emailNotConfirmed": "Email not confirmed. Check your inbox.",
+    "emailAlreadyUsed": "This email is already registered.",
+    "passwordTooShort": "Password must be at least 6 characters.",
+    "rateLimited": "For security, please wait 60 seconds before trying again.",
+    "loginTitle": "Sign in to your account",
+    "signupTitle": "Create your account",
+    "recoverTitle": "Recover your password"
+  },
+  "resetPassword": {
+    "title": "Set your new password",
+    "invalidLink": "Invalid or expired recovery link. Request a new link from the login page.",
+    "passwordMismatch": "Passwords do not match.",
+    "passwordTooShort": "Password must be at least 6 characters.",
+    "success": "Password updated successfully!",
+    "newPasswordDifferent": "New password must be different from the current one.",
+    "sessionExpired": "Session expired. Request a new recovery link.",
+    "checkingLink": "Checking recovery link...",
+    "newPassword": "New password",
+    "confirmPassword": "Confirm password",
+    "waiting": "Please wait...",
+    "submit": "Reset password",
+    "back": "Back to login"
   },
   "diagram": {
     "newDiagram": "New Diagram",
@@ -62,5 +112,216 @@
   },
   "protected": {
     "loading": "Loading..."
+  },
+  "save": {
+    "recentlySaved": "Diagram saved recently. Please wait a moment.",
+    "sharedSaved": "Changes saved to shared diagram!",
+    "savedAsCopy": "Diagram saved as copy!",
+    "savedAsCopyDesc": "A copy of this diagram was saved to \"My Diagrams\". You are not editing the original diagram.",
+    "savedToCloud": "Diagram saved to cloud!",
+    "error": "Save failed"
+  },
+  "export": {
+    "pngSuccess": "PNG exported successfully!",
+    "pngError": "Failed to export PNG",
+    "svgSuccess": "SVG exported successfully!",
+    "svgError": "Failed to export SVG",
+    "jsonSuccess": "JSON exported successfully!"
+  },
+  "canvas": {
+    "saveFirst": "Save the diagram first before refreshing.",
+    "notFound": "Diagram not found",
+    "alreadyUpdated": "Diagram is already up to date.",
+    "updateSuccess": "Diagram updated successfully!",
+    "updateError": "Failed to update diagram",
+    "layoutError": "Failed to apply auto layout. Please try again.",
+    "keyboardShortcuts": "Keyboard shortcuts",
+    "keyboardShortcutsBtn": "Shortcuts (?)"
+  },
+  "toolbar": {
+    "diagramName": "Diagram name",
+    "service": "Microservice",
+    "database": "Database",
+    "queue": "Queue / Messaging",
+    "api": "API / Protocol",
+    "autoLayout": "Auto Layout",
+    "export": "Export",
+    "deleteSelected": "Delete (Del)",
+    "clearDiagram": "Clear Diagram",
+    "undo": "Undo (Ctrl+Z)",
+    "redo": "Redo (Ctrl+Y)",
+    "elkLR": "ELK — Left → Right",
+    "elkTB": "ELK — Top → Bottom",
+    "dagreH": "Dagre — Horizontal",
+    "dagreV": "Dagre — Vertical",
+    "importJSON": "Import JSON",
+    "lightMode": "Light Mode",
+    "darkMode": "Dark Mode"
+  },
+  "nodePanel": {
+    "properties": "Properties",
+    "closePanel": "Close panel",
+    "type": "Type",
+    "name": "Name",
+    "category": "Category",
+    "internalDbs": "Internal Databases",
+    "addDb": "Add database",
+    "removeDb": "Remove database",
+    "libraries": "Libraries",
+    "addLibrary": "Add service",
+    "removeLibrary": "Remove service",
+    "typeService": "Microservice",
+    "typeDatabase": "Database",
+    "typeQueue": "Queue",
+    "typeExternal": "External API",
+    "dbDefault": "DB {{n}}",
+    "libDefault": "Library {{n}}"
+  },
+  "spawnModal": {
+    "titleFrom": "Create from \"{{label}}\"",
+    "objectType": "Object type",
+    "subtype": "Subtype",
+    "quantity": "Quantity",
+    "service": "Microservice",
+    "library": "Library",
+    "database": "Database",
+    "queue": "Queue (IBM MQ/Kafka/RabbitMQ)",
+    "api": "API (REST/gRPC/GraphQL/WS/HTTPS)",
+    "queueOnlyService": "Queues can only create microservices",
+    "oracleAlert": "Oracle will be added as an internal database of node \"{{label}}\". No separate node will be created on the canvas.",
+    "libraryAlert": "The library will be added as an internal component of node \"{{label}}\". No separate node will be created on the canvas.",
+    "connectManually": "The node will be created near \"{{label}}\". Connect them manually by dragging between the desired handles.",
+    "cancel": "Cancel",
+    "create": "Create"
+  },
+  "shareModal": {
+    "title": "Share Diagram",
+    "description": "Anyone with this link can view and collaborate on the diagram in real time.",
+    "close": "Close"
+  },
+  "shareDiagramModal": {
+    "title": "Share Diagram",
+    "searchPlaceholder": "Search users by email...",
+    "typeEmail": "Type an email to search users",
+    "noResults": "No users found",
+    "alreadyHasAccess": "Already has access",
+    "shareWith": "Share with {{count}} user(s)",
+    "usersWithAccess": "Users with access:",
+    "revokeAccess": "Revoke access",
+    "noSharedUsers": "No users with shared access.",
+    "shareSuccess": "Diagram shared with {{count}} user(s)!",
+    "shareErrors": "{{count}} error(s) while sharing",
+    "revokeSuccess": "Access revoked",
+    "revokeDesc": "{{email}} lost access.",
+    "revokeError": "Failed to revoke",
+    "close": "Close"
+  },
+  "importModal": {
+    "title": "Import JSON Diagram",
+    "description": "Drag a .json file or paste the content below.",
+    "dropHere": "Drop file here",
+    "dragOrClick": "Drag a .json or click to select",
+    "cancel": "Cancel",
+    "import": "Import",
+    "validationFailed": "Validation failed",
+    "invalidJSON": "Invalid JSON",
+    "invalidFormat": "Invalid format",
+    "jsonOnly": "Only .json files are accepted"
+  },
+  "mermaidModal": {
+    "title": "Export Mermaid.js",
+    "description": "Paste this code in",
+    "descriptionSuffix": "or any markdown that supports Mermaid.",
+    "close": "Close",
+    "copied": "Copied!",
+    "copyCode": "Copy code"
+  },
+  "shortcuts": {
+    "title": "Keyboard Shortcuts",
+    "undo": "Undo",
+    "redo": "Redo",
+    "redoAlt": "Redo (alternative)",
+    "delete": "Delete selected",
+    "save": "Save to cloud",
+    "selectAll": "Select all nodes",
+    "close": "Close modals / deselect",
+    "openShortcuts": "Open keyboard shortcuts"
+  },
+  "protocolModal": {
+    "title": "Select Protocol",
+    "async": "async",
+    "sync": "sync"
+  },
+  "header": {
+    "viewingShared": "Viewing shared diagram",
+    "savedCopy": "✓ Copy saved to My Diagrams",
+    "editingShared": "Editing shared diagram",
+    "myDiagrams": "My Diagrams",
+    "update": "Refresh diagram",
+    "saveToCloud": "Save to cloud",
+    "logout": "Sign out"
+  },
+  "legend": {
+    "protocols": "Protocols",
+    "sync": "Synchronous",
+    "async": "Asynchronous"
+  },
+  "modals": {
+    "importSuccess": "Diagram imported successfully!",
+    "clearTitle": "Clear diagram",
+    "clearDesc": "Are you sure you want to clear the entire diagram? This action can be undone with Ctrl+Z.",
+    "cancel": "Cancel",
+    "clear": "Clear"
+  },
+  "overlays": {
+    "moveCanvas": "Move canvas",
+    "moveCanvasDrag": "Move canvas (drag)",
+    "selectObjects": "Select objects",
+    "selectObjectsDrag": "Select objects (drag)"
+  },
+  "contextMenu": {
+    "createFrom": "Create objects from this"
+  },
+  "collaborators": {
+    "anonymous": "Anonymous"
+  },
+  "myDiagrams": {
+    "title": "My Diagrams",
+    "newDiagram": "New Diagram",
+    "loadError": "Failed to load diagrams.",
+    "emptyTitle": "No diagrams saved yet",
+    "emptyDesc": "Create your first architecture diagram",
+    "createFirst": "Create first diagram",
+    "back": "Back",
+    "loading": "Loading...",
+    "loadMore": "Load more",
+    "sharedWithMe": "Shared with me",
+    "sharedBy": "Shared by {{email}}",
+    "share": "Share",
+    "duplicate": "Duplicate",
+    "rename": "Rename",
+    "delete": "Delete",
+    "deleteTitle": "Delete diagram",
+    "deleteDesc": "Are you sure? This action cannot be undone.",
+    "cancel": "Cancel",
+    "stats": "{{nodes}} nodes · {{edges}} connections",
+    "updatedAt": "Updated at {{date}}",
+    "deleteSuccess": "Diagram deleted",
+    "deleteError": "Failed to delete",
+    "renameSuccess": "Diagram renamed",
+    "renameError": "Failed to rename",
+    "duplicateSuccess": "Diagram duplicated successfully",
+    "duplicateError": "Failed to duplicate",
+    "titleEmpty": "Title cannot be empty",
+    "titleTooLong": "Title too long",
+    "titleTooLongDesc": "Maximum 100 characters"
+  },
+  "sharedDiagram": {
+    "loading": "Loading diagram...",
+    "notFound": "Diagram not found."
+  },
+  "notFound": {
+    "title": "Page not found",
+    "home": "Return to Home"
   }
 }

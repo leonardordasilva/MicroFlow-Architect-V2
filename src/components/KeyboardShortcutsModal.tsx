@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -10,23 +11,25 @@ interface KeyboardShortcutsModalProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const shortcuts = [
-  { keys: 'Ctrl + Z', desc: 'Desfazer' },
-  { keys: 'Ctrl + Y', desc: 'Refazer' },
-  { keys: 'Ctrl + Shift + Z', desc: 'Refazer (alternativo)' },
-  { keys: 'Delete', desc: 'Deletar selecionado' },
-  { keys: 'Ctrl + S', desc: 'Salvar na nuvem' },
-  { keys: 'Ctrl + A', desc: 'Selecionar todos os nós' },
-  { keys: 'Escape', desc: 'Fechar modais / deselecionar' },
-  { keys: '?', desc: 'Abrir atalhos de teclado' },
-];
-
 export default function KeyboardShortcutsModal({ open, onOpenChange }: KeyboardShortcutsModalProps) {
+  const { t } = useTranslation();
+
+  const shortcuts = [
+    { keys: 'Ctrl + Z', desc: t('shortcuts.undo') },
+    { keys: 'Ctrl + Y', desc: t('shortcuts.redo') },
+    { keys: 'Ctrl + Shift + Z', desc: t('shortcuts.redoAlt') },
+    { keys: 'Delete', desc: t('shortcuts.delete') },
+    { keys: 'Ctrl + S', desc: t('shortcuts.save') },
+    { keys: 'Ctrl + A', desc: t('shortcuts.selectAll') },
+    { keys: 'Escape', desc: t('shortcuts.close') },
+    { keys: '?', desc: t('shortcuts.openShortcuts') },
+  ];
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[400px]">
         <DialogHeader>
-          <DialogTitle className="text-base">Atalhos de Teclado</DialogTitle>
+          <DialogTitle className="text-base">{t('shortcuts.title')}</DialogTitle>
         </DialogHeader>
         <div className="space-y-2">
           {shortcuts.map((s) => (

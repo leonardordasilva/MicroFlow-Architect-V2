@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useDiagramStore } from '@/store/diagramStore';
 import { useAuth } from '@/hooks/useAuth';
 import { saveDiagram, saveSharedDiagram } from '@/services/diagramService';
@@ -21,6 +22,7 @@ interface UseSaveDiagramReturn {
 
 export function useSaveDiagram({ shareToken }: UseSaveDiagramOptions = {}): UseSaveDiagramReturn {
   const { user } = useAuth();
+  const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
   const lastSaveTimestampRef = useRef<number>(0);
 
@@ -32,7 +34,7 @@ export function useSaveDiagram({ shareToken }: UseSaveDiagramOptions = {}): UseS
     // R5: Throttle temporal — impede saves consecutivos dentro do cooldown
     const now = Date.now();
     if (now - lastSaveTimestampRef.current < SAVE_COOLDOWN_MS) {
-      toast({ title: 'Diagrama salvo recentemente. Aguarde um momento.' });
+      toast({ title: t('save.recentlySaved') });
       return;
     }
 
@@ -46,7 +48,7 @@ export function useSaveDiagram({ shareToken }: UseSaveDiagramOptions = {}): UseS
       if (isCollaborator && diagramId) {
         await saveSharedDiagram(diagramId, nodes, edges);
         clearAutoSave();
-        toast({ title: 'Alterações salvas no diagrama compartilhado!' });
+        toast({ title: t('save.sharedSaved') });
       } else {
         const isSharedContext = !!shareToken && !diagramId;
         const record = await saveDiagram(diagramName, nodes, edges, user.id, diagramId);
@@ -54,17 +56,17 @@ export function useSaveDiagram({ shareToken }: UseSaveDiagramOptions = {}): UseS
         clearAutoSave();
         if (isSharedContext) {
           toast({
-            title: 'Diagrama salvo como cópia!',
-            description: 'Uma cópia deste diagrama foi salva em "Meus Diagramas". Você não está editando o diagrama original.',
+            title: t('save.savedAsCopy'),
+            description: t('save.savedAsCopyDesc'),
             duration: 6000,
           });
         } else {
-          toast({ title: 'Diagrama salvo na nuvem!' });
+          toast({ title: t('save.savedToCloud') });
         }
       }
     } catch (err: any) {
       console.error('[useSaveDiagram] Save error:', err);
-      toast({ title: 'Erro ao salvar', description: err.message, variant: 'destructive' });
+      toast({ title: t('save.error'), description: err.message, variant: 'destructive' });
     } finally {
       setSaving(false);
     }

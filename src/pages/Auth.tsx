@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useDiagramStore } from '@/store/diagramStore';
 import { clearAutoSave } from '@/hooks/useAutoSave';
@@ -11,6 +12,7 @@ import { ArrowLeft } from 'lucide-react';
 type AuthView = 'login' | 'signup' | 'forgot';
 
 export default function AuthPage() {
+  const { t } = useTranslation();
   const [view, setView] = useState<AuthView>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,8 +28,8 @@ export default function AuthPage() {
         });
         if (error) throw error;
         toast({
-          title: 'E-mail enviado!',
-          description: 'Verifique sua caixa de entrada para redefinir sua senha.',
+          title: t('auth.emailSent'),
+          description: t('auth.emailSentDesc'),
         });
         return;
       }
@@ -37,10 +39,10 @@ export default function AuthPage() {
         // Clear canvas and auto-save on fresh login
         const store = useDiagramStore.getState();
         store.clearCanvas();
-        store.setDiagramName('Novo Diagrama');
+        store.setDiagramName(t('diagram.newDiagram'));
         store.setCurrentDiagramId(undefined);
         clearAutoSave();
-        toast({ title: 'Login realizado com sucesso!' });
+        toast({ title: t('auth.loginSuccess') });
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -48,20 +50,20 @@ export default function AuthPage() {
           options: { emailRedirectTo: window.location.origin },
         });
         if (error) throw error;
-        toast({ title: 'Conta criada com sucesso!' });
+        toast({ title: t('auth.signupSuccessMsg') });
       }
     } catch (err: any) {
       const msgMap: Record<string, string> = {
-        'Invalid login credentials': 'Credenciais inválidas. Verifique seu e-mail e senha.',
-        'Email not confirmed': 'E-mail não confirmado. Verifique sua caixa de entrada.',
-        'User already registered': 'Este e-mail já está cadastrado.',
-        'Signup requires a valid password': 'A senha deve ter no mínimo 6 caracteres.',
-        'Password should be at least 6 characters': 'A senha deve ter no mínimo 6 caracteres.',
+        'Invalid login credentials': t('auth.invalidCredentials'),
+        'Email not confirmed': t('auth.emailNotConfirmed'),
+        'User already registered': t('auth.emailAlreadyUsed'),
+        'Signup requires a valid password': t('auth.passwordTooShort'),
+        'Password should be at least 6 characters': t('auth.passwordTooShort'),
         'For security purposes, you can only request this once every 60 seconds':
-          'Por segurança, aguarde 60 segundos antes de solicitar novamente.',
+          t('auth.rateLimited'),
       };
       const translated = msgMap[err.message] || err.message;
-      toast({ title: 'Erro', description: translated, variant: 'destructive' });
+      toast({ title: t('common.error'), description: translated, variant: 'destructive' });
     } finally {
       setLoading(false);
     }
@@ -69,10 +71,10 @@ export default function AuthPage() {
 
   const subtitle =
     view === 'login'
-      ? 'Entre na sua conta'
+      ? t('auth.loginTitle')
       : view === 'signup'
-        ? 'Crie sua conta'
-        : 'Recupere sua senha';
+        ? t('auth.signupTitle')
+        : t('auth.recoverTitle');
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">
@@ -84,13 +86,13 @@ export default function AuthPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{t('auth.email')}</Label>
             <Input
               id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="seu@email.com"
+              placeholder={t('auth.emailPlaceholder')}
               autoComplete="email"
               required
             />
@@ -98,13 +100,13 @@ export default function AuthPage() {
 
           {view !== 'forgot' && (
             <div className="space-y-2">
-              <Label htmlFor="password">Senha</Label>
+              <Label htmlFor="password">{t('auth.password')}</Label>
             <Input
                 id="password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="••••••••"
+                placeholder={t('auth.passwordPlaceholder')}
                 autoComplete={view === 'login' ? 'current-password' : 'new-password'}
                 minLength={6}
                 required
@@ -114,12 +116,12 @@ export default function AuthPage() {
 
           <Button type="submit" className="w-full" disabled={loading}>
             {loading
-              ? 'Aguarde...'
+              ? t('auth.waiting')
               : view === 'login'
-                ? 'Entrar'
+                ? t('auth.loginBtn')
                 : view === 'signup'
-                  ? 'Criar conta'
-                  : 'Enviar link de recuperação'}
+                  ? t('auth.createAccountBtn')
+                  : t('auth.sendRecoveryBtn')}
           </Button>
         </form>
 
@@ -130,12 +132,12 @@ export default function AuthPage() {
               className="text-sm text-primary underline"
               onClick={() => setView('forgot')}
             >
-              Esqueceu sua senha?
+              {t('auth.forgotPasswordLink')}
             </button>
             <p className="text-sm text-muted-foreground">
-              Não tem conta?{' '}
+              {t('auth.noAccountPrompt')}{' '}
               <button type="button" className="text-primary underline" onClick={() => setView('signup')}>
-                Criar conta
+                {t('auth.createAccountBtn')}
               </button>
             </p>
           </div>
@@ -143,9 +145,9 @@ export default function AuthPage() {
 
         {view === 'signup' && (
           <p className="text-center text-sm text-muted-foreground">
-            Já tem conta?{' '}
+            {t('auth.hasAccountPrompt')}{' '}
             <button type="button" className="text-primary underline" onClick={() => setView('login')}>
-              Fazer login
+              {t('auth.doLogin')}
             </button>
           </p>
         )}
@@ -158,7 +160,7 @@ export default function AuthPage() {
               onClick={() => setView('login')}
             >
               <ArrowLeft className="h-3 w-3" />
-              Voltar ao login
+              {t('auth.backToLogin')}
             </button>
           </div>
         )}

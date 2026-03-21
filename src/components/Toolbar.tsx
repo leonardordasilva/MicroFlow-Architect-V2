@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Box, Database, Mail, Globe, Trash2, Undo2, Redo2, LayoutGrid,
   Download, Upload, Image, Sparkles, Brain, Moon, Sun, ChevronDown, XCircle,
@@ -53,18 +54,19 @@ function ToolbarButton({
 }
 
 function DatabaseDropdown({ onSelect }: { onSelect: (subType: string) => void }) {
+  const { t } = useTranslation();
   return (
     <DropdownMenu>
       <Tooltip>
         <TooltipTrigger asChild>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Banco de Dados">
+            <Button variant="ghost" size="icon" className="h-9 w-9" aria-label={t('toolbar.database')}>
               <Database className="h-4 w-4" />
               <ChevronDown className="h-3 w-3 ml-[-2px]" />
             </Button>
           </DropdownMenuTrigger>
         </TooltipTrigger>
-        <TooltipContent side="bottom" className="text-xs">Banco de Dados</TooltipContent>
+        <TooltipContent side="bottom" className="text-xs">{t('toolbar.database')}</TooltipContent>
       </Tooltip>
       <DropdownMenuContent align="start" className="z-50">
         <DropdownMenuItem onClick={() => onSelect('Oracle')}>Oracle</DropdownMenuItem>
@@ -80,6 +82,7 @@ function Toolbar({
   diagramName, onDiagramNameChange,
   darkMode, onToggleDarkMode,
 }: ToolbarProps) {
+  const { t } = useTranslation();
   const [localName, setLocalName] = useState(diagramName);
 
   // Sync when store changes externally (e.g. loadDiagram, RecoveryBanner)
@@ -115,8 +118,8 @@ function Toolbar({
             }
           }}
           maxLength={100}
-          placeholder="Nome do diagrama"
-          aria-label="Nome do diagrama"
+          placeholder={t('toolbar.diagramName')}
+          aria-label={t('toolbar.diagramName')}
         />
         <div aria-live="polite" aria-atomic="true" className="absolute -bottom-4 right-0 text-[10px] text-muted-foreground">
           {localName.length > 80 ? `${localName.length}/100` : ''}
@@ -125,19 +128,19 @@ function Toolbar({
 
       <Separator orientation="vertical" className="h-6" />
 
-      <ToolbarButton icon={Box} label="Microserviço" onClick={() => onAddNode('service')} />
+      <ToolbarButton icon={Box} label={t('toolbar.service')} onClick={() => onAddNode('service')} />
       <DatabaseDropdown onSelect={(subType) => onAddNode('database', subType)} />
       <DropdownMenu>
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Fila / Mensageria">
+              <Button variant="ghost" size="icon" className="h-9 w-9" aria-label={t('toolbar.queue')}>
                 <Mail className="h-4 w-4" />
                 <ChevronDown className="h-3 w-3 ml-[-2px]" />
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs">Fila / Mensageria</TooltipContent>
+          <TooltipContent side="bottom" className="text-xs">{t('toolbar.queue')}</TooltipContent>
         </Tooltip>
         <DropdownMenuContent align="start" className="z-50">
           <DropdownMenuItem onClick={() => onAddNode('queue', 'IBM MQ')}>IBM MQ</DropdownMenuItem>
@@ -149,13 +152,13 @@ function Toolbar({
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="API / Protocolo">
+              <Button variant="ghost" size="icon" className="h-9 w-9" aria-label={t('toolbar.api')}>
                 <Globe className="h-4 w-4" />
                 <ChevronDown className="h-3 w-3 ml-[-2px]" />
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs">API / Protocolo</TooltipContent>
+          <TooltipContent side="bottom" className="text-xs">{t('toolbar.api')}</TooltipContent>
         </Tooltip>
         <DropdownMenuContent align="start" className="z-50">
           <DropdownMenuItem onClick={() => onAddNode('external', 'REST')}>REST</DropdownMenuItem>
@@ -168,27 +171,27 @@ function Toolbar({
 
       <Separator orientation="vertical" className="h-6" />
 
-      <ToolbarButton icon={Trash2} label="Deletar (Del)" onClick={onDelete} />
-      <ToolbarButton icon={XCircle} label="Limpar Diagrama" onClick={onClearCanvas} />
-      <ToolbarButton icon={Undo2} label="Desfazer (Ctrl+Z)" onClick={onUndo} />
-      <ToolbarButton icon={Redo2} label="Refazer (Ctrl+Y)" onClick={onRedo} />
+      <ToolbarButton icon={Trash2} label={t('toolbar.deleteSelected')} onClick={onDelete} />
+      <ToolbarButton icon={XCircle} label={t('toolbar.clearDiagram')} onClick={onClearCanvas} />
+      <ToolbarButton icon={Undo2} label={t('toolbar.undo')} onClick={onUndo} />
+      <ToolbarButton icon={Redo2} label={t('toolbar.redo')} onClick={onRedo} />
       <DropdownMenu>
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Auto Layout">
+              <Button variant="ghost" size="icon" className="h-9 w-9" aria-label={t('toolbar.autoLayout')}>
                 <LayoutGrid className="h-4 w-4" />
                 <ChevronDown className="h-3 w-3 ml-[-2px]" />
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs">Auto Layout</TooltipContent>
+          <TooltipContent side="bottom" className="text-xs">{t('toolbar.autoLayout')}</TooltipContent>
         </Tooltip>
         <DropdownMenuContent align="start" className="z-50">
-          <DropdownMenuItem onClick={() => onAutoLayout('elk', 'LR')}>ELK — Esquerda → Direita</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onAutoLayout('elk', 'TB')}>ELK — Cima → Baixo</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onAutoLayout('dagre', 'LR')}>Dagre — Horizontal</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => onAutoLayout('dagre', 'TB')}>Dagre — Vertical</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onAutoLayout('elk', 'LR')}>{t('toolbar.elkLR')}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onAutoLayout('elk', 'TB')}>{t('toolbar.elkTB')}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onAutoLayout('dagre', 'LR')}>{t('toolbar.dagreH')}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => onAutoLayout('dagre', 'TB')}>{t('toolbar.dagreV')}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
 
@@ -198,13 +201,13 @@ function Toolbar({
         <Tooltip>
           <TooltipTrigger asChild>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-9 w-9" aria-label="Exportar">
+              <Button variant="ghost" size="icon" className="h-9 w-9" aria-label={t('toolbar.export')}>
                 <Download className="h-4 w-4" />
                 <ChevronDown className="h-3 w-3 ml-[-2px]" />
               </Button>
             </DropdownMenuTrigger>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs">Exportar</TooltipContent>
+          <TooltipContent side="bottom" className="text-xs">{t('toolbar.export')}</TooltipContent>
         </Tooltip>
         <DropdownMenuContent align="start" className="z-50">
           <DropdownMenuItem onClick={onExportPNG} className="gap-2">
@@ -221,13 +224,13 @@ function Toolbar({
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
-      <ToolbarButton icon={Upload} label="Importar JSON" onClick={onImportJSON} />
+      <ToolbarButton icon={Upload} label={t('toolbar.importJSON')} onClick={onImportJSON} />
 
       <Separator orientation="vertical" className="h-6" />
 
       <ToolbarButton
         icon={darkMode ? Sun : Moon}
-        label={darkMode ? 'Modo Claro' : 'Modo Escuro'}
+        label={darkMode ? t('toolbar.lightMode') : t('toolbar.darkMode')}
         onClick={onToggleDarkMode}
       />
     </div>

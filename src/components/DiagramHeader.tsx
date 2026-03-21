@@ -1,4 +1,5 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { Loader2, Save, LogOut, FolderOpen, RefreshCw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -32,23 +33,24 @@ function DiagramHeader({
   onRefresh,
   onSignOut,
 }: DiagramHeaderProps) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
 
   return (
     <>
       {shareToken && !diagramId && (
         <Badge variant="outline" className="text-xs">
-          Visualizando diagrama compartilhado
+          {t('header.viewingShared')}
         </Badge>
       )}
       {shareToken && diagramId && (
         <Badge variant="secondary" className="text-xs">
-          ✓ Cópia salva em Meus Diagramas
+          {t('header.savedCopy')}
         </Badge>
       )}
       {isCollaborator && (
         <Badge variant="outline" className="text-xs border-blue-500/30 text-blue-600 dark:text-blue-400">
-          Editando diagrama compartilhado
+          {t('header.editingShared')}
         </Badge>
       )}
 
@@ -57,35 +59,35 @@ function DiagramHeader({
           <CollaboratorAvatars collaborators={collaborators} />
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate('/my-diagrams')} aria-label="Meus Diagramas">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => navigate('/my-diagrams')} aria-label={t('header.myDiagrams')}>
                 <FolderOpen className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">Meus Diagramas</TooltipContent>
+            <TooltipContent side="bottom" className="text-xs">{t('header.myDiagrams')}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onRefresh} disabled={refreshing} aria-label="Atualizar diagrama">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onRefresh} disabled={refreshing} aria-label={t('header.update')}>
                 {refreshing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">Atualizar diagrama</TooltipContent>
+            <TooltipContent side="bottom" className="text-xs">{t('header.update')}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onSave} disabled={saving} aria-label="Salvar na nuvem">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onSave} disabled={saving} aria-label={t('header.saveToCloud')}>
                 {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">Salvar na nuvem</TooltipContent>
+            <TooltipContent side="bottom" className="text-xs">{t('header.saveToCloud')}</TooltipContent>
           </Tooltip>
           <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onSignOut} aria-label="Sair">
+              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={onSignOut} aria-label={t('header.logout')}>
                 <LogOut className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent side="bottom" className="text-xs">Sair</TooltipContent>
+            <TooltipContent side="bottom" className="text-xs">{t('header.logout')}</TooltipContent>
           </Tooltip>
         </div>
       )}

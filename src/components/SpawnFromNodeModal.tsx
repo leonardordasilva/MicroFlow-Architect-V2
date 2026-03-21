@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -35,6 +36,7 @@ export default function SpawnFromNodeModal({
   sourceNodeType,
   onConfirm,
 }: SpawnFromNodeModalProps) {
+  const { t } = useTranslation();
   const isQueue = sourceNodeType === 'queue';
   const isService = sourceNodeType === 'service';
   const [type, setType] = useState<NodeType>('database');
@@ -78,32 +80,32 @@ export default function SpawnFromNodeModal({
       <DialogContent className="sm:max-w-[380px]">
         <DialogHeader>
           <DialogTitle className="text-base">
-            Criar a partir de "{sourceNodeLabel}"
+            {t('spawnModal.titleFrom', { label: sourceNodeLabel })}
           </DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           {isQueue ? (
             <div className="space-y-2">
-              <Label>Tipo do objeto</Label>
+              <Label>{t('spawnModal.objectType')}</Label>
               <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
-                Microserviço
+                {t('spawnModal.service')}
               </div>
-              <p className="text-xs text-muted-foreground">Filas só podem criar microserviços</p>
+              <p className="text-xs text-muted-foreground">{t('spawnModal.queueOnlyService')}</p>
             </div>
           ) : (
             <div className="space-y-2">
-              <Label>Tipo do objeto</Label>
+              <Label>{t('spawnModal.objectType')}</Label>
               <Select value={type} onValueChange={handleTypeChange}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className="z-50">
-                  <SelectItem value="service">Microserviço</SelectItem>
-                  {isService && <SelectItem value="library">Biblioteca</SelectItem>}
-                  <SelectItem value="database">Banco de Dados</SelectItem>
-                  <SelectItem value="queue">Fila (IBM MQ/Kafka/RabbitMQ)</SelectItem>
-                  <SelectItem value="external">API (REST/gRPC/GraphQL/WS/HTTPS)</SelectItem>
+                  <SelectItem value="service">{t('spawnModal.service')}</SelectItem>
+                  {isService && <SelectItem value="library">{t('spawnModal.library')}</SelectItem>}
+                  <SelectItem value="database">{t('spawnModal.database')}</SelectItem>
+                  <SelectItem value="queue">{t('spawnModal.queue')}</SelectItem>
+                  <SelectItem value="external">{t('spawnModal.api')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -111,7 +113,7 @@ export default function SpawnFromNodeModal({
 
           {type === 'database' && (
             <div className="space-y-2">
-              <Label>Subtipo</Label>
+              <Label>{t('spawnModal.subtype')}</Label>
               <Select value={subType} onValueChange={setSubType}>
                 <SelectTrigger>
                   <SelectValue />
@@ -126,7 +128,7 @@ export default function SpawnFromNodeModal({
 
           {type === 'queue' && (
             <div className="space-y-2">
-              <Label>Subtipo</Label>
+              <Label>{t('spawnModal.subtype')}</Label>
               <Select value={subType} onValueChange={setSubType}>
                 <SelectTrigger>
                   <SelectValue />
@@ -142,7 +144,7 @@ export default function SpawnFromNodeModal({
 
           {type === 'external' && (
             <div className="space-y-2">
-              <Label>Subtipo</Label>
+              <Label>{t('spawnModal.subtype')}</Label>
               <Select value={subType} onValueChange={setSubType}>
                 <SelectTrigger>
                   <SelectValue />
@@ -166,8 +168,8 @@ export default function SpawnFromNodeModal({
 
             if (isEmbedding) {
               const embeddingMessage = isEmbeddingOracle
-                ? `O Oracle será adicionado como banco interno do nó "${sourceNodeLabel}". Nenhum nó separado será criado no canvas.`
-                : `A biblioteca será adicionada como componente interno do nó "${sourceNodeLabel}". Nenhum nó separado será criado no canvas.`;
+                ? t('spawnModal.oracleAlert', { label: sourceNodeLabel })
+                : t('spawnModal.libraryAlert', { label: sourceNodeLabel });
               return (
                 <Alert className="border-blue-500/30 bg-blue-500/5">
                   <Info className="h-4 w-4 text-blue-500" />
@@ -181,14 +183,14 @@ export default function SpawnFromNodeModal({
               <Alert className="border-muted bg-muted/30">
                 <Info className="h-4 w-4 text-muted-foreground" />
                 <AlertDescription className="text-xs text-muted-foreground">
-                  O nó será criado próximo a "{sourceNodeLabel}". Conecte-os manualmente arrastando entre os handles desejados.
+                  {t('spawnModal.connectManually', { label: sourceNodeLabel })}
                 </AlertDescription>
               </Alert>
             );
           })()}
 
           <div className="space-y-2">
-            <Label>Quantidade</Label>
+            <Label>{t('spawnModal.quantity')}</Label>
             <Input
               type="number"
               min={1}
@@ -201,9 +203,9 @@ export default function SpawnFromNodeModal({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
+            {t('spawnModal.cancel')}
           </Button>
-          <Button onClick={handleConfirm}>Criar</Button>
+          <Button onClick={handleConfirm}>{t('spawnModal.create')}</Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>

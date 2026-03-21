@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next';
 import {
   Dialog,
   DialogContent,
@@ -25,6 +26,7 @@ export default function ProtocolSelectorModal({
   onSelect,
   onCancel,
 }: ProtocolSelectorModalProps) {
+  const { t } = useTranslation();
   const highlighted = currentProtocol ?? defaultProtocol;
 
   const handleClose = (isOpen: boolean) => {
@@ -38,7 +40,7 @@ export default function ProtocolSelectorModal({
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle>Selecionar Protocolo</DialogTitle>
+          <DialogTitle>{t('protocolModal.title')}</DialogTitle>
         </DialogHeader>
         <div className="grid grid-cols-2 gap-2">
           {protocols.map((proto) => {
@@ -64,7 +66,7 @@ export default function ProtocolSelectorModal({
                 />
                 <span className="font-medium">{config.label}</span>
                 <span className="ml-auto text-[10px] text-muted-foreground">
-                  {config.async ? 'async' : 'sync'}
+                  {config.async ? t('protocolModal.async') : t('protocolModal.sync')}
                 </span>
               </button>
             );

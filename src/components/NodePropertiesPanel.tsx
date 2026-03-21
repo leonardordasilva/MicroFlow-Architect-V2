@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import { X, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -16,6 +17,7 @@ interface NodePropertiesPanelProps {
 }
 
 function NodePropertiesPanel({ nodeId, onClose }: NodePropertiesPanelProps) {
+  const { t } = useTranslation();
   const nodes = useDiagramStore((s) => s.nodes);
   const setNodes = useDiagramStore((s) => s.setNodes);
 
@@ -64,7 +66,7 @@ function NodePropertiesPanel({ nodeId, onClose }: NodePropertiesPanelProps) {
   };
 
   const addDb = () => {
-    const updated = [...internalDbs, { label: `DB ${internalDbs.length + 1}`, dbType: 'Oracle' }];
+    const updated = [...internalDbs, { label: t('nodePanel.dbDefault', { n: internalDbs.length + 1 }), dbType: 'Oracle' }];
     setInternalDbs(updated);
     updateNode({ internalDatabases: updated });
   };
@@ -83,7 +85,7 @@ function NodePropertiesPanel({ nodeId, onClose }: NodePropertiesPanelProps) {
   };
 
   const addSvc = () => {
-    const updated = [...internalSvcs, `Biblioteca ${internalSvcs.length + 1}`];
+    const updated = [...internalSvcs, t('nodePanel.libDefault', { n: internalSvcs.length + 1 })];
     setInternalSvcs(updated);
     updateNode({ internalServices: updated });
   };
@@ -95,24 +97,24 @@ function NodePropertiesPanel({ nodeId, onClose }: NodePropertiesPanelProps) {
   };
 
   const typeLabels: Record<string, string> = {
-    service: 'Microserviço',
-    database: 'Banco de Dados',
-    queue: 'Fila',
-    external: 'API Externa',
+    service: t('nodePanel.typeService'),
+    database: t('nodePanel.typeDatabase'),
+    queue: t('nodePanel.typeQueue'),
+    external: t('nodePanel.typeExternal'),
   };
 
   return (
     <div className="absolute right-0 top-0 bottom-0 w-80 bg-card border-l border-border shadow-xl z-40 flex flex-col animate-in slide-in-from-right-5 duration-200">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
-        <h3 className="text-sm font-semibold text-foreground">Propriedades</h3>
-        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} aria-label="Fechar painel">
+        <h3 className="text-sm font-semibold text-foreground">{t('nodePanel.properties')}</h3>
+        <Button variant="ghost" size="icon" className="h-7 w-7" onClick={onClose} aria-label={t('nodePanel.closePanel')}>
           <X className="h-4 w-4" />
         </Button>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <div className="space-y-1.5">
-          <Label className="text-xs">Tipo</Label>
+          <Label className="text-xs">{t('nodePanel.type')}</Label>
           <div className="rounded-md border bg-muted px-3 py-2 text-sm text-muted-foreground">
             {typeLabels[node.type || ''] || node.type}
             {data.subType ? ` (${data.subType})` : ''}
@@ -120,7 +122,7 @@ function NodePropertiesPanel({ nodeId, onClose }: NodePropertiesPanelProps) {
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs">Nome</Label>
+          <Label className="text-xs">{t('nodePanel.name')}</Label>
           <Input
             value={label}
             onChange={(e) => handleLabelChange(e.target.value)}
@@ -132,7 +134,7 @@ function NodePropertiesPanel({ nodeId, onClose }: NodePropertiesPanelProps) {
           <>
             <Separator />
             <div className="space-y-1.5">
-              <Label className="text-xs">Categoria</Label>
+              <Label className="text-xs">{t('nodePanel.category')}</Label>
               <Select
                 value={data.externalCategory || 'Other'}
                 onValueChange={(val) => updateNode({ externalCategory: val as ExternalCategory })}
@@ -155,8 +157,8 @@ function NodePropertiesPanel({ nodeId, onClose }: NodePropertiesPanelProps) {
             <Separator />
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-xs">Bancos Internos</Label>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={addDb} aria-label="Adicionar banco">
+                <Label className="text-xs">{t('nodePanel.internalDbs')}</Label>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={addDb} aria-label={t('nodePanel.addDb')}>
                   <Plus className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -177,7 +179,7 @@ function NodePropertiesPanel({ nodeId, onClose }: NodePropertiesPanelProps) {
                     onChange={(e) => handleDbLabelChange(i, e.target.value)}
                     className="h-8 text-xs flex-1"
                   />
-                  <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => removeDb(i)} aria-label="Remover banco">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => removeDb(i)} aria-label={t('nodePanel.removeDb')}>
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>
@@ -186,8 +188,8 @@ function NodePropertiesPanel({ nodeId, onClose }: NodePropertiesPanelProps) {
 
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <Label className="text-xs">Bibliotecas</Label>
-                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={addSvc} aria-label="Adicionar serviço">
+                <Label className="text-xs">{t('nodePanel.libraries')}</Label>
+                <Button variant="ghost" size="icon" className="h-6 w-6" onClick={addSvc} aria-label={t('nodePanel.addLibrary')}>
                   <Plus className="h-3.5 w-3.5" />
                 </Button>
               </div>
@@ -198,7 +200,7 @@ function NodePropertiesPanel({ nodeId, onClose }: NodePropertiesPanelProps) {
                     onChange={(e) => handleSvcChange(i, e.target.value)}
                     className="h-8 text-xs flex-1"
                   />
-                  <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => removeSvc(i)} aria-label="Remover serviço">
+                  <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => removeSvc(i)} aria-label={t('nodePanel.removeLibrary')}>
                     <Trash2 className="h-3 w-3" />
                   </Button>
                 </div>

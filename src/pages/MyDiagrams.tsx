@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
 import type { DiagramNode, DiagramEdge } from '@/types/diagram';
 import { clearAutoSave } from '@/hooks/useAutoSave';
 import { useNavigate } from 'react-router-dom';
@@ -39,6 +40,7 @@ function DiagramCardSkeleton() {
 }
 
 export default function MyDiagrams() {
+  const { t } = useTranslation();
   const { user } = useAuth();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
@@ -81,33 +83,33 @@ export default function MyDiagrams() {
       const store = useDiagramStore.getState();
       if (store.currentDiagramId === variables.id) {
         store.clearCanvas();
-        store.setDiagramName('Novo Diagrama');
+        store.setDiagramName(t('diagram.newDiagram'));
         store.setCurrentDiagramId(undefined);
         clearAutoSave();
       }
-      toast({ title: 'Diagrama excluído' });
+      toast({ title: t('myDiagrams.deleteSuccess') });
       setDeleteTarget(null);
     },
-    onError: () => toast({ title: 'Erro ao excluir', variant: 'destructive' }),
+    onError: () => toast({ title: t('myDiagrams.deleteError'), variant: 'destructive' }),
   });
 
   const renameMutation = useMutation({
     mutationFn: ({ id, title }: { id: string; title: string }) => renameDiagram(id, title, user!.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['diagrams', user?.id] });
-      toast({ title: 'Diagrama renomeado' });
+      toast({ title: t('myDiagrams.renameSuccess') });
       setEditingId(null);
     },
-    onError: () => toast({ title: 'Erro ao renomear', variant: 'destructive' }),
+    onError: () => toast({ title: t('myDiagrams.renameError'), variant: 'destructive' }),
   });
 
   const duplicateMutation = useMutation({
     mutationFn: ({ id }: { id: string }) => duplicateDiagram(id, user!.id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['diagrams', user?.id] });
-      toast({ title: 'Diagrama duplicado com sucesso' });
+      toast({ title: t('myDiagrams.duplicateSuccess') });
     },
-    onError: () => toast({ title: 'Erro ao duplicar', variant: 'destructive' }),
+    onError: () => toast({ title: t('myDiagrams.duplicateError'), variant: 'destructive' }),
   });
 
   const handleDelete = () => {
@@ -117,12 +119,12 @@ export default function MyDiagrams() {
   const handleRename = (id: string) => {
     const trimmed = editTitle.trim();
     if (!trimmed) {
-      toast({ title: 'Título não pode ser vazio', variant: 'destructive' });
+      toast({ title: t('myDiagrams.titleEmpty'), variant: 'destructive' });
       setEditingId(null);
       return;
     }
     if (trimmed.length > 100) {
-      toast({ title: 'Título muito longo', description: 'Máximo de 100 caracteres', variant: 'destructive' });
+      toast({ title: t('myDiagrams.titleTooLong'), description: t('myDiagrams.titleTooLongDesc'), variant: 'destructive' });
       return;
     }
     renameMutation.mutate({ id, title: trimmed });
@@ -151,28 +153,28 @@ export default function MyDiagrams() {
       <div className="mx-auto max-w-5xl">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/')} aria-label="Voltar">
+            <Button variant="ghost" size="icon" onClick={() => navigate('/')} aria-label={t('myDiagrams.back')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <h1 className="text-2xl font-bold text-foreground">Meus Diagramas</h1>
+            <h1 className="text-2xl font-bold text-foreground">{t('myDiagrams.title')}</h1>
           </div>
           <Button onClick={() => {
             const store = useDiagramStore.getState();
             store.clearCanvas();
-            store.setDiagramName('Novo Diagrama');
+            store.setDiagramName(t('diagram.newDiagram'));
             store.setCurrentDiagramId(undefined);
             clearAutoSave();
             navigate('/');
           }}>
-            <Plus className="mr-2 h-4 w-4" /> Novo Diagrama
+            <Plus className="mr-2 h-4 w-4" /> {t('myDiagrams.newDiagram')}
           </Button>
         </div>
 
         {isError && (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
-            <p className="mb-4">Erro ao carregar diagramas.</p>
+            <p className="mb-4">{t('myDiagrams.loadError')}</p>
             <Button variant="outline" onClick={() => queryClient.invalidateQueries({ queryKey: ['diagrams', user?.id] })}>
-              <RefreshCw className="mr-2 h-4 w-4" /> Tentar novamente
+              <RefreshCw className="mr-2 h-4 w-4" /> {t('common.tryAgain')}
             </Button>
           </div>
         )}
@@ -184,10 +186,10 @@ export default function MyDiagrams() {
         ) : !isError && diagrams.length === 0 && sharedWithMe.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
             <FileText className="mb-4 h-14 w-14 opacity-30" />
-            <p className="mb-1">Nenhum diagrama salvo ainda</p>
-            <p className="mb-4 text-sm">Crie seu primeiro diagrama de arquitetura</p>
+            <p className="mb-1">{t('myDiagrams.emptyTitle')}</p>
+            <p className="mb-4 text-sm">{t('myDiagrams.emptyDesc')}</p>
             <Button onClick={() => navigate('/')}>
-              <Plus className="mr-2 h-4 w-4" /> Criar primeiro diagrama
+              <Plus className="mr-2 h-4 w-4" />{t('myDiagrams.createFirst')}
             </Button>
           </div>
         ) : !isError ? (
@@ -220,10 +222,10 @@ export default function MyDiagrams() {
                       )}
                     </div>
                     <p className="text-xs text-muted-foreground">
-                      {d.nodes.length} nós · {d.edges.length} conexões
+                      {t('myDiagrams.stats', { nodes: d.nodes.length, edges: d.edges.length })}
                     </p>
                     <p className="mt-1 text-xs text-muted-foreground">
-                      Atualizado em {format(new Date(d.updated_at), 'dd/MM/yyyy HH:mm')}
+                      {t('myDiagrams.updatedAt', { date: format(new Date(d.updated_at), 'dd/MM/yyyy HH:mm') })}
                     </p>
                     <TooltipProvider delayDuration={300}>
                       <div className="mt-2 flex justify-end gap-1">
@@ -235,12 +237,12 @@ export default function MyDiagrams() {
                                 e.stopPropagation();
                                 setShareTarget({ diagramId: d.id, ownerId: d.owner_id });
                               }}
-                              aria-label="Compartilhar"
+                              aria-label={t('myDiagrams.share')}
                             >
                               <Share2 className="h-3.5 w-3.5" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Compartilhar</TooltipContent>
+                          <TooltipContent>{t('myDiagrams.share')}</TooltipContent>
                         </Tooltip>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -250,13 +252,13 @@ export default function MyDiagrams() {
                                 e.stopPropagation();
                                 duplicateMutation.mutate({ id: d.id });
                               }}
-                              aria-label="Duplicar"
+                              aria-label={t('myDiagrams.duplicate')}
                               disabled={duplicateMutation.isPending}
                             >
                               <Copy className="h-3.5 w-3.5" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Duplicar</TooltipContent>
+                          <TooltipContent>{t('myDiagrams.duplicate')}</TooltipContent>
                         </Tooltip>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -267,12 +269,12 @@ export default function MyDiagrams() {
                                 setEditingId(d.id);
                                 setEditTitle(d.title);
                               }}
-                              aria-label="Renomear"
+                              aria-label={t('myDiagrams.rename')}
                             >
                               <Pencil className="h-3.5 w-3.5" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Renomear</TooltipContent>
+                          <TooltipContent>{t('myDiagrams.rename')}</TooltipContent>
                         </Tooltip>
                         <Tooltip>
                           <TooltipTrigger asChild>
@@ -280,12 +282,12 @@ export default function MyDiagrams() {
                               variant="ghost" size="icon"
                               className="h-7 w-7 text-destructive hover:text-destructive"
                               onClick={(e) => { e.stopPropagation(); setDeleteTarget({ id: d.id, ownerId: d.owner_id }); }}
-                              aria-label="Excluir"
+                              aria-label={t('myDiagrams.delete')}
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </TooltipTrigger>
-                          <TooltipContent>Excluir</TooltipContent>
+                          <TooltipContent>{t('myDiagrams.delete')}</TooltipContent>
                         </Tooltip>
                       </div>
                     </TooltipProvider>
@@ -298,8 +300,8 @@ export default function MyDiagrams() {
               <div className="mt-6 flex justify-center">
                 <Button variant="outline" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
                   {isFetchingNextPage ? (
-                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Carregando...</>
-                  ) : 'Carregar mais'}
+                    <><Loader2 className="mr-2 h-4 w-4 animate-spin" />{t('myDiagrams.loading')}</>
+                  ) : t('myDiagrams.loadMore')}
                 </Button>
               </div>
             )}
@@ -309,7 +311,7 @@ export default function MyDiagrams() {
               <div className="mt-10">
                 <div className="mb-4 flex items-center gap-2">
                   <Users className="h-5 w-5 text-muted-foreground" />
-                  <h2 className="text-lg font-semibold text-foreground">Compartilhados comigo</h2>
+                  <h2 className="text-lg font-semibold text-foreground">{t('myDiagrams.sharedWithMe')}</h2>
                 </div>
                 {loadingShared ? (
                   <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -325,10 +327,10 @@ export default function MyDiagrams() {
                       >
                         <h3 className="truncate font-semibold text-foreground mb-2">{item.title}</h3>
                         <p className="text-xs text-muted-foreground">
-                          Atualizado em {format(new Date(item.updated_at), 'dd/MM/yyyy HH:mm')}
+                          {t('myDiagrams.updatedAt', { date: format(new Date(item.updated_at), 'dd/MM/yyyy HH:mm') })}
                         </p>
                         <Badge variant="secondary" className="mt-2 w-fit text-xs">
-                          Compartilhado por {item.owner_email}
+                          {t('myDiagrams.sharedBy', { email: item.owner_email })}
                         </Badge>
                       </div>
                     ))}
@@ -343,12 +345,12 @@ export default function MyDiagrams() {
       <AlertDialog open={!!deleteTarget} onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Excluir diagrama</AlertDialogTitle>
-            <AlertDialogDescription>Tem certeza? Esta ação não pode ser desfeita.</AlertDialogDescription>
+            <AlertDialogTitle>{t('myDiagrams.deleteTitle')}</AlertDialogTitle>
+            <AlertDialogDescription>{t('myDiagrams.deleteDesc')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDelete}>Excluir</AlertDialogAction>
+            <AlertDialogCancel>{t('myDiagrams.cancel')}</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>{t('myDiagrams.delete')}</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
