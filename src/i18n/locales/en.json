@@ -314,7 +314,8 @@
     "duplicateError": "Failed to duplicate",
     "titleEmpty": "Title cannot be empty",
     "titleTooLong": "Title too long",
-    "titleTooLongDesc": "Maximum 100 characters"
+    "titleTooLongDesc": "Maximum 100 characters",
+    "copyOf": "Copy of {{title}}"
   },
   "sharedDiagram": {
     "loading": "Loading diagram...",

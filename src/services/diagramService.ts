@@ -3,6 +3,7 @@ import type { DiagramNode, DiagramEdge } from '@/types/diagram';
 import type { Tables, TablesInsert, TablesUpdate } from '@/integrations/supabase/types';
 import { DbDiagramNodesSchema, DbDiagramEdgesSchema } from '@/schemas/diagramSchema';
 import { encryptDiagramData, decryptDiagramData } from '@/services/cryptoService';
+import i18n from '@/i18n';
 
 // Use Supabase generated type for rows
 type DiagramRow = Tables<'diagrams'>;
@@ -285,7 +286,7 @@ export async function duplicateDiagram(id: string, ownerId: string): Promise<Dia
   if (!original) throw new Error('Diagrama original não encontrado');
 
   return saveDiagram(
-    `Cópia de ${original.title}`,
+    i18n.t('myDiagrams.copyOf', { title: original.title }),
     original.nodes,
     original.edges,
     ownerId,

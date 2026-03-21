@@ -314,7 +314,8 @@
     "duplicateError": "Erro ao duplicar",
     "titleEmpty": "Título não pode ser vazio",
     "titleTooLong": "Título muito longo",
-    "titleTooLongDesc": "Máximo de 100 caracteres"
+    "titleTooLongDesc": "Máximo de 100 caracteres",
+    "copyOf": "Cópia de {{title}}"
   },
   "sharedDiagram": {
     "loading": "Carregando diagrama...",
