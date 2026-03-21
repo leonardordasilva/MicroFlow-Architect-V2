@@ -15,7 +15,6 @@ import {
   Zap,
   Heart,
   ChevronRight,
-  Github,
 } from 'lucide-react';
 import heroImg from '../img/High-quality_technical_diagram_of_microservices_ar-1772109807434.avif';
 import logoIcon from '../img/MicroFlow_Icon_Low.avif';
@@ -25,15 +24,13 @@ import logoIcon from '../img/MicroFlow_Icon_Low.avif';
 const copy = {
   pt: {
     nav: {
-      cta: 'Comece grátis',
+      cta: 'Login',
       lang: 'EN',
     },
     hero: {
-      badge: 'Score de auditoria técnica: 99/100',
       headline: 'Projete arquiteturas de microsserviços visualmente',
       sub: 'Crie diagramas profissionais com drag-and-drop, colaboração em tempo real e exportação para PNG, SVG, Mermaid e JSON. Sem instalação.',
-      ctaPrimary: 'Comece grátis',
-      ctaSecondary: 'Ver no GitHub',
+      ctaPrimary: 'Login',
       pills: ['Undo/Redo', 'Dark Mode', 'AES-256', '11 Protocolos'],
     },
     nodes: {
@@ -110,7 +107,7 @@ const copy = {
       steps: [
         {
           title: 'Crie sua conta',
-          desc: 'Cadastro gratuito com e-mail e senha. Confirmação por e-mail.',
+          desc: 'Cadastro com e-mail e senha. Acesse imediatamente após o login.',
         },
         {
           title: 'Monte seu diagrama',
@@ -138,7 +135,7 @@ const copy = {
     finalCta: {
       headline: 'Pronto para visualizar sua arquitetura?',
       sub: 'Comece gratuitamente hoje. Sem cartão de crédito.',
-      btn: 'Começar agora',
+      btn: 'Login',
     },
     footer: {
       tagline: 'Editor visual de arquiteturas de microsserviços',
@@ -149,15 +146,13 @@ const copy = {
   },
   en: {
     nav: {
-      cta: 'Start free',
+      cta: 'Login',
       lang: 'PT',
     },
     hero: {
-      badge: 'Technical audit score: 99/100',
       headline: 'Design microservices architectures visually',
       sub: 'Create professional diagrams with drag-and-drop, real-time collaboration, and export to PNG, SVG, Mermaid and JSON. No install needed.',
-      ctaPrimary: 'Start free',
-      ctaSecondary: 'View on GitHub',
+      ctaPrimary: 'Login',
       pills: ['Undo/Redo', 'Dark Mode', 'AES-256', '11 Protocols'],
     },
     nodes: {
@@ -234,7 +229,7 @@ const copy = {
       steps: [
         {
           title: 'Create your account',
-          desc: 'Free sign-up with email and password. Email confirmation.',
+          desc: 'Sign up with email and password. Access immediately after login.',
         },
         {
           title: 'Build your diagram',
@@ -262,7 +257,7 @@ const copy = {
     finalCta: {
       headline: 'Ready to visualize your architecture?',
       sub: 'Start free today. No credit card required.',
-      btn: 'Get started',
+      btn: 'Login',
     },
     footer: {
       tagline: 'Visual editor for microservices architectures',
@@ -302,27 +297,41 @@ const featureIcons = [Move, GitBranch, Undo2, Download];
 
 const securityIcons = [Shield, Lock, Code, Zap];
 
-// ─── Scroll reveal hook ─────────────────────────────────────────────────────────
+// ─── Scroll reveal (fixed: re-runs when lang changes) ───────────────────────
 
-function useScrollReveal() {
+function useScrollReveal(lang: string) {
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            entry.target.classList.add('reveal-visible');
-          }
-        });
-      },
-      { threshold: 0.1, rootMargin: '0px 0px -40px 0px' }
-    );
-
-    const elements = document.querySelectorAll('[data-reveal]');
-    elements.forEach((el) => observer.observe(el));
-
-    return () => observer.disconnect();
-  }, []);
+    let observer: IntersectionObserver | undefined;
+    const raf = requestAnimationFrame(() => {
+      observer = new IntersectionObserver(
+        (entries) => {
+          entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+              (entry.target as HTMLElement).classList.add('sr-visible');
+              observer?.unobserve(entry.target);
+            }
+          });
+        },
+        { threshold: 0.07, rootMargin: '0px 0px -40px 0px' }
+      );
+      document.querySelectorAll('[data-sr]').forEach((el) => {
+        (el as HTMLElement).classList.remove('sr-visible');
+        observer!.observe(el);
+      });
+    });
+    return () => {
+      cancelAnimationFrame(raf);
+      observer?.disconnect();
+    };
+  }, [lang]);
 }
+
+const navLinks = {
+  pt: ['Nós', 'Funcionalidades', 'Protocolos', 'Segurança', 'Como Funciona'],
+  en: ['Nodes', 'Features', 'Protocols', 'Security', 'How It Works'],
+};
+const navHrefs = ['#nodes', '#features', '#protocols', '#security', '#how-it-works'];
+const backToTopLabel = { pt: '↑ Topo', en: '↑ Top' };
 
 // ─── Main Component ─────────────────────────────────────────────────────────────
 
@@ -358,7 +367,7 @@ export default function Landing() {
     return () => window.removeEventListener('scroll', handler);
   }, []);
 
-  useScrollReveal();
+  useScrollReveal(lang);
 
   const glassCard = 'rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10 p-6';
   const sectionWrapper = 'py-20 px-6 max-w-6xl mx-auto';
@@ -373,47 +382,234 @@ export default function Landing() {
         overflowX: 'hidden',
       }}
     >
-      {/* Inline styles for reveal animation and nav scroll */}
       <style>{`
-        [data-reveal] {
+        /* ── Smooth scroll ── */
+        html { scroll-behavior: smooth; }
+
+        /* ── Scroll reveal ── */
+        [data-sr] {
           opacity: 0;
-          transform: translateY(24px);
-          transition: opacity 0.6s ease, transform 0.6s ease;
+          transform: translateY(22px);
+          transition: opacity 0.55s cubic-bezier(0.4,0,0.2,1),
+                      transform 0.55s cubic-bezier(0.4,0,0.2,1);
         }
-        [data-reveal].reveal-visible {
-          opacity: 1;
-          transform: translateY(0);
+        [data-sr].sr-visible { opacity: 1; transform: translateY(0); }
+        [data-sr][data-delay="100"] { transition-delay: 0.10s; }
+        [data-sr][data-delay="150"] { transition-delay: 0.15s; }
+        [data-sr][data-delay="200"] { transition-delay: 0.20s; }
+        [data-sr][data-delay="250"] { transition-delay: 0.25s; }
+        [data-sr][data-delay="300"] { transition-delay: 0.30s; }
+        [data-sr][data-delay="350"] { transition-delay: 0.35s; }
+
+        /* ── Keyframes ── */
+        @keyframes float {
+          0%,100% { transform: translateY(0px) scale(1); }
+          50% { transform: translateY(-18px) scale(1.04); }
         }
-        .nav-scrolled {
-          box-shadow: 0 4px 32px rgba(0,0,0,0.4);
+        @keyframes floatSlow {
+          0%,100% { transform: translateY(0px) scale(1); }
+          50% { transform: translateY(-28px) scale(1.06); }
         }
-        .protocol-chip:hover {
-          background: rgba(255,255,255,0.08);
+        @keyframes shimmer {
+          0% { background-position: -400% center; }
+          100% { background-position: 400% center; }
         }
-        .feature-card:hover {
-          background: rgba(255,255,255,0.08);
-          border-color: rgba(59,130,246,0.3);
+        @keyframes pulseRing {
+          0% { transform: scale(1); opacity: 0.6; }
+          100% { transform: scale(1.55); opacity: 0; }
         }
-        .node-card:hover {
-          transform: scale(1.02);
-          border-color: rgba(255,255,255,0.2);
+        @keyframes gradientBorder {
+          0%,100% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+        }
+        @keyframes fadeInDown {
+          from { opacity: 0; transform: translateY(-12px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes glowPulse {
+          0%,100% { opacity: 0.5; }
+          50%     { opacity: 1; }
+        }
+        @keyframes rotateSlow {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+
+        /* ── Navbar ── */
+        .nav-scrolled { box-shadow: 0 4px 32px rgba(0,0,0,0.5); }
+        .nav-logo { animation: fadeInDown 0.5s ease both; }
+        .nav-cta  { animation: fadeInDown 0.5s 0.15s ease both; }
+
+        /* ── Hero headline shimmer ── */
+        .headline-shimmer {
+          background: linear-gradient(
+            90deg,
+            #f1f5f9 0%, #f1f5f9 30%,
+            #93c5fd 45%, #c4b5fd 55%,
+            #f1f5f9 70%, #f1f5f9 100%
+          );
+          background-size: 300% auto;
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          animation: shimmer 4s linear infinite;
+        }
+
+        /* ── Hero badge bounce-in ── */
+        .hero-badge {
+          animation: fadeInDown 0.6s cubic-bezier(0.34,1.56,0.64,1) both;
+        }
+
+        /* ── Floating blobs ── */
+        .blob-1 {
+          animation: float 7s ease-in-out infinite;
+        }
+        .blob-2 {
+          animation: floatSlow 10s ease-in-out infinite 2s;
+        }
+        .blob-3 {
+          animation: float 8s ease-in-out infinite 4s;
+        }
+
+        /* ── Hero image glow animation ── */
+        .hero-glow {
+          background: linear-gradient(135deg, rgba(59,130,246,0.5), rgba(139,92,246,0.3), rgba(16,185,129,0.3));
+          background-size: 200% 200%;
+          animation: gradientBorder 4s ease infinite;
+        }
+
+        /* ── Buttons ── */
+        .btn-primary {
+          position: relative;
+          transition: all 0.2s ease !important;
         }
         .btn-primary:hover {
-          background: #ea6c00;
-          box-shadow: 0 0 32px rgba(249,115,22,0.4);
+          background: #ea6c00 !important;
+          box-shadow: 0 0 36px rgba(249,115,22,0.45), 0 8px 24px rgba(249,115,22,0.2);
+          transform: translateY(-1px);
         }
         .btn-outline:hover {
-          background: rgba(255,255,255,0.08);
-          border-color: rgba(255,255,255,0.3);
+          background: rgba(255,255,255,0.09) !important;
+          border-color: rgba(255,255,255,0.3) !important;
+          transform: translateY(-1px);
+        }
+
+        /* ── Node cards ── */
+        .node-card {
+          transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease !important;
+        }
+        .node-card:hover {
+          transform: translateY(-4px) scale(1.01) !important;
+        }
+
+        /* ── Feature cards ── */
+        .feature-card {
+          transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+        }
+        .feature-card:hover {
+          background: rgba(59,130,246,0.07) !important;
+          border-color: rgba(59,130,246,0.35) !important;
+          box-shadow: 0 0 0 1px rgba(59,130,246,0.15), 0 8px 32px rgba(59,130,246,0.12) !important;
+        }
+
+        /* ── Security cards ── */
+        .security-card {
+          transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease !important;
+        }
+        .security-card:hover {
+          background: rgba(16,185,129,0.07) !important;
+          border-color: rgba(16,185,129,0.35) !important;
+          box-shadow: 0 0 0 1px rgba(16,185,129,0.15), 0 8px 32px rgba(16,185,129,0.1) !important;
+        }
+
+        /* ── Step cards ── */
+        .step-card {
+          transition: border-color 0.2s ease, background 0.2s ease, transform 0.2s ease !important;
         }
         .step-card:hover {
-          border-color: rgba(59,130,246,0.4);
-          background: rgba(255,255,255,0.07);
+          border-color: rgba(59,130,246,0.45) !important;
+          background: rgba(59,130,246,0.06) !important;
+          transform: translateY(-3px) !important;
         }
+
+        /* ── Protocol chips ── */
+        .protocol-chip {
+          transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease !important;
+        }
+        .protocol-chip:hover {
+          background: rgba(255,255,255,0.1) !important;
+          transform: translateY(-2px) !important;
+        }
+
+        /* ── Section title gradient accent ── */
+        .section-accent {
+          display: inline-block;
+          background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+        }
+
+        /* ── Shortcut kbd ── */
+        .kbd-key {
+          transition: background 0.15s ease, color 0.15s ease !important;
+        }
+        .kbd-key:hover {
+          background: rgba(59,130,246,0.25) !important;
+          color: #93c5fd !important;
+        }
+
+        /* ── Responsive ── */
         @media (max-width: 768px) {
           .hero-grid { grid-template-columns: 1fr !important; }
           .feature-alt-grid { grid-template-columns: 1fr !important; }
           .feature-alt-grid .order-first { order: -1 !important; }
+        }
+
+        /* ── Nav section links ── */
+        .nav-section-link {
+          color: #94a3b8;
+          text-decoration: none;
+          font-size: 14px;
+          font-weight: 500;
+          padding: 6px 10px;
+          border-radius: 8px;
+          transition: color 0.15s ease, background 0.15s ease;
+          white-space: nowrap;
+        }
+        .nav-section-link:hover {
+          color: #e2e8f0;
+          background: rgba(255,255,255,0.06);
+        }
+        .nav-section-links {
+          display: flex;
+          gap: 2px;
+          align-items: center;
+        }
+        @media (max-width: 900px) {
+          .nav-section-links { display: none !important; }
+        }
+
+        /* ── Back to top button ── */
+        .back-to-top {
+          display: inline-flex;
+          align-items: center;
+          gap: 6px;
+          margin-top: 48px;
+          background: rgba(255,255,255,0.05);
+          border: 1px solid rgba(255,255,255,0.1);
+          border-radius: 100px;
+          padding: 7px 18px;
+          font-size: 13px;
+          font-weight: 500;
+          color: #64748b;
+          cursor: pointer;
+          transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+        .back-to-top:hover {
+          color: #94a3b8;
+          background: rgba(255,255,255,0.08);
+          border-color: rgba(255,255,255,0.18);
         }
       `}</style>
 
@@ -445,7 +641,7 @@ export default function Landing() {
           }}
         >
           {/* Logo */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div className="nav-logo" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <img
               src={logoIcon}
               alt="MicroFlow Architect logo"
@@ -463,6 +659,15 @@ export default function Landing() {
               MicroFlow Architect
             </span>
           </div>
+
+          {/* Section links */}
+          <nav className="nav-section-links">
+            {navLinks[lang].map((label, i) => (
+              <a key={navHrefs[i]} href={navHrefs[i]} className="nav-section-link">
+                {label}
+              </a>
+            ))}
+          </nav>
 
           {/* Right side */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -485,7 +690,7 @@ export default function Landing() {
               {c.nav.lang}
             </button>
             <Link
-              to="/"
+              to="/app"
               style={{
                 background: '#f97316',
                 color: '#fff',
@@ -500,7 +705,7 @@ export default function Landing() {
                 gap: '6px',
                 cursor: 'pointer',
               }}
-              className="btn-primary"
+              className="btn-primary nav-cta"
             >
               {c.nav.cta}
               <ChevronRight size={14} />
@@ -522,6 +727,23 @@ export default function Landing() {
           overflow: 'hidden',
         }}
       >
+        {/* Animated background blobs */}
+        <div className="blob-1" style={{
+          position: 'absolute', top: '10%', left: '5%', width: '400px', height: '400px',
+          borderRadius: '50%', background: 'radial-gradient(circle, rgba(37,99,235,0.18) 0%, transparent 70%)',
+          filter: 'blur(40px)', pointerEvents: 'none',
+        }} />
+        <div className="blob-2" style={{
+          position: 'absolute', top: '20%', right: '10%', width: '500px', height: '500px',
+          borderRadius: '50%', background: 'radial-gradient(circle, rgba(139,92,246,0.12) 0%, transparent 70%)',
+          filter: 'blur(60px)', pointerEvents: 'none',
+        }} />
+        <div className="blob-3" style={{
+          position: 'absolute', bottom: '5%', left: '40%', width: '350px', height: '350px',
+          borderRadius: '50%', background: 'radial-gradient(circle, rgba(16,185,129,0.1) 0%, transparent 70%)',
+          filter: 'blur(50px)', pointerEvents: 'none',
+        }} />
+
         {/* Decorative glow */}
         <div
           style={{
@@ -536,36 +758,6 @@ export default function Landing() {
         />
 
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
-          {/* Badge */}
-          <div
-            data-reveal
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              background: 'rgba(37,99,235,0.12)',
-              border: '1px solid rgba(59,130,246,0.3)',
-              borderRadius: '100px',
-              padding: '6px 16px',
-              marginBottom: '28px',
-            }}
-          >
-            <div
-              style={{
-                width: '6px',
-                height: '6px',
-                borderRadius: '50%',
-                background: '#3b82f6',
-                boxShadow: '0 0 8px #3b82f6',
-              }}
-            />
-            <span
-              style={{ fontSize: '13px', color: '#93c5fd', fontWeight: 500, letterSpacing: '0.2px' }}
-            >
-              {c.hero.badge}
-            </span>
-          </div>
-
           {/* Hero grid */}
           <div
             className="hero-grid"
@@ -577,9 +769,8 @@ export default function Landing() {
             }}
           >
             {/* Left: text */}
-            <div>
+            <div data-sr>
               <h1
-                data-reveal
                 style={{
                   fontFamily: "'Space Grotesk', sans-serif",
                   fontWeight: 700,
@@ -590,10 +781,9 @@ export default function Landing() {
                   marginBottom: '20px',
                 }}
               >
-                {c.hero.headline}
+                <span className="headline-shimmer">{c.hero.headline}</span>
               </h1>
               <p
-                data-reveal
                 style={{
                   fontSize: '18px',
                   lineHeight: 1.7,
@@ -607,11 +797,10 @@ export default function Landing() {
 
               {/* CTA buttons */}
               <div
-                data-reveal
                 style={{ display: 'flex', gap: '16px', flexWrap: 'wrap', marginBottom: '40px' }}
               >
                 <Link
-                  to="/"
+                  to="/app"
                   className="btn-primary"
                   style={{
                     background: '#f97316',
@@ -632,34 +821,10 @@ export default function Landing() {
                   {c.hero.ctaPrimary}
                   <ChevronRight size={18} />
                 </Link>
-                <a
-                  href="https://github.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn-outline"
-                  style={{
-                    background: 'rgba(255,255,255,0.05)',
-                    color: '#e2e8f0',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    borderRadius: '12px',
-                    padding: '14px 28px',
-                    fontWeight: 600,
-                    fontSize: '16px',
-                    textDecoration: 'none',
-                    transition: 'all 0.2s ease',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <Github size={18} />
-                  {c.hero.ctaSecondary}
-                </a>
               </div>
 
               {/* Pills */}
-              <div data-reveal style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
                 {c.hero.pills.map((pill) => (
                   <span
                     key={pill}
@@ -680,15 +845,14 @@ export default function Landing() {
             </div>
 
             {/* Right: hero image */}
-            <div data-reveal style={{ position: 'relative' }}>
+            <div data-sr data-delay="200" style={{ position: 'relative' }}>
               {/* Glow behind image */}
               <div
+                className="hero-glow"
                 style={{
                   position: 'absolute',
                   inset: '-2px',
                   borderRadius: '20px',
-                  background:
-                    'linear-gradient(135deg, rgba(59,130,246,0.4) 0%, rgba(139,92,246,0.2) 50%, rgba(16,185,129,0.2) 100%)',
                   filter: 'blur(12px)',
                   zIndex: 0,
                 }}
@@ -735,10 +899,10 @@ export default function Landing() {
       </section>
 
       {/* ── Node Types Section ── */}
-      <section style={{ padding: '80px 24px', background: 'rgba(255,255,255,0.02)' }}>
+      <section id="nodes" style={{ padding: '80px 24px', background: 'rgba(255,255,255,0.02)' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <h2
-            data-reveal
+            data-sr
             style={{
               fontFamily: "'Space Grotesk', sans-serif",
               fontWeight: 700,
@@ -752,7 +916,8 @@ export default function Landing() {
             {c.nodes.title}
           </h2>
           <p
-            data-reveal
+            data-sr
+            data-delay="100"
             style={{
               textAlign: 'center',
               color: '#64748b',
@@ -766,6 +931,8 @@ export default function Landing() {
           </p>
 
           <div
+            data-sr
+            data-delay="200"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
@@ -778,7 +945,6 @@ export default function Landing() {
               return (
                 <div
                   key={node.name}
-                  data-reveal
                   className="node-card"
                   style={{
                     borderRadius: '16px',
@@ -822,14 +988,23 @@ export default function Landing() {
               );
             })}
           </div>
+          {/* Back to top */}
+          <div style={{ textAlign: 'center' }}>
+            <button
+              className="back-to-top"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            >
+              {backToTopLabel[lang]}
+            </button>
+          </div>
         </div>
       </section>
 
       {/* ── Feature Highlights ── */}
-      <section style={{ padding: '80px 24px' }}>
+      <section id="features" style={{ padding: '80px 24px' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <h2
-            data-reveal
+            data-sr
             style={{
               fontFamily: "'Space Grotesk', sans-serif",
               fontWeight: 700,
@@ -847,10 +1022,12 @@ export default function Landing() {
             {c.features.items.map((feat, i) => {
               const Icon = featureIcons[i];
               const isEven = i % 2 === 0;
+              const delays = ['0', '100', '200', '300'] as const;
               return (
                 <div
                   key={feat.heading}
-                  data-reveal
+                  data-sr
+                  data-delay={delays[i]}
                   className="feature-alt-grid"
                   style={{
                     display: 'grid',
@@ -947,11 +1124,21 @@ export default function Landing() {
               );
             })}
           </div>
+          {/* Back to top */}
+          <div style={{ textAlign: 'center' }}>
+            <button
+              className="back-to-top"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            >
+              {backToTopLabel[lang]}
+            </button>
+          </div>
         </div>
       </section>
 
       {/* ── Protocols Grid ── */}
       <section
+        id="protocols"
         style={{
           padding: '80px 24px',
           background: 'rgba(255,255,255,0.02)',
@@ -959,7 +1146,7 @@ export default function Landing() {
       >
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <h2
-            data-reveal
+            data-sr
             style={{
               fontFamily: "'Space Grotesk', sans-serif",
               fontWeight: 700,
@@ -973,7 +1160,8 @@ export default function Landing() {
             {c.protocols.title}
           </h2>
           <p
-            data-reveal
+            data-sr
+            data-delay="100"
             style={{
               textAlign: 'center',
               color: '#64748b',
@@ -985,7 +1173,8 @@ export default function Landing() {
           </p>
 
           <div
-            data-reveal
+            data-sr
+            data-delay="200"
             style={{
               display: 'grid',
               gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
@@ -1044,14 +1233,23 @@ export default function Landing() {
               </div>
             ))}
           </div>
+          {/* Back to top */}
+          <div style={{ textAlign: 'center' }}>
+            <button
+              className="back-to-top"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            >
+              {backToTopLabel[lang]}
+            </button>
+          </div>
         </div>
       </section>
 
       {/* ── Security Section ── */}
-      <section style={{ padding: '80px 24px' }}>
+      <section id="security" style={{ padding: '80px 24px' }}>
         <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
           <h2
-            data-reveal
+            data-sr
             style={{
               fontFamily: "'Space Grotesk', sans-serif",
               fontWeight: 700,
@@ -1074,11 +1272,13 @@ export default function Landing() {
           >
             {c.security.items.map((item, i) => {
               const Icon = securityIcons[i];
+              const secDelays = ['0', '100', '200', '300'] as const;
               return (
                 <div
                   key={item.name}
-                  data-reveal
-                  className="feature-card"
+                  data-sr
+                  data-delay={secDelays[i]}
+                  className="security-card"
                   style={{
                     borderRadius: '16px',
                     background: 'rgba(255,255,255,0.04)',
@@ -1121,11 +1321,21 @@ export default function Landing() {
               );
             })}
           </div>
+          {/* Back to top */}
+          <div style={{ textAlign: 'center' }}>
+            <button
+              className="back-to-top"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            >
+              {backToTopLabel[lang]}
+            </button>
+          </div>
         </div>
       </section>
 
       {/* ── How It Works ── */}
       <section
+        id="how-it-works"
         style={{
           padding: '80px 24px',
           background: 'rgba(255,255,255,0.02)',
@@ -1133,7 +1343,7 @@ export default function Landing() {
       >
         <div style={{ maxWidth: '900px', margin: '0 auto' }}>
           <h2
-            data-reveal
+            data-sr
             style={{
               fontFamily: "'Space Grotesk', sans-serif",
               fontWeight: 700,
@@ -1155,10 +1365,13 @@ export default function Landing() {
               position: 'relative',
             }}
           >
-            {c.howItWorks.steps.map((step, i) => (
+            {c.howItWorks.steps.map((step, i) => {
+              const stepDelays = ['100', '200', '300'] as const;
+              return (
               <div
                 key={step.title}
-                data-reveal
+                data-sr
+                data-delay={stepDelays[i]}
                 className="step-card"
                 style={{
                   borderRadius: '16px',
@@ -1206,101 +1419,22 @@ export default function Landing() {
                   {step.desc}
                 </p>
               </div>
-            ))}
+              );
+            })}
+          </div>
+          {/* Back to top */}
+          <div style={{ textAlign: 'center' }}>
+            <button
+              className="back-to-top"
+              onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            >
+              {backToTopLabel[lang]}
+            </button>
           </div>
         </div>
       </section>
 
       {/* ── Keyboard Shortcuts ── */}
-      <section style={{ padding: '80px 24px' }}>
-        <div style={{ maxWidth: '720px', margin: '0 auto' }}>
-          <h2
-            data-reveal
-            style={{
-              fontFamily: "'Space Grotesk', sans-serif",
-              fontWeight: 700,
-              fontSize: 'clamp(26px, 4vw, 40px)',
-              textAlign: 'center',
-              marginBottom: '40px',
-              color: '#f1f5f9',
-              letterSpacing: '-0.5px',
-            }}
-          >
-            {c.shortcuts.title}
-          </h2>
-
-          <div
-            data-reveal
-            style={{
-              borderRadius: '16px',
-              background: 'rgba(255,255,255,0.04)',
-              border: '1px solid rgba(255,255,255,0.08)',
-              overflow: 'hidden',
-            }}
-          >
-            {/* Table header */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                background: 'rgba(255,255,255,0.04)',
-                borderBottom: '1px solid rgba(255,255,255,0.08)',
-                padding: '12px 24px',
-              }}
-            >
-              {c.shortcuts.headers.map((h) => (
-                <span
-                  key={h}
-                  style={{
-                    fontFamily: "'Space Grotesk', sans-serif",
-                    fontWeight: 600,
-                    fontSize: '12px',
-                    color: '#475569',
-                    letterSpacing: '0.8px',
-                    textTransform: 'uppercase',
-                  }}
-                >
-                  {h}
-                </span>
-              ))}
-            </div>
-            {/* Table rows */}
-            {c.shortcuts.rows.map(([shortcut, action], i) => (
-              <div
-                key={shortcut}
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  padding: '14px 24px',
-                  borderBottom:
-                    i < c.shortcuts.rows.length - 1
-                      ? '1px solid rgba(255,255,255,0.05)'
-                      : 'none',
-                  alignItems: 'center',
-                }}
-              >
-                <kbd
-                  style={{
-                    background: 'rgba(255,255,255,0.07)',
-                    border: '1px solid rgba(255,255,255,0.12)',
-                    borderRadius: '6px',
-                    padding: '3px 10px',
-                    fontSize: '13px',
-                    fontFamily: 'monospace',
-                    color: '#93c5fd',
-                    display: 'inline-block',
-                    width: 'fit-content',
-                  }}
-                >
-                  {shortcut}
-                </kbd>
-                <span style={{ fontSize: '15px', color: '#94a3b8' }}>{action}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── Final CTA ── */}
       <section
         style={{
@@ -1310,9 +1444,8 @@ export default function Landing() {
           textAlign: 'center',
         }}
       >
-        <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+        <div data-sr style={{ maxWidth: '700px', margin: '0 auto' }}>
           <h2
-            data-reveal
             style={{
               fontFamily: "'Space Grotesk', sans-serif",
               fontWeight: 700,
@@ -1326,7 +1459,6 @@ export default function Landing() {
             {c.finalCta.headline}
           </h2>
           <p
-            data-reveal
             style={{
               fontSize: '18px',
               color: '#64748b',
@@ -1336,9 +1468,9 @@ export default function Landing() {
           >
             {c.finalCta.sub}
           </p>
-          <div data-reveal>
+          <div>
             <Link
-              to="/"
+              to="/app"
               className="btn-primary"
               style={{
                 background: '#f97316',

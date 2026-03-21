@@ -136,7 +136,7 @@ export default function MyDiagrams() {
     store.setDiagramName(diagram.title);
     store.setCurrentDiagramId(diagram.id);
     store.setIsCollaborator(false);
-    navigate('/');
+    navigate('/app');
   };
 
   const handleLoadShared = (item: typeof sharedWithMe[0]) => {
@@ -145,7 +145,7 @@ export default function MyDiagrams() {
     store.setDiagramName(item.title);
     store.setCurrentDiagramId(item.diagram_id);
     store.setIsCollaborator(true);
-    navigate('/');
+    navigate('/app');
   };
 
   return (
@@ -153,7 +153,7 @@ export default function MyDiagrams() {
       <div className="mx-auto max-w-5xl">
         <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Button variant="ghost" size="icon" onClick={() => navigate('/')} aria-label={t('myDiagrams.back')}>
+            <Button variant="ghost" size="icon" onClick={() => navigate('/app')} aria-label={t('myDiagrams.back')}>
               <ArrowLeft className="h-5 w-5" />
             </Button>
             <h1 className="text-2xl font-bold text-foreground">{t('myDiagrams.title')}</h1>
@@ -164,7 +164,7 @@ export default function MyDiagrams() {
             store.setDiagramName(t('diagram.newDiagram'));
             store.setCurrentDiagramId(undefined);
             clearAutoSave();
-            navigate('/');
+            navigate('/app');
           }}>
             <Plus className="mr-2 h-4 w-4" /> {t('myDiagrams.newDiagram')}
           </Button>
@@ -188,7 +188,7 @@ export default function MyDiagrams() {
             <FileText className="mb-4 h-14 w-14 opacity-30" />
             <p className="mb-1">{t('myDiagrams.emptyTitle')}</p>
             <p className="mb-4 text-sm">{t('myDiagrams.emptyDesc')}</p>
-            <Button onClick={() => navigate('/')}>
+            <Button onClick={() => navigate('/app')}>
               <Plus className="mr-2 h-4 w-4" />{t('myDiagrams.createFirst')}
             </Button>
           </div>

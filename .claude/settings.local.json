@@ -13,7 +13,15 @@
       "Bash(Get-Command python*)",
       "Bash(powershell.exe -Command \"Get-Command python*\")",
       "Read(//c/Program Files/**)",
-      "Bash(ls \"/c/Users/leona/AppData/Local/Programs/\"*)"
+      "Bash(ls \"/c/Users/leona/AppData/Local/Programs/\"*)",
+      "Read(//c/Users/leona/.claude/**)",
+      "Bash(find c:/Users/leona/OneDrive/Documentos/java/workspace/vibe-code/MicroFlow-Architect -name *skill* -o -name *ui-ux*)",
+      "Bash(python skills/ui-ux-pro-max/scripts/search.py \"SaaS auth login signup dark professional\" --design-system -p \"MicroFlow Architect\")",
+      "Bash(py --version)",
+      "Bash(where python*)",
+      "Bash(py skills/ui-ux-pro-max/scripts/search.py \"SaaS auth login signup dark professional\" --design-system -p \"MicroFlow Architect\")",
+      "Bash(\"c:/Users/leona/AppData/Local/Microsoft/WindowsApps/python3.exe\" skills/ui-ux-pro-max/scripts/search.py \"SaaS auth login signup dark professional\" --design-system -p \"MicroFlow Architect\")",
+      "Bash(npm exec:*)"
     ]
   }
 }

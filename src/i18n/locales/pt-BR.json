@@ -30,6 +30,7 @@
     "forgotPassword": "Esqueci minha senha",
     "resetPassword": "Redefinir senha",
     "backToLogin": "Voltar ao login",
+    "backToHome": "Voltar à página inicial",
     "noAccount": "Não tem uma conta?",
     "hasAccount": "Já tem uma conta?",
     "sendResetLink": "Enviar link de redefinição",

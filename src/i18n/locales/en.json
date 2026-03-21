@@ -30,6 +30,7 @@
     "forgotPassword": "Forgot password",
     "resetPassword": "Reset password",
     "backToLogin": "Back to login",
+    "backToHome": "Back to home page",
     "noAccount": "Don't have an account?",
     "hasAccount": "Already have an account?",
     "sendResetLink": "Send reset link",

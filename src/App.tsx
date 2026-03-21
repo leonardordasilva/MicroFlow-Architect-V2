@@ -41,11 +41,11 @@ const App = () => (
           <BrowserRouter>
             <Suspense fallback={<LoadingSpinner />}>
               <Routes>
-                <Route path="/" element={<Index />} />
+                <Route path="/" element={<Landing />} />
+                <Route path="/app" element={<Index />} />
                 <Route path="/my-diagrams" element={<ProtectedRoute><MyDiagrams /></ProtectedRoute>} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/diagram/:shareToken" element={<SharedDiagram />} />
-                <Route path="/landing" element={<Landing />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

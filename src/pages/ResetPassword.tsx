@@ -59,7 +59,7 @@ export default function ResetPasswordPage() {
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
       toast({ title: t('resetPassword.success') });
-      navigate('/');
+      navigate('/app');
     } catch (err: any) {
       const msgMap: Record<string, string> = {
         'New password should be different from the old password.': t('resetPassword.newPasswordDifferent'),
@@ -83,7 +83,7 @@ export default function ResetPasswordPage() {
         {error ? (
           <div className="text-center space-y-4">
             <p className="text-sm text-destructive">{error}</p>
-            <Button variant="outline" onClick={() => navigate('/')}>
+            <Button variant="outline" onClick={() => navigate('/app')}>
               {t('resetPassword.back')}
             </Button>
           </div>
