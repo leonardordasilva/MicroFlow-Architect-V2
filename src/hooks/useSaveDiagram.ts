@@ -22,11 +22,19 @@ interface UseSaveDiagramReturn {
 export function useSaveDiagram({ shareToken }: UseSaveDiagramOptions = {}): UseSaveDiagramReturn {
   const { user } = useAuth();
   const [saving, setSaving] = useState(false);
+  const lastSaveTimestampRef = useRef<number>(0);
 
   // PERF-05: Read store state at call time instead of subscribing — avoids unnecessary callback recreation
   const save = useCallback(async () => {
     if (!user) return;
     if (saving) return; // R12: guard against concurrent saves
+
+    // R5: Throttle temporal — impede saves consecutivos dentro do cooldown
+    const now = Date.now();
+    if (now - lastSaveTimestampRef.current < SAVE_COOLDOWN_MS) {
+      toast({ title: 'Diagrama salvo recentemente. Aguarde um momento.' });
+      return;
+    }
 
     // Snapshot current store state at the moment of save
     const { nodes, edges, diagramName, currentDiagramId: diagramId, isCollaborator } = useDiagramStore.getState();
@@ -34,6 +42,7 @@ export function useSaveDiagram({ shareToken }: UseSaveDiagramOptions = {}): UseS
 
     setSaving(true);
     try {
+      lastSaveTimestampRef.current = Date.now();
       if (isCollaborator && diagramId) {
         await saveSharedDiagram(diagramId, nodes, edges);
         clearAutoSave();

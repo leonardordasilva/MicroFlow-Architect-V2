@@ -1,0 +1,39 @@
+{
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success"
+  },
+  "auth": {
+    "login": "Sign in",
+    "signup": "Sign up",
+    "logout": "Sign out",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password",
+    "resetPassword": "Reset password"
+  },
+  "diagram": {
+    "newDiagram": "New Diagram",
+    "myDiagrams": "My Diagrams",
+    "sharedWithMe": "Shared with me",
+    "savedToCloud": "Diagram saved to cloud!",
+    "exportPNG": "Export PNG",
+    "exportSVG": "Export SVG",
+    "exportJSON": "Export JSON",
+    "importJSON": "Import JSON",
+    "clearCanvas": "Clear canvas",
+    "autoLayout": "Auto layout",
+    "undo": "Undo",
+    "redo": "Redo"
+  },
+  "nodes": {
+    "service": "Microservice",
+    "database": "Database",
+    "queue": "Queue/Messaging",
+    "external": "External System"
+  }
+}
