@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { z } from 'zod';
 import { useDiagramStore } from '@/store/diagramStore';
 import { toast } from '@/hooks/use-toast';
+import i18n from '@/i18n';
 
 const STORAGE_KEY = 'microflow_autosave_v2';
 const LEGACY_STORAGE_KEY = 'microflow_autosave_v1';
@@ -167,8 +168,8 @@ export function useAutoSave() {
         // PERF-06: Handle storage quota exceeded
         if (e?.name === 'QuotaExceededError' || e?.code === 22) {
           toast({
-            title: 'Armazenamento local cheio',
-            description: 'O diagrama é muito grande para salvar localmente. Salve na nuvem para não perder seu trabalho.',
+            title: i18n.t('autoSave.storageFull'),
+            description: i18n.t('autoSave.storageFullDesc'),
             variant: 'destructive',
           });
         }
@@ -216,7 +217,7 @@ export async function getAutoSave(): Promise<AutoSaveData | null> {
       const data: AutoSaveData = {
         nodes: parsed.data.nodes as DiagramNode[],
         edges: parsed.data.edges as DiagramEdge[],
-        title: parsed.data.title ?? 'Sem título',
+        title: parsed.data.title ?? i18n.t('autoSave.untitled'),
         savedAt: parsed.data.savedAt ?? new Date().toISOString(),
         version: '2',
       };

@@ -323,5 +323,13 @@
   "notFound": {
     "title": "Page not found",
     "home": "Return to Home"
+  },
+  "connectionError": {
+    "message": "{{source}} cannot connect to {{target}}"
+  },
+  "autoSave": {
+    "storageFull": "Local storage full",
+    "storageFullDesc": "The diagram is too large to save locally. Save to cloud to preserve your work.",
+    "untitled": "Untitled"
   }
 }

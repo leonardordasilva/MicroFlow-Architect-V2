@@ -43,6 +43,6 @@ describe('connectionErrorMessage', () => {
 
   it('uses correct names for all types', () => {
     expect(connectionErrorMessage('service', 'database')).toContain('Microserviço');
-    expect(connectionErrorMessage('external', 'service')).toContain('API/Protocolo');
+    expect(connectionErrorMessage('external', 'service')).toContain('Sistema Externo');
   });
 });

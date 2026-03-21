@@ -5,6 +5,7 @@ import type { DiagramNodeData } from '@/types/diagram';
 import { normalizeInternalDb } from '@/types/diagram';
 import { useDiagramStore } from '@/store/diagramStore';
 import { getDbColor } from '@/constants/databaseColors';
+import { useTranslation } from 'react-i18next';
 
 function EditableDbItem({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const [editing, setEditing] = useState(false);
@@ -37,6 +38,7 @@ function EditableDbItem({ value, onChange }: { value: string; onChange: (v: stri
 
 const ServiceNode = memo(({ data, id, selected }: NodeProps) => {
   const nodeData = data as unknown as DiagramNodeData;
+  const { t } = useTranslation();
   const [editing, setEditing] = useState(false);
   const [label, setLabel] = useState(nodeData.label);
 
@@ -113,7 +115,7 @@ const ServiceNode = memo(({ data, id, selected }: NodeProps) => {
       </div>
 
       <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-medium">
-        Microserviço
+        {t('nodes.service')}
       </div>
 
       {nodeData.internalDatabases && nodeData.internalDatabases.length > 0 && (

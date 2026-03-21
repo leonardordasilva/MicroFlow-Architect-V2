@@ -14,6 +14,7 @@ import type { DiagramNode, DiagramEdge, DiagramNodeData, NodeType } from '@/type
 import { getLayoutedElements, getELKLayoutedElements, type LayoutDirection } from '@/services/layoutService';
 import { getNodeColor } from '@/utils/nodeColors';
 import { canConnect } from '@/utils/connectionRules';
+import i18n from '@/i18n';
 
 const createNodeId = () => `node_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
@@ -63,7 +64,7 @@ export const useDiagramStore = create<DiagramStore>()(
       // State
       nodes: [],
       edges: [],
-      diagramName: 'Novo Diagrama',
+      diagramName: i18n.t('diagram.newDiagram'),
       currentDiagramId: undefined,
       isAnalyzing: false,
       analysisResult: null,
@@ -183,7 +184,7 @@ export const useDiagramStore = create<DiagramStore>()(
       // Actions
       addNode: (type, subType, position) => {
         const labelMap: Record<NodeType, string> = {
-          service: 'Microserviço',
+          service: i18n.t('nodes.service'),
           database: subType || 'Oracle',
           queue: subType || 'IBM MQ',
           external: subType || 'REST',
@@ -224,7 +225,7 @@ export const useDiagramStore = create<DiagramStore>()(
           const currentSvcs = sourceData.internalServices || [];
           const newSvcs = [...currentSvcs];
           for (let i = 0; i < count; i++) {
-            newSvcs.push(`Biblioteca ${currentSvcs.length + i + 1}`);
+            newSvcs.push(i18n.t('nodePanel.libDefault', { n: currentSvcs.length + i + 1 }));
           }
           set((state) => ({
             nodes: state.nodes.map((n) =>
@@ -235,7 +236,7 @@ export const useDiagramStore = create<DiagramStore>()(
         }
 
         const labelMap: Record<NodeType, string> = {
-          service: 'Microserviço',
+          service: i18n.t('nodes.service'),
           database: subType || 'Oracle',
           queue: subType || 'IBM MQ',
           external: subType || 'REST',

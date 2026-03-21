@@ -323,5 +323,13 @@
   "notFound": {
     "title": "Página não encontrada",
     "home": "Voltar ao início"
+  },
+  "connectionError": {
+    "message": "{{source}} não pode se conectar a {{target}}"
+  },
+  "autoSave": {
+    "storageFull": "Armazenamento local cheio",
+    "storageFullDesc": "O diagrama é muito grande para salvar localmente. Salve na nuvem para não perder seu trabalho.",
+    "untitled": "Sem título"
   }
 }
