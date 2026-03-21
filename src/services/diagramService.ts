@@ -209,13 +209,35 @@ export async function deleteDiagram(id: string, ownerId: string): Promise<void> 
  *
  * CONTRATO DE SEGURANÇA: esta função NÃO verifica owner_id no lado
  * cliente intencionalmente. A autorização é delegada inteiramente
- * à política RLS da tabela `diagrams` no Supabase, que deve garantir
+ * à política RLS da tabela `diagrams` no Supabase, que garante
  * que somente colaboradores autorizados possam executar UPDATE.
  *
- * Política RLS esperada (tabela diagrams, operação UPDATE):
- *   auth.uid() = owner_id  OR  share_token IS NOT NULL
+ * Política RLS atual (tabela diagrams, operação UPDATE):
+ *   USING:
+ *     deleted_at IS NULL
+ *     AND (
+ *       owner_id = auth.uid()
+ *       OR EXISTS (
+ *         SELECT 1 FROM diagram_shares
+ *         WHERE diagram_shares.diagram_id = diagrams.id
+ *           AND diagram_shares.shared_with_id = auth.uid()
+ *       )
+ *     )
+ *
+ * WITH CHECK:
+ *     owner_id = auth.uid()
+ *     OR EXISTS (
+ *       SELECT 1 FROM diagram_shares
+ *       WHERE diagram_shares.diagram_id = diagrams.id
+ *         AND diagram_shares.shared_with_id = auth.uid()
+ *     )
+ *
+ * Ou seja: o UPDATE só é permitido se o diagrama NÃO está soft-deleted
+ * E o usuário autenticado é o proprietário OU possui um registro
+ * explícito em diagram_shares.
  *
  * Nunca remova esta nota sem auditar as políticas RLS primeiro.
+ * Última auditoria: 21/03/2026 (PRD-18, Score 93/100).
  */
 export async function saveSharedDiagram(
   diagramId: string,

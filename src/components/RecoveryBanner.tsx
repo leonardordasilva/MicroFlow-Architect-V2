@@ -6,6 +6,7 @@ import type { DiagramNode, DiagramEdge } from '@/types/diagram';
 import { toast } from '@/hooks/use-toast';
 import { X, FolderOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { useTranslation } from 'react-i18next';
 
 const RECOVERY_FLAG_KEY = 'microflow_show_recovery';
 
@@ -15,6 +16,7 @@ export function triggerRecoveryBanner() {
 }
 
 export default function RecoveryBanner() {
+  const { t } = useTranslation();
   const [savedData, setSavedData] = useState<AutoSaveData | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const nodes = useDiagramStore((s) => s.nodes);
@@ -32,19 +34,16 @@ export default function RecoveryBanner() {
 
   if (!savedData || dismissed || nodes.length > 0) return null;
 
-  const formattedDate = new Date(savedData.savedAt).toLocaleString('pt-BR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
+  const formattedDate = new Date(savedData.savedAt).toLocaleString(
+    navigator.language.startsWith('pt') ? 'pt-BR' : 'en-US',
+    { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' },
+  );
 
   const handleRestore = () => {
     const nodesParsed = DbDiagramNodesSchema.safeParse(savedData.nodes);
     const edgesParsed = DbDiagramEdgesSchema.safeParse(savedData.edges);
     if (!nodesParsed.success || !edgesParsed.success) {
-      toast({ title: 'Dados do diagrama salvo estão corrompidos.', variant: 'destructive' });
+      toast({ title: t('recovery.corruptedData'), variant: 'destructive' });
       clearAutoSave();
       setDismissed(true);
       return;
@@ -65,7 +64,7 @@ export default function RecoveryBanner() {
       <div className="flex items-center gap-3 rounded-lg border border-amber-500/30 bg-amber-900/80 px-4 py-2.5 shadow-lg backdrop-blur-sm">
         <FolderOpen className="h-4 w-4 text-amber-300 shrink-0" />
         <span className="text-sm text-amber-100">
-          Diagrama recuperado: "<strong>{savedData.title}</strong>" — salvo em {formattedDate}
+          {t('recovery.title')}: "<strong>{savedData.title}</strong>" — {t('recovery.savedAt')} {formattedDate}
         </span>
         <div className="flex items-center gap-1.5 ml-2">
           <Button
@@ -74,7 +73,7 @@ export default function RecoveryBanner() {
             className="h-7 text-xs border-amber-500/40 bg-amber-800/50 text-amber-100 hover:bg-amber-700/60"
             onClick={handleRestore}
           >
-            Restaurar
+            {t('recovery.restore')}
           </Button>
           <Button
             size="sm"
@@ -83,7 +82,7 @@ export default function RecoveryBanner() {
             onClick={handleDiscard}
           >
             <X className="h-3.5 w-3.5 mr-1" />
-            Descartar
+            {t('recovery.discard')}
           </Button>
         </div>
       </div>

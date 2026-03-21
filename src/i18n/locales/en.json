@@ -5,7 +5,8 @@
     "delete": "Delete",
     "loading": "Loading...",
     "error": "Error",
-    "success": "Success"
+    "success": "Success",
+    "tryAgain": "Try again"
   },
   "auth": {
     "login": "Sign in",
@@ -14,7 +15,16 @@
     "email": "Email",
     "password": "Password",
     "forgotPassword": "Forgot password",
-    "resetPassword": "Reset password"
+    "resetPassword": "Reset password",
+    "backToLogin": "Back to login",
+    "noAccount": "Don't have an account?",
+    "hasAccount": "Already have an account?",
+    "sendResetLink": "Send reset link",
+    "loginError": "Sign in failed",
+    "signupError": "Sign up failed",
+    "signupSuccess": "Account created! Check your email.",
+    "resetSent": "Reset link sent! Check your email.",
+    "resetError": "Failed to send reset link"
   },
   "diagram": {
     "newDiagram": "New Diagram",
@@ -35,5 +45,22 @@
     "database": "Database",
     "queue": "Queue/Messaging",
     "external": "External System"
+  },
+  "status": {
+    "idle": "",
+    "saving": "Saving...",
+    "saved": "Saved locally",
+    "nodes": "nodes",
+    "connections": "connections"
+  },
+  "recovery": {
+    "title": "Diagram recovered",
+    "savedAt": "saved at",
+    "restore": "Restore",
+    "discard": "Discard",
+    "corruptedData": "Saved diagram data is corrupted."
+  },
+  "protected": {
+    "loading": "Loading..."
   }
 }

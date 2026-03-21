@@ -5,7 +5,8 @@
     "delete": "Excluir",
     "loading": "Carregando...",
     "error": "Erro",
-    "success": "Sucesso"
+    "success": "Sucesso",
+    "tryAgain": "Tentar novamente"
   },
   "auth": {
     "login": "Entrar",
@@ -14,7 +15,16 @@
     "email": "E-mail",
     "password": "Senha",
     "forgotPassword": "Esqueci minha senha",
-    "resetPassword": "Redefinir senha"
+    "resetPassword": "Redefinir senha",
+    "backToLogin": "Voltar ao login",
+    "noAccount": "Não tem uma conta?",
+    "hasAccount": "Já tem uma conta?",
+    "sendResetLink": "Enviar link de redefinição",
+    "loginError": "Erro ao entrar",
+    "signupError": "Erro ao criar conta",
+    "signupSuccess": "Conta criada com sucesso! Verifique seu e-mail.",
+    "resetSent": "Link de redefinição enviado! Verifique seu e-mail.",
+    "resetError": "Erro ao enviar link"
   },
   "diagram": {
     "newDiagram": "Novo Diagrama",
@@ -35,5 +45,22 @@
     "database": "Banco de Dados",
     "queue": "Fila/Mensageria",
     "external": "Sistema Externo"
+  },
+  "status": {
+    "idle": "",
+    "saving": "Salvando...",
+    "saved": "Salvo localmente",
+    "nodes": "nós",
+    "connections": "conexões"
+  },
+  "recovery": {
+    "title": "Diagrama recuperado",
+    "savedAt": "salvo em",
+    "restore": "Restaurar",
+    "discard": "Descartar",
+    "corruptedData": "Dados do diagrama salvo estão corrompidos."
+  },
+  "protected": {
+    "loading": "Carregando..."
   }
 }
