@@ -15,6 +15,9 @@ import {
   Zap,
   Heart,
   ChevronRight,
+  Check,
+  Crown,
+  Users,
 } from 'lucide-react';
 import heroImg from '../img/High-quality_technical_diagram_of_microservices_ar-1772109807434.avif';
 import logoIcon from '../img/MicroFlow_Icon_Low.avif';
@@ -136,6 +139,73 @@ const copy = {
       headline: 'Pronto para visualizar sua arquitetura?',
       sub: 'Comece gratuitamente hoje. Sem cartão de crédito.',
       btn: 'Login',
+    },
+    pricing: {
+      title: 'Planos simples e transparentes',
+      sub: 'Escolha o plano ideal para seu time. Faça upgrade ou cancele quando quiser.',
+      popular: 'Popular',
+      cycleMonthly: 'Mensal',
+      cycleQuarterly: 'Trimestral',
+      cycleSemiannual: 'Semestral',
+      cycleAnnual: 'Anual',
+      perMonth: '/mês',
+      perEditorMonth: '/editor/mês',
+      ctaFree: 'Comece grátis',
+      ctaPro: 'Assinar Pro',
+      ctaTeam: 'Assinar Team',
+      footer: 'Todos os planos incluem criptografia SSL e backups automáticos. Cancele quando quiser.',
+      plans: [
+        {
+          id: 'free',
+          name: 'Free',
+          prices: { monthly: 'R$ 0', quarterly: 'R$ 0', semiannual: 'R$ 0', annual: 'R$ 0' },
+          perNote: null,
+          features: [
+            'Até 3 diagramas salvos',
+            'Até 25 nós por diagrama',
+            'Exportação PNG + JSON',
+            'Compartilhamento por link (somente visualização)',
+            'Suporte da comunidade',
+          ],
+          cta: 'Comece grátis',
+          href: '/app',
+          highlight: false,
+        },
+        {
+          id: 'pro',
+          name: 'Pro',
+          prices: { monthly: 'R$ 49', quarterly: 'R$ 129', semiannual: 'R$ 219', annual: 'R$ 369' },
+          perNote: '/mês',
+          features: [
+            'Diagramas ilimitados',
+            'Até 200 nós por diagrama',
+            'Todos os formatos de exportação, sem marca d\'água',
+            'Compartilhamento por e-mail (5 colaboradores)',
+            'Colaboração em tempo real',
+            'Suporte por e-mail (SLA 48h)',
+          ],
+          cta: 'Assinar Pro',
+          href: '/pricing?plan=pro',
+          highlight: true,
+        },
+        {
+          id: 'team',
+          name: 'Team',
+          prices: { monthly: 'R$ 99', quarterly: 'R$ 259', semiannual: 'R$ 459', annual: 'R$ 759' },
+          perNote: '/editor/mês',
+          features: [
+            'Diagramas ilimitados',
+            'Nós ilimitados por diagrama',
+            'Todos os formatos de exportação, sem marca d\'água',
+            'Compartilhamento ilimitado por e-mail',
+            'Workspaces com gestão de funções',
+            'Suporte prioritário (SLA 24h)',
+          ],
+          cta: 'Assinar Team',
+          href: '/pricing?plan=team',
+          highlight: false,
+        },
+      ],
     },
     footer: {
       tagline: 'Editor visual de arquiteturas de microsserviços',
@@ -259,6 +329,73 @@ const copy = {
       sub: 'Start free today. No credit card required.',
       btn: 'Login',
     },
+    pricing: {
+      title: 'Simple, transparent pricing',
+      sub: 'Choose the plan that fits your team. Upgrade or cancel anytime.',
+      popular: 'Popular',
+      cycleMonthly: 'Monthly',
+      cycleQuarterly: 'Quarterly',
+      cycleSemiannual: 'Semiannual',
+      cycleAnnual: 'Annual',
+      perMonth: '/mo',
+      perEditorMonth: '/editor/mo',
+      ctaFree: 'Get started free',
+      ctaPro: 'Get Pro',
+      ctaTeam: 'Get Team',
+      footer: 'All plans include SSL encryption and automatic backups. Cancel anytime.',
+      plans: [
+        {
+          id: 'free',
+          name: 'Free',
+          prices: { monthly: '$0', quarterly: '$0', semiannual: '$0', annual: '$0' },
+          perNote: null,
+          features: [
+            'Up to 3 saved diagrams',
+            'Up to 25 nodes per diagram',
+            'PNG + JSON export',
+            'Link sharing (view-only)',
+            'Community support',
+          ],
+          cta: 'Get started free',
+          href: '/app',
+          highlight: false,
+        },
+        {
+          id: 'pro',
+          name: 'Pro',
+          prices: { monthly: '$9', quarterly: '$24', semiannual: '$42', annual: '$72' },
+          perNote: '/mo',
+          features: [
+            'Unlimited diagrams',
+            'Up to 200 nodes per diagram',
+            'All export formats, no watermark',
+            'Email sharing (5 collaborators)',
+            'Real-time collaboration',
+            'Email support (SLA 48h)',
+          ],
+          cta: 'Get Pro',
+          href: '/pricing?plan=pro',
+          highlight: true,
+        },
+        {
+          id: 'team',
+          name: 'Team',
+          prices: { monthly: '$19', quarterly: '$51', semiannual: '$90', annual: '$156' },
+          perNote: '/editor/mo',
+          features: [
+            'Unlimited diagrams',
+            'Unlimited nodes per diagram',
+            'All export formats, no watermark',
+            'Unlimited email sharing',
+            'Workspaces with role management',
+            'Priority support (SLA 24h)',
+          ],
+          cta: 'Get Team',
+          href: '/pricing?plan=team',
+          highlight: false,
+        },
+      ],
+    },
     footer: {
       tagline: 'Visual editor for microservices architectures',
       madeWith: 'Made with',
@@ -327,16 +464,19 @@ function useScrollReveal(lang: string) {
 }
 
 const navLinks = {
-  pt: ['Nós', 'Funcionalidades', 'Protocolos', 'Segurança', 'Como Funciona'],
-  en: ['Nodes', 'Features', 'Protocols', 'Security', 'How It Works'],
+  pt: ['Nós', 'Funcionalidades', 'Protocolos', 'Segurança', 'Como Funciona', 'Preços'],
+  en: ['Nodes', 'Features', 'Protocols', 'Security', 'How It Works', 'Pricing'],
 };
-const navHrefs = ['#nodes', '#features', '#protocols', '#security', '#how-it-works'];
+const navHrefs = ['#nodes', '#features', '#protocols', '#security', '#how-it-works', '#pricing'];
 const backToTopLabel = { pt: '↑ Topo', en: '↑ Top' };
 
 // ─── Main Component ─────────────────────────────────────────────────────────────
 
+type BillingCycle = 'monthly' | 'quarterly' | 'semiannual' | 'annual';
+
 export default function Landing() {
   const [lang, setLang] = useState<'pt' | 'en'>('pt');
+  const [pricingCycle, setPricingCycle] = useState<BillingCycle>('monthly');
   const navRef = useRef<HTMLElement>(null);
 
   const c = copy[lang];
@@ -588,6 +728,41 @@ export default function Landing() {
         }
         @media (max-width: 900px) {
           .nav-section-links { display: none !important; }
+        }
+
+        /* ── Pricing cards ── */
+        .pricing-card {
+          transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease !important;
+        }
+        .pricing-card:hover {
+          transform: translateY(-4px) !important;
+          box-shadow: 0 12px 40px rgba(0,0,0,0.3) !important;
+        }
+        .pricing-card-highlight {
+          border-color: rgba(59,130,246,0.5) !important;
+          box-shadow: 0 0 0 1px rgba(59,130,246,0.25), 0 8px 40px rgba(59,130,246,0.15) !important;
+        }
+        .pricing-cycle-btn {
+          transition: background 0.15s ease, color 0.15s ease !important;
+          cursor: pointer;
+          border: none;
+          border-radius: 8px;
+          padding: 7px 14px;
+          font-size: 13px;
+          font-weight: 500;
+          white-space: nowrap;
+        }
+        .pricing-cycle-btn-active {
+          background: rgba(59,130,246,0.2) !important;
+          color: #93c5fd !important;
+        }
+        .pricing-cycle-btn-inactive {
+          background: transparent !important;
+          color: #64748b !important;
+        }
+        .pricing-cycle-btn-inactive:hover {
+          background: rgba(255,255,255,0.06) !important;
+          color: #94a3b8 !important;
         }
 
         /* ── Back to top button ── */
@@ -1435,6 +1610,217 @@ export default function Landing() {
       </section>
 
       {/* ── Keyboard Shortcuts ── */}
+
+      {/* ── Pricing ── */}
+      <section
+        id="pricing"
+        style={{
+          padding: '100px 24px',
+          background: 'radial-gradient(ellipse at 50% 0%, rgba(59,130,246,0.08) 0%, transparent 60%)',
+        }}
+      >
+        <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+          {/* Header */}
+          <div data-sr style={{ textAlign: 'center', marginBottom: '48px' }}>
+            <h2
+              style={{
+                fontFamily: "'Space Grotesk', sans-serif",
+                fontWeight: 700,
+                fontSize: 'clamp(26px, 4vw, 44px)',
+                color: '#f1f5f9',
+                marginBottom: '12px',
+                letterSpacing: '-0.5px',
+              }}
+            >
+              {c.pricing.title}
+            </h2>
+            <p style={{ fontSize: '17px', color: '#64748b', fontWeight: 300 }}>
+              {c.pricing.sub}
+            </p>
+          </div>
+
+          {/* Billing cycle toggle */}
+          <div data-sr data-delay="100" style={{ display: 'flex', justifyContent: 'center', marginBottom: '48px' }}>
+            <div
+              style={{
+                display: 'inline-flex',
+                gap: '4px',
+                background: 'rgba(255,255,255,0.04)',
+                border: '1px solid rgba(255,255,255,0.08)',
+                borderRadius: '12px',
+                padding: '4px',
+              }}
+            >
+              {(['monthly', 'quarterly', 'semiannual', 'annual'] as BillingCycle[]).map((cycle) => (
+                <button
+                  key={cycle}
+                  className={`pricing-cycle-btn ${pricingCycle === cycle ? 'pricing-cycle-btn-active' : 'pricing-cycle-btn-inactive'}`}
+                  onClick={() => setPricingCycle(cycle)}
+                >
+                  {c.pricing[`cycle${cycle.charAt(0).toUpperCase() + cycle.slice(1)}` as keyof typeof c.pricing] as string}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Plan cards */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(3, 1fr)',
+              gap: '24px',
+            }}
+          >
+            {c.pricing.plans.map((plan, i) => (
+              <div
+                key={plan.id}
+                data-sr
+                data-delay={String((i + 2) * 100) as '100' | '200' | '300'}
+                className={`pricing-card ${plan.highlight ? 'pricing-card-highlight' : ''}`}
+                style={{
+                  position: 'relative',
+                  background: plan.highlight
+                    ? 'linear-gradient(135deg, rgba(37,99,235,0.12), rgba(59,130,246,0.06))'
+                    : 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${plan.highlight ? 'rgba(59,130,246,0.4)' : 'rgba(255,255,255,0.08)'}`,
+                  borderRadius: '20px',
+                  padding: '32px 28px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                }}
+              >
+                {/* Popular badge */}
+                {plan.highlight && (
+                  <div
+                    style={{
+                      position: 'absolute',
+                      top: '-13px',
+                      left: '50%',
+                      transform: 'translateX(-50%)',
+                      background: 'linear-gradient(90deg, #3b82f6, #8b5cf6)',
+                      color: '#fff',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      letterSpacing: '0.8px',
+                      textTransform: 'uppercase',
+                      padding: '4px 14px',
+                      borderRadius: '100px',
+                    }}
+                  >
+                    {c.pricing.popular}
+                  </div>
+                )}
+
+                {/* Plan name & icon */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '20px' }}>
+                  {plan.id === 'pro' && <Zap size={20} color="#3b82f6" />}
+                  {plan.id === 'team' && <Crown size={20} color="#eab308" />}
+                  {plan.id === 'free' && <Users size={20} color="#6b7280" />}
+                  <span
+                    style={{
+                      fontFamily: "'Space Grotesk', sans-serif",
+                      fontWeight: 700,
+                      fontSize: '20px',
+                      color: '#f1f5f9',
+                    }}
+                  >
+                    {plan.name}
+                  </span>
+                </div>
+
+                {/* Price */}
+                <div style={{ marginBottom: '28px' }}>
+                  <span
+                    style={{
+                      fontFamily: "'Space Grotesk', sans-serif",
+                      fontWeight: 700,
+                      fontSize: '44px',
+                      color: plan.highlight ? '#93c5fd' : '#f1f5f9',
+                      letterSpacing: '-1px',
+                    }}
+                  >
+                    {plan.prices[pricingCycle]}
+                  </span>
+                  {plan.perNote && (
+                    <span style={{ fontSize: '14px', color: '#64748b', marginLeft: '4px' }}>
+                      {plan.perNote}
+                    </span>
+                  )}
+                </div>
+
+                {/* Features */}
+                <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 32px 0', flex: 1 }}>
+                  {plan.features.map((feat, fi) => (
+                    <li
+                      key={fi}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'flex-start',
+                        gap: '10px',
+                        marginBottom: '12px',
+                        fontSize: '14px',
+                        color: '#94a3b8',
+                        lineHeight: 1.5,
+                      }}
+                    >
+                      <Check
+                        size={15}
+                        color={plan.highlight ? '#3b82f6' : '#22c55e'}
+                        style={{ marginTop: '2px', flexShrink: 0 }}
+                      />
+                      {feat}
+                    </li>
+                  ))}
+                </ul>
+
+                {/* CTA */}
+                <Link
+                  to={plan.href}
+                  className={plan.highlight ? 'btn-primary' : 'btn-outline'}
+                  style={{
+                    display: 'block',
+                    textAlign: 'center',
+                    padding: '14px 24px',
+                    borderRadius: '12px',
+                    fontWeight: 700,
+                    fontSize: '15px',
+                    textDecoration: 'none',
+                    transition: 'all 0.2s ease',
+                    ...(plan.highlight
+                      ? {
+                          background: '#3b82f6',
+                          color: '#fff',
+                          boxShadow: '0 4px 20px rgba(59,130,246,0.35)',
+                        }
+                      : {
+                          background: 'transparent',
+                          color: '#94a3b8',
+                          border: '1px solid rgba(255,255,255,0.12)',
+                        }),
+                  }}
+                >
+                  {plan.cta}
+                </Link>
+              </div>
+            ))}
+          </div>
+
+          {/* Footer note */}
+          <p
+            data-sr
+            data-delay="300"
+            style={{
+              textAlign: 'center',
+              marginTop: '40px',
+              fontSize: '13px',
+              color: '#475569',
+            }}
+          >
+            {c.pricing.footer}
+          </p>
+        </div>
+      </section>
+
       {/* ── Final CTA ── */}
       <section
         style={{

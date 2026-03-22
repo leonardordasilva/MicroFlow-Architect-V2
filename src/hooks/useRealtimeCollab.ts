@@ -37,7 +37,7 @@ const AVATAR_COLORS = [
   'hsl(0, 72%, 51%)',
 ];
 
-export function useRealtimeCollab(shareToken: string | null) {
+export function useRealtimeCollab(shareToken: string | null, realtimeCollabEnabled = true) {
   const diagramId = useDiagramStore((s) => s.currentDiagramId);
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const dbChannelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
@@ -50,7 +50,8 @@ export function useRealtimeCollab(shareToken: string | null) {
 
   const broadcastChanges = useCallback(
     (nodes: DiagramNode[], edges: DiagramEdge[]) => {
-      if (!channelRef.current || isRemoteUpdate.current) return;
+      // saas0001: no-op when realtime collab is disabled
+      if (!realtimeCollabEnabled || !channelRef.current || isRemoteUpdate.current) return;
       if (timerRef.current) clearTimeout(timerRef.current);
 
       timerRef.current = setTimeout(() => {
@@ -66,12 +67,13 @@ export function useRealtimeCollab(shareToken: string | null) {
         });
       }, DEBOUNCE_MS);
     },
-    [],
+    [realtimeCollabEnabled],
   );
 
   // Broadcast channel for live cursor-style updates
   useEffect(() => {
-    if (!shareToken) return;
+    // saas0001: realtime collab disabled on Free tier
+    if (!shareToken || !realtimeCollabEnabled) return;
 
     const channel = supabase.channel(`diagram:${shareToken}`, {
       config: { presence: { key: 'user' } },
@@ -148,7 +150,7 @@ export function useRealtimeCollab(shareToken: string | null) {
       supabase.removeChannel(channel);
       channelRef.current = null;
     };
-  }, [shareToken]);
+  }, [shareToken, realtimeCollabEnabled]);
 
   // PERF-03: Track last known updated_at to avoid unnecessary state updates
   const lastUpdatedAtRef = useRef<string>('');

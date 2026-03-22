@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Box, Database, Mail, Globe, Trash2, Undo2, Redo2, LayoutGrid,
-  Download, Upload, Image, Sparkles, Brain, Moon, Sun, ChevronDown, XCircle,
-  FileCode, FileImage, FileJson,
+  Download, Upload, Image, Moon, Sun, ChevronDown, XCircle,
+  FileCode, FileImage, FileJson, Lock,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -28,6 +28,10 @@ interface ToolbarProps {
   onDiagramNameChange: (name: string) => void;
   darkMode: boolean;
   onToggleDarkMode: () => void;
+  /** Formats allowed by current plan (e.g. ['png','json']). Defaults to all. */
+  allowedExportFormats?: string[];
+  /** Called when user clicks a locked export format */
+  onUpgradeRequest?: (featureName: string) => void;
 }
 
 function ToolbarButton({
@@ -81,9 +85,19 @@ function Toolbar({
   onExportPNG, onExportSVG, onExportMermaid, onExportJSON, onImportJSON,
   diagramName, onDiagramNameChange,
   darkMode, onToggleDarkMode,
+  allowedExportFormats,
+  onUpgradeRequest,
 }: ToolbarProps) {
   const { t } = useTranslation();
   const [localName, setLocalName] = useState(diagramName);
+
+  // saas0001: format lock helpers
+  const isFormatAllowed = (format: string) =>
+    !allowedExportFormats || allowedExportFormats.includes(format);
+
+  const handleLockedFormat = (featureName: string) => {
+    onUpgradeRequest?.(featureName);
+  };
 
   // Sync when store changes externally (e.g. loadDiagram, RecoveryBanner)
   useEffect(() => {
@@ -213,12 +227,38 @@ function Toolbar({
           <DropdownMenuItem onClick={onExportPNG} className="gap-2">
             <Image className="h-4 w-4" /> PNG
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={onExportSVG} className="gap-2">
-            <FileImage className="h-4 w-4" /> SVG
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={onExportMermaid} className="gap-2">
-            <FileCode className="h-4 w-4" /> Mermaid.js
-          </DropdownMenuItem>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuItem
+                className="gap-2"
+                onClick={isFormatAllowed('svg') ? onExportSVG : () => handleLockedFormat('SVG')}
+                disabled={false}
+              >
+                <FileImage className="h-4 w-4" />
+                SVG
+                {!isFormatAllowed('svg') && <Lock className="h-3 w-3 ml-auto text-muted-foreground" />}
+              </DropdownMenuItem>
+            </TooltipTrigger>
+            {!isFormatAllowed('svg') && (
+              <TooltipContent side="right" className="text-xs">{t('limits.availableOnPro')}</TooltipContent>
+            )}
+          </Tooltip>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <DropdownMenuItem
+                className="gap-2"
+                onClick={isFormatAllowed('mermaid') ? onExportMermaid : () => handleLockedFormat('Mermaid.js')}
+                disabled={false}
+              >
+                <FileCode className="h-4 w-4" />
+                Mermaid.js
+                {!isFormatAllowed('mermaid') && <Lock className="h-3 w-3 ml-auto text-muted-foreground" />}
+              </DropdownMenuItem>
+            </TooltipTrigger>
+            {!isFormatAllowed('mermaid') && (
+              <TooltipContent side="right" className="text-xs">{t('limits.availableOnPro')}</TooltipContent>
+            )}
+          </Tooltip>
           <DropdownMenuItem onClick={onExportJSON} className="gap-2">
             <FileJson className="h-4 w-4" /> JSON
           </DropdownMenuItem>

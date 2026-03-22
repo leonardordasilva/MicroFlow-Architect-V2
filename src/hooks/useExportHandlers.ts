@@ -59,7 +59,30 @@ function getFullDiagramBounds(flowNodes: any[]) {
   return { x: minX, y: minY, width: maxX - minX, height: maxY - minY };
 }
 
-export function useExportHandlers(darkMode: boolean) {
+/** Applies a "Made with MicroFlow Architect" watermark to a PNG data URL */
+async function applyWatermark(dataUrl: string): Promise<string> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      canvas.width = img.width;
+      canvas.height = img.height;
+      const ctx = canvas.getContext('2d')!;
+      ctx.drawImage(img, 0, 0);
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = '#888888';
+      ctx.font = `bold ${Math.max(12, Math.round(img.height * 0.02))}px sans-serif`;
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'bottom';
+      const padding = Math.round(img.width * 0.015);
+      ctx.fillText('Made with MicroFlow Architect', img.width - padding, img.height - padding);
+      resolve(canvas.toDataURL('image/png'));
+    };
+    img.src = dataUrl;
+  });
+}
+
+export function useExportHandlers(darkMode: boolean, watermarkEnabled = false) {
   const { t } = useTranslation();
   const { getNodes: getFlowNodes } = useReactFlow();
   const nodes = useDiagramStore((s) => s.nodes);
@@ -91,15 +114,16 @@ export function useExportHandlers(darkMode: boolean) {
           transform: `translate(${translateX}px, ${translateY}px) scale(1)`,
         },
       });
+      const finalUrl = watermarkEnabled ? await applyWatermark(dataUrl) : dataUrl;
       const a = document.createElement('a');
-      a.href = dataUrl;
+      a.href = finalUrl;
       a.download = `${diagramName || 'diagram'}.png`;
       a.click();
       toast({ title: t('export.pngSuccess') });
     } catch {
       toast({ title: t('export.pngError'), variant: 'destructive' });
     }
-  }, [darkMode, diagramName, getFlowNodes]);
+  }, [darkMode, diagramName, getFlowNodes, watermarkEnabled]);
 
   const handleExportSVG = useCallback(async () => {
     const flowNodes = getFlowNodes();

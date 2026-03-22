@@ -6,7 +6,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from '@/hooks/use-toast';
-import { Loader2, Trash2, Search } from 'lucide-react';
+import { Loader2, Trash2, Search, Lock } from 'lucide-react';
 import {
   searchUsersByEmail, shareDiagramWithUser, listDiagramShares, revokeShare,
   type ShareRecord,
@@ -17,6 +17,12 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   diagramId: string;
   ownerId: string;
+  /** Whether email sharing is enabled on current plan */
+  emailSharingEnabled?: boolean;
+  /** Max collaborators per diagram (null = unlimited) */
+  maxCollaborators?: number | null;
+  /** Called when user clicks upgrade CTA */
+  onUpgradeRequest?: () => void;
 }
 
 interface UserResult {
@@ -24,7 +30,12 @@ interface UserResult {
   email: string;
 }
 
-export default function ShareDiagramModal({ open, onOpenChange, diagramId, ownerId }: Props) {
+export default function ShareDiagramModal({
+  open, onOpenChange, diagramId, ownerId,
+  emailSharingEnabled = true,
+  maxCollaborators = null,
+  onUpgradeRequest,
+}: Props) {
   const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<UserResult[]>([]);
@@ -70,6 +81,16 @@ export default function ShareDiagramModal({ open, onOpenChange, diagramId, owner
 
   const handleShareSelected = async () => {
     if (selected.size === 0) return;
+
+    // saas0001: enforce collaborator limit
+    if (maxCollaborators !== null && shares.length + selected.size > maxCollaborators) {
+      toast({
+        title: t('limits.collaboratorLimitReached', { max: maxCollaborators }),
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setSharing(true);
     let successCount = 0;
     let errorCount = 0;
@@ -138,6 +159,19 @@ export default function ShareDiagramModal({ open, onOpenChange, diagramId, owner
           <DialogTitle className="text-base">{t('shareDiagramModal.title')}</DialogTitle>
         </DialogHeader>
 
+        {/* saas0001: email sharing blocked on Free tier */}
+        {!emailSharingEnabled ? (
+          <div className="flex flex-col items-center gap-4 py-8 text-center">
+            <Lock className="h-8 w-8 text-muted-foreground" />
+            <div>
+              <p className="font-medium text-sm">{t('shareDiagramModal.emailSharingLocked')}</p>
+              <p className="text-xs text-muted-foreground mt-1">{t('shareDiagramModal.emailSharingLockedDesc')}</p>
+            </div>
+            <Button size="sm" onClick={() => { onOpenChange(false); onUpgradeRequest?.(); }}>
+              {t('upgrade.seeProPlans')}
+            </Button>
+          </div>
+        ) : (
         <div className="space-y-4 flex-1 overflow-hidden flex flex-col">
           {/* Search */}
           <div className="relative">
@@ -203,6 +237,8 @@ export default function ShareDiagramModal({ open, onOpenChange, diagramId, owner
             )}
           </div>
         </div>
+
+        )}
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>{t('shareDiagramModal.close')}</Button>

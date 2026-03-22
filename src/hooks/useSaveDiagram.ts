@@ -4,6 +4,9 @@ import { useDiagramStore } from '@/store/diagramStore';
 import { useAuth } from '@/hooks/useAuth';
 import { saveDiagram, saveSharedDiagram } from '@/services/diagramService';
 import { clearAutoSave } from '@/hooks/useAutoSave';
+import { supabase } from '@/integrations/supabase/client';
+import { usePlanStore } from '@/store/planStore';
+import { useWorkspaceStore } from '@/store/workspaceStore';
 
 /** R12 — Minimum interval between successive saves (ms) */
 const SAVE_COOLDOWN_MS = 1500;
@@ -11,6 +14,8 @@ import { toast } from '@/hooks/use-toast';
 
 interface UseSaveDiagramOptions {
   shareToken?: string;
+  /** Called when diagram count limit is reached — use to open UpgradeModal */
+  onDiagramLimitReached?: () => void;
 }
 
 interface UseSaveDiagramReturn {
@@ -20,7 +25,7 @@ interface UseSaveDiagramReturn {
   saveRef: React.RefObject<() => void>;
 }
 
-export function useSaveDiagram({ shareToken }: UseSaveDiagramOptions = {}): UseSaveDiagramReturn {
+export function useSaveDiagram({ shareToken, onDiagramLimitReached }: UseSaveDiagramOptions = {}): UseSaveDiagramReturn {
   const { user } = useAuth();
   const { t } = useTranslation();
   const [saving, setSaving] = useState(false);
@@ -42,6 +47,18 @@ export function useSaveDiagram({ shareToken }: UseSaveDiagramOptions = {}): UseS
     const { nodes, edges, diagramName, currentDiagramId: diagramId, isCollaborator } = useDiagramStore.getState();
     const setDiagramId = useDiagramStore.getState().setCurrentDiagramId;
 
+    // saas0001: enforce diagram count limit for new diagrams
+    if (!diagramId && !isCollaborator) {
+      const { limits } = usePlanStore.getState();
+      if (limits.maxDiagrams !== null) {
+        const { data: countData, error: countError } = await supabase.rpc('get_user_diagram_count', { p_user_id: user.id });
+        if (!countError && countData !== null && countData >= limits.maxDiagrams) {
+          onDiagramLimitReached?.();
+          return;
+        }
+      }
+    }
+
     setSaving(true);
     try {
       lastSaveTimestampRef.current = Date.now();
@@ -51,7 +68,8 @@ export function useSaveDiagram({ shareToken }: UseSaveDiagramOptions = {}): UseS
         toast({ title: t('save.sharedSaved') });
       } else {
         const isSharedContext = !!shareToken && !diagramId;
-        const record = await saveDiagram(diagramName, nodes, edges, user.id, diagramId);
+        const workspaceId = useWorkspaceStore.getState().currentWorkspace?.id ?? null;
+        const record = await saveDiagram(diagramName, nodes, edges, user.id, diagramId, workspaceId);
         setDiagramId(record.id);
         clearAutoSave();
         if (isSharedContext) {
@@ -70,7 +88,7 @@ export function useSaveDiagram({ shareToken }: UseSaveDiagramOptions = {}): UseS
     } finally {
       setSaving(false);
     }
-  }, [user, shareToken, saving]); // saving included so ref stays current when guard state changes
+  }, [user, shareToken, saving, onDiagramLimitReached]); // saving included so ref stays current when guard state changes
 
   // PERF-05: Stable ref always pointing to latest save
   const saveRef = useRef<() => void>(() => {});

@@ -81,6 +81,7 @@ export type Database = {
           share_token: string | null
           title: string
           updated_at: string
+          workspace_id: string | null
         }
         Insert: {
           created_at?: string
@@ -95,6 +96,7 @@ export type Database = {
           share_token?: string | null
           title?: string
           updated_at?: string
+          workspace_id?: string | null
         }
         Update: {
           created_at?: string
@@ -109,6 +111,40 @@ export type Database = {
           share_token?: string | null
           title?: string
           updated_at?: string
+          workspace_id?: string | null
+        }
+        Relationships: []
+      }
+      plan_limits: {
+        Row: {
+          plan: string
+          max_diagrams: number | null
+          max_nodes_per_diagram: number | null
+          max_collaborators_per_diagram: number | null
+          allowed_export_formats: string[]
+          watermark_enabled: boolean
+          realtime_collab_enabled: boolean
+          email_sharing_enabled: boolean
+        }
+        Insert: {
+          plan: string
+          max_diagrams?: number | null
+          max_nodes_per_diagram?: number | null
+          max_collaborators_per_diagram?: number | null
+          allowed_export_formats?: string[]
+          watermark_enabled?: boolean
+          realtime_collab_enabled?: boolean
+          email_sharing_enabled?: boolean
+        }
+        Update: {
+          plan?: string
+          max_diagrams?: number | null
+          max_nodes_per_diagram?: number | null
+          max_collaborators_per_diagram?: number | null
+          allowed_export_formats?: string[]
+          watermark_enabled?: boolean
+          realtime_collab_enabled?: boolean
+          email_sharing_enabled?: boolean
         }
         Relationships: []
       }
@@ -117,18 +153,167 @@ export type Database = {
           created_at: string
           email: string
           id: string
+          plan: string
         }
         Insert: {
           created_at?: string
           email: string
           id: string
+          plan?: string
         }
         Update: {
           created_at?: string
           email?: string
           id?: string
+          plan?: string
         }
         Relationships: []
+      }
+      workspace_invites: {
+        Row: {
+          id: string
+          workspace_id: string
+          email: string
+          role: string
+          invited_by: string
+          token: string
+          created_at: string
+          expires_at: string
+          accepted_at: string | null
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          email: string
+          role: string
+          invited_by: string
+          token: string
+          created_at?: string
+          expires_at: string
+          accepted_at?: string | null
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          email?: string
+          role?: string
+          invited_by?: string
+          token?: string
+          created_at?: string
+          expires_at?: string
+          accepted_at?: string | null
+        }
+        Relationships: []
+      }
+      workspace_members: {
+        Row: {
+          id: string
+          workspace_id: string
+          user_id: string
+          role: string
+          invited_by: string | null
+          invited_at: string
+          accepted_at: string | null
+        }
+        Insert: {
+          id?: string
+          workspace_id: string
+          user_id: string
+          role: string
+          invited_by?: string | null
+          invited_at?: string
+          accepted_at?: string | null
+        }
+        Update: {
+          id?: string
+          workspace_id?: string
+          user_id?: string
+          role?: string
+          invited_by?: string | null
+          invited_at?: string
+          accepted_at?: string | null
+        }
+        Relationships: []
+      }
+      workspaces: {
+        Row: {
+          id: string
+          name: string
+          owner_id: string
+          plan: string
+          stripe_subscription_id: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          name: string
+          owner_id: string
+          plan?: string
+          stripe_subscription_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          name?: string
+          owner_id?: string
+          plan?: string
+          stripe_subscription_id?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          id: string
+          user_id: string
+          plan: string
+          status: string
+          billing_cycle: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          current_period_start: string | null
+          current_period_end: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          user_id: string
+          plan?: string
+          status?: string
+          billing_cycle?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          current_period_start?: string | null
+          current_period_end?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string
+          plan?: string
+          status?: string
+          billing_cycle?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          current_period_start?: string | null
+          current_period_end?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -159,6 +344,44 @@ export type Database = {
       }
       get_diagram_owner: { Args: { diagram_id: string }; Returns: string }
       get_diagram_title: { Args: { diagram_id: string }; Returns: string }
+      get_user_plan_limits: {
+        Args: { p_user_id: string }
+        Returns: {
+          plan: string
+          max_diagrams: number | null
+          max_nodes_per_diagram: number | null
+          max_collaborators_per_diagram: number | null
+          allowed_export_formats: string[]
+          watermark_enabled: boolean
+          realtime_collab_enabled: boolean
+          email_sharing_enabled: boolean
+        }[]
+      }
+      get_user_diagram_count: { Args: { p_user_id: string }; Returns: number }
+      is_diagram_collaborator: { Args: { p_diagram_id: string; p_user_id: string }; Returns: boolean }
+      get_user_workspace: {
+        Args: { p_user_id: string }
+        Returns: {
+          id: string
+          name: string
+          owner_id: string
+          stripe_subscription_id: string | null
+          created_at: string
+          role: string
+        }[]
+      }
+      get_workspace_editor_count: { Args: { p_workspace_id: string }; Returns: number }
+      get_workspace_members: {
+        Args: { p_workspace_id: string }
+        Returns: {
+          id: string
+          user_id: string
+          email: string
+          role: string
+          invited_at: string
+          accepted_at: string | null
+        }[]
+      }
     }
     Enums: {
       [_ in never]: never

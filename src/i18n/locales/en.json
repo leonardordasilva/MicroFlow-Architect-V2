@@ -316,11 +316,16 @@
     "titleEmpty": "Title cannot be empty",
     "titleTooLong": "Title too long",
     "titleTooLongDesc": "Maximum 100 characters",
-    "copyOf": "Copy of {{title}}"
+    "copyOf": "Copy of {{title}}",
+    "overLimit": "You are over the Free plan limit",
+    "overLimitDesc": "You have {{count}} diagrams, but the Free plan allows a maximum of {{max}}. Your existing diagrams remain accessible, but you cannot create new ones. Delete some or upgrade.",
+    "overLimitUpgrade": "Upgrade plan"
   },
   "sharedDiagram": {
     "loading": "Loading diagram...",
-    "notFound": "Diagram not found."
+    "notFound": "Diagram not found.",
+    "readOnlyBadge": "View mode",
+    "signUpToEdit": "Sign up to edit"
   },
   "notFound": {
     "title": "Page not found",
@@ -333,5 +338,133 @@
     "storageFull": "Local storage full",
     "storageFullDesc": "The diagram is too large to save locally. Save to cloud to preserve your work.",
     "untitled": "Untitled"
+  },
+  "limits": {
+    "nodeLimitReached": "Node limit reached (max: {{max}}). Upgrade your plan to add more nodes.",
+    "diagramLimitReached": "Diagram limit reached. Upgrade your plan to create more diagrams.",
+    "collaboratorLimitReached": "Collaborator limit reached (max: {{max}}). Upgrade your plan for more collaborators.",
+    "availableOnPro": "Available on Pro plan"
+  },
+  "upgrade": {
+    "title": "Upgrade your plan",
+    "featureBlocked": "\"{{feature}}\" requires a paid plan.",
+    "checkoutError": "Could not open checkout. Please try again.",
+    "choosePro": "Choose Pro",
+    "chooseTeam": "Choose Team",
+    "seeProPlans": "See Pro plans",
+    "proFeatures": {
+      "unlimitedDiagrams": "Unlimited diagrams",
+      "nodes200": "Up to 200 nodes per diagram",
+      "allFormats": "All export formats (PNG, SVG, Mermaid, JSON)",
+      "noWatermark": "No watermark on exports",
+      "emailSharing": "Email sharing (up to 5 collaborators)",
+      "realtimeCollab": "Real-time collaboration"
+    },
+    "teamFeatures": {
+      "everythingPro": "Everything in Pro",
+      "unlimitedNodes": "Unlimited nodes per diagram",
+      "workspaces": "Workspaces with role management",
+      "unlimitedCollaborators": "Unlimited collaborators",
+      "prioritySupport": "Priority support (SLA 24h)"
+    }
+  },
+  "pricing": {
+    "title": "Simple, transparent pricing",
+    "subtitle": "Choose the plan that fits your team. Upgrade or cancel anytime.",
+    "popular": "Popular",
+    "free": "Free",
+    "pro": "Pro",
+    "team": "Team",
+    "perMonth": "/mo",
+    "perEditorMonth": "/editor/mo",
+    "cycleMonthly": "Monthly",
+    "cycleQuarterly": "Quarterly",
+    "cycleSemiannual": "Semiannual",
+    "cycleAnnual": "Annual",
+    "ctaFree": "Get started free",
+    "ctaPro": "Get Pro",
+    "ctaTeam": "Get Team",
+    "footer": "All plans include SSL encryption and automatic backups. Cancel anytime.",
+    "freeFeatures": {
+      "diagrams": "Up to 3 saved diagrams",
+      "nodes": "Up to 25 nodes per diagram",
+      "formats": "PNG + JSON export",
+      "linkSharing": "Link sharing (view-only)",
+      "community": "Community support"
+    },
+    "proFeatures": {
+      "diagrams": "Unlimited diagrams",
+      "nodes": "Up to 200 nodes per diagram",
+      "formats": "All export formats, no watermark",
+      "emailSharing": "Email sharing (5 collaborators)",
+      "realtimeCollab": "Real-time collaboration",
+      "support": "Email support (SLA 48h)"
+    },
+    "teamFeatures": {
+      "diagrams": "Unlimited diagrams",
+      "nodes": "Unlimited nodes per diagram",
+      "formats": "All export formats, no watermark",
+      "emailSharing": "Unlimited email sharing",
+      "workspaces": "Workspaces with role management",
+      "support": "Priority support (SLA 24h)"
+    }
+  },
+  "shareDiagramModal": {
+    "emailSharingLocked": "Email sharing not available",
+    "emailSharingLockedDesc": "Upgrade to the Pro plan to share diagrams by email with your team."
+  },
+  "account": {
+    "title": "My Account",
+    "currentPlan": "Current Plan",
+    "billingCycle": "Billing cycle",
+    "renewsOn": "Renews on",
+    "manageSubscription": "Manage subscription",
+    "upgradePlan": "Upgrade plan",
+    "usage": "Usage",
+    "diagrams": "Saved diagrams",
+    "nodesPerDiagram": "Max nodes per diagram",
+    "unlimited": "Unlimited",
+    "portalError": "Could not open billing portal. Please try again.",
+    "checkoutProcessing": "Processing your payment…",
+    "checkoutProcessingDesc": "Please wait while we confirm your subscription. This may take a few seconds."
+  },
+  "workspace": {
+    "title": "Workspace",
+    "personal": "Personal",
+    "manage": "Manage workspace",
+    "diagrams": "Workspace diagrams",
+    "noWorkspace": "No workspace yet",
+    "noWorkspaceDesc": "The Team plan lets you create a shared workspace for your team.",
+    "create": "Create workspace",
+    "created": "Workspace created successfully!",
+    "createError": "Failed to create workspace",
+    "members": "Members",
+    "invite": "Invite member",
+    "inviteTitle": "Invite member",
+    "inviteEmail": "Member email",
+    "inviteRole": "Role",
+    "inviteBtn": "Send invite",
+    "inviteSent": "Invite sent to {{email}}",
+    "inviteError": "Failed to send invite",
+    "roleEditor": "Editor",
+    "roleEditorDesc": "can create and edit",
+    "roleViewer": "Viewer",
+    "roleViewerDesc": "read-only",
+    "editors": "Editors",
+    "viewers": "Viewers",
+    "charged": "billed",
+    "free": "free",
+    "pending": "Pending",
+    "invitedAt": "Invited on {{date}}",
+    "memberRemoved": "Member removed",
+    "memberRemoveError": "Failed to remove member",
+    "roleUpdateError": "Failed to update role",
+    "renameSuccess": "Workspace renamed",
+    "renameError": "Failed to rename workspace",
+    "removeTitle": "Remove member",
+    "removeDesc": "Are you sure you want to remove {{email}} from the workspace?",
+    "removeMember": "Remove",
+    "roleBadge": "{{role}} in workspace",
+    "contextWorkspace": "Workspace: {{name}}"
   }
 }

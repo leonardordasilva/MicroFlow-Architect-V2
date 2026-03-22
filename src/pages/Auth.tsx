@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { supabase } from '@/integrations/supabase/client';
 import { useDiagramStore } from '@/store/diagramStore';
@@ -12,6 +12,9 @@ type AuthView = 'login' | 'signup' | 'forgot';
 
 export default function AuthPage() {
   const { t } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const redirectTo = (location.state as { redirectTo?: string } | null)?.redirectTo;
   const [view, setView] = useState<AuthView>('login');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -50,6 +53,10 @@ export default function AuthPage() {
         store.setCurrentDiagramId(undefined);
         clearAutoSave();
         toast({ title: t('auth.loginSuccess') });
+        if (redirectTo) {
+          navigate(redirectTo, { replace: true });
+          return;
+        }
       } else {
         const { error } = await supabase.auth.signUp({
           email,

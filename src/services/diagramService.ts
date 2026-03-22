@@ -58,6 +58,7 @@ export async function saveDiagram(
   edges: DiagramEdge[],
   ownerId: string,
   existingId?: string,
+  workspaceId?: string | null,
 ): Promise<DiagramRecord> {
   // Encrypt nodes/edges before persisting
   const encrypted = await encryptDiagramData(
@@ -102,6 +103,7 @@ export async function saveDiagram(
     node_count: nodes.length,
     edge_count: edges.length,
     owner_id: ownerId,
+    ...(workspaceId ? { workspace_id: workspaceId } : {}),
   };
   const { data, error } = await supabase
     .from('diagrams')

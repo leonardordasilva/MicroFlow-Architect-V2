@@ -15,6 +15,9 @@ import { getLayoutedElements, getELKLayoutedElements, type LayoutDirection } fro
 import { getNodeColor } from '@/utils/nodeColors';
 import { canConnect } from '@/utils/connectionRules';
 import i18n from '@/i18n';
+import { usePlanStore } from '@/store/planStore';
+// Lazy import of toast to avoid circular dependency at module load time
+import { toast } from '@/hooks/use-toast';
 
 const createNodeId = () => `node_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`;
 
@@ -42,8 +45,8 @@ interface DiagramActions {
   onConnect: (connection: Connection) => void;
   onNodeDragHandler: (event: React.MouseEvent, node: DiagramNode) => void;
 
-  addNode: (type: NodeType, subType?: string, position?: { x: number; y: number }) => void;
-  addNodesFromSource: (sourceNodeId: string, type: NodeType, count: number, subType?: string) => void;
+  addNode: (type: NodeType, subType?: string, position?: { x: number; y: number }, onLimitReached?: () => void) => void;
+  addNodesFromSource: (sourceNodeId: string, type: NodeType, count: number, subType?: string, onLimitReached?: () => void) => void;
   deleteSelected: () => void;
   autoLayout: (direction?: LayoutDirection) => void;
   autoLayoutELK: (direction?: LayoutDirection) => Promise<void>;
@@ -182,7 +185,19 @@ export const useDiagramStore = create<DiagramStore>()(
       },
 
       // Actions
-      addNode: (type, subType, position) => {
+      addNode: (type, subType, position, onLimitReached) => {
+        // saas0001: enforce node limit per plan
+        const { limits } = usePlanStore.getState();
+        const { maxNodesPerDiagram } = limits;
+        if (maxNodesPerDiagram !== null) {
+          const currentCount = get().nodes.length;
+          if (currentCount >= maxNodesPerDiagram) {
+            toast({ title: i18n.t('limits.nodeLimitReached', { max: maxNodesPerDiagram }), variant: 'destructive' });
+            onLimitReached?.();
+            return;
+          }
+        }
+
         const labelMap: Record<NodeType, string> = {
           service: i18n.t('nodes.service'),
           database: subType || 'Oracle',
@@ -198,7 +213,17 @@ export const useDiagramStore = create<DiagramStore>()(
         set((state) => ({ nodes: [...state.nodes, newNode] }));
       },
 
-      addNodesFromSource: (sourceNodeId, type, count, subType) => {
+      addNodesFromSource: (sourceNodeId, type, count, subType, onLimitReached) => {
+        // saas0001: enforce node limit per plan
+        const { limits } = usePlanStore.getState();
+        const { maxNodesPerDiagram } = limits;
+        const { nodes: currentNodes } = get();
+        if (maxNodesPerDiagram !== null && currentNodes.length + count > maxNodesPerDiagram) {
+          toast({ title: i18n.t('limits.nodeLimitReached', { max: maxNodesPerDiagram }), variant: 'destructive' });
+          onLimitReached?.();
+          return;
+        }
+
         const { nodes } = get();
         const sourceNode = nodes.find((n) => n.id === sourceNodeId);
         if (!sourceNode) return;

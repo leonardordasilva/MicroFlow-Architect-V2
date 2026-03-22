@@ -16,6 +16,10 @@ const MyDiagrams = lazy(() => import('./pages/MyDiagrams'));
 const SharedDiagram = lazy(() => import('./pages/SharedDiagram'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 const Landing = lazy(() => import('./pages/Landing'));
+const Pricing = lazy(() => import('./pages/Pricing'));
+const Account = lazy(() => import('./pages/Account'));
+const Workspace = lazy(() => import('./pages/Workspace'));
+const WorkspaceDiagrams = lazy(() => import('./pages/WorkspaceDiagrams'));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -46,6 +50,10 @@ const App = () => (
                 <Route path="/my-diagrams" element={<ProtectedRoute><MyDiagrams /></ProtectedRoute>} />
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/diagram/:shareToken" element={<SharedDiagram />} />
+                <Route path="/pricing" element={<Pricing />} />
+                <Route path="/account" element={<ProtectedRoute><Account /></ProtectedRoute>} />
+                <Route path="/workspace" element={<ProtectedRoute><Workspace /></ProtectedRoute>} />
+                <Route path="/workspace/diagrams" element={<ProtectedRoute><WorkspaceDiagrams /></ProtectedRoute>} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

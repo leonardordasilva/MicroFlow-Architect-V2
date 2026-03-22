@@ -21,11 +21,13 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
 import { toast } from '@/hooks/use-toast';
-import { Plus, Trash2, Pencil, ArrowLeft, FileText, Share2, RefreshCw, Loader2, Users, Copy } from 'lucide-react';
+import { Plus, Trash2, Pencil, ArrowLeft, FileText, Share2, RefreshCw, Loader2, Users, Copy, AlertTriangle } from 'lucide-react';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/components/ui/tooltip';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import ShareDiagramModal from '@/components/ShareDiagramModal';
+import UpgradeModal from '@/components/UpgradeModal';
+import { usePlanLimits } from '@/hooks/usePlanLimits';
 
 function DiagramCardSkeleton() {
   return (
@@ -48,6 +50,8 @@ export default function MyDiagrams() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [shareTarget, setShareTarget] = useState<{ diagramId: string; ownerId: string } | null>(null);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const planLimits = usePlanLimits();
   const [sharedWithMe, setSharedWithMe] = useState<
     { diagram_id: string; title: string; owner_email: string; updated_at: string; nodes: DiagramNode[]; edges: DiagramEdge[] }[]
   >([]);
@@ -67,6 +71,8 @@ export default function MyDiagrams() {
   });
 
   const diagrams = data?.pages.flatMap((p) => p.diagrams) ?? [];
+  const { limits } = planLimits;
+  const isOverDiagramLimit = limits.maxDiagrams !== null && diagrams.length > limits.maxDiagrams;
 
   // Load shared diagrams
   useEffect(() => {
@@ -159,6 +165,10 @@ export default function MyDiagrams() {
             <h1 className="text-2xl font-bold text-foreground">{t('myDiagrams.title')}</h1>
           </div>
           <Button onClick={() => {
+            if (isOverDiagramLimit) {
+              setUpgradeModalOpen(true);
+              return;
+            }
             const store = useDiagramStore.getState();
             store.clearCanvas();
             store.setDiagramName(t('diagram.newDiagram'));
@@ -169,6 +179,26 @@ export default function MyDiagrams() {
             <Plus className="mr-2 h-4 w-4" /> {t('myDiagrams.newDiagram')}
           </Button>
         </div>
+
+        {isOverDiagramLimit && (
+          <div className="mb-6 flex items-start gap-3 rounded-lg border border-yellow-500/30 bg-yellow-500/10 p-4 text-sm">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-yellow-400" />
+            <div className="flex-1">
+              <p className="font-semibold text-yellow-300">{t('myDiagrams.overLimit')}</p>
+              <p className="mt-1 text-yellow-200/70">
+                {t('myDiagrams.overLimitDesc', { count: diagrams.length, max: limits.maxDiagrams })}
+              </p>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              className="shrink-0 border-yellow-500/40 text-yellow-300 hover:bg-yellow-500/20 hover:text-yellow-200"
+              onClick={() => setUpgradeModalOpen(true)}
+            >
+              {t('myDiagrams.overLimitUpgrade')}
+            </Button>
+          </div>
+        )}
 
         {isError && (
           <div className="flex flex-col items-center justify-center py-20 text-muted-foreground">
@@ -361,8 +391,17 @@ export default function MyDiagrams() {
           onOpenChange={(open) => { if (!open) setShareTarget(null); }}
           diagramId={shareTarget.diagramId}
           ownerId={shareTarget.ownerId}
+          emailSharingEnabled={planLimits.emailSharingEnabled}
+          maxCollaborators={planLimits.maxCollaboratorsPerDiagram}
+          onUpgradeRequest={() => setUpgradeModalOpen(true)}
         />
       )}
+
+      <UpgradeModal
+        open={upgradeModalOpen}
+        onOpenChange={setUpgradeModalOpen}
+        featureName="Compartilhamento por e-mail"
+      />
     </div>
   );
 }

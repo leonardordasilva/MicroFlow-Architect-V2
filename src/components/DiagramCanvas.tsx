@@ -32,8 +32,13 @@ import { useSaveDiagram } from '@/hooks/useSaveDiagram';
 import { useRealtimeCollab } from '@/hooks/useRealtimeCollab';
 import { useAutoSave } from '@/hooks/useAutoSave';
 import { useExportHandlers } from '@/hooks/useExportHandlers';
+import { usePlanLimits } from '@/hooks/usePlanLimits';
+import { useWorkspace } from '@/hooks/useWorkspace';
+import { useWorkspaceStore } from '@/store/workspaceStore';
 import RecoveryBanner from '@/components/RecoveryBanner';
 import DiagramHeader from '@/components/DiagramHeader';
+import UpgradeModal from '@/components/UpgradeModal';
+import WorkspaceContextSelector from '@/components/WorkspaceContextSelector';
 
 import { canConnect, connectionErrorMessage } from '@/utils/connectionRules';
 import { Keyboard } from 'lucide-react';
@@ -60,9 +65,11 @@ const MINIMAP_NODE_COLORS: Record<string, string> = {
 
 interface DiagramCanvasProps {
   shareToken?: string;
+  /** When true, all editing is disabled (read-only shared view) */
+  readOnly?: boolean;
 }
 
-function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
+function DiagramCanvasInner({ shareToken, readOnly = false }: DiagramCanvasProps) {
   const { t } = useTranslation();
   const nodes = useDiagramStore((s) => s.nodes);
   const edges = useDiagramStore((s) => s.edges);
@@ -86,7 +93,24 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
   const redo = useCallback(() => useDiagramStore.temporal.getState().redo(), []);
 
   const { user, signOut } = useAuth();
-  const { save: handleSaveToCloud, saving, saveRef: handleSaveToCloudRef } = useSaveDiagram({ shareToken });
+
+  // saas0001: plan limits
+  const planLimits = usePlanLimits();
+  // saas0003: workspace context
+  useWorkspace(); // populates workspaceStore
+  const currentWorkspace = useWorkspaceStore((s) => s.currentWorkspace);
+  const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
+  const [upgradeFeatureName, setUpgradeFeatureName] = useState('');
+
+  const openUpgradeModal = useCallback((featureName: string) => {
+    setUpgradeFeatureName(featureName);
+    setUpgradeModalOpen(true);
+  }, []);
+
+  const { save: handleSaveToCloud, saving, saveRef: handleSaveToCloudRef } = useSaveDiagram({
+    shareToken,
+    onDiagramLimitReached: () => openUpgradeModal('Diagramas ilimitados'),
+  });
 
   // UX-04: Initialize dark mode from localStorage or system preference
   const [darkMode, setDarkMode] = useState(() => {
@@ -105,10 +129,10 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
   const overlaysRef = useRef<CanvasOverlaysHandle>(null);
 
   const { guides, onNodeDrag, onNodeDragStop } = useSnapGuides(nodes);
-  const { broadcastChanges, collaborators } = useRealtimeCollab(shareToken || null);
+  const { broadcastChanges, collaborators } = useRealtimeCollab(shareToken || null, planLimits.realtimeCollabEnabled);
   const { saveStatus } = useAutoSave();
   const { screenToFlowPosition } = useReactFlow();
-  const { handleExportPNG, handleExportSVG, handleExportMermaid, handleExportJSON } = useExportHandlers(darkMode);
+  const { handleExportPNG, handleExportSVG, handleExportMermaid, handleExportJSON } = useExportHandlers(darkMode, planLimits.watermarkEnabled);
 
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
@@ -208,6 +232,7 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
   return (
     <div className="flex h-screen w-screen flex-col bg-background" onKeyDown={handleKeyDown} tabIndex={0} role="application" aria-label="Editor de diagramas de arquitetura">
       <header className="flex items-center justify-center gap-3 border-b bg-card/80 px-4 py-2 backdrop-blur-sm">
+        {!readOnly && (
         <Toolbar
           onAddNode={handleAddNode}
           onDelete={deleteSelected}
@@ -230,27 +255,35 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
           onDiagramNameChange={setDiagramName}
           darkMode={darkMode}
           onToggleDarkMode={toggleDarkMode}
+          allowedExportFormats={planLimits.allowedExportFormats}
+          onUpgradeRequest={openUpgradeModal}
         />
-        <DiagramHeader
-          shareToken={shareToken}
-          diagramId={diagramId}
-          isCollaborator={isCollaborator}
-          user={user}
-          collaborators={collaborators}
-          saving={saving}
-          refreshing={refreshing}
-          onSave={handleSaveToCloud}
-          onRefresh={handleRefreshDiagram}
-          onSignOut={signOut}
-        />
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => modalsRef.current?.openShortcuts()} aria-label={t('canvas.keyboardShortcuts')}>
-              <Keyboard className="h-4 w-4" />
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent side="bottom" className="text-xs">{t('canvas.keyboardShortcutsBtn')}</TooltipContent>
-        </Tooltip>
+        )}
+        {!readOnly && <WorkspaceContextSelector />}
+        {!readOnly && (
+          <>
+            <DiagramHeader
+              shareToken={shareToken}
+              diagramId={diagramId}
+              isCollaborator={isCollaborator}
+              user={user}
+              collaborators={collaborators}
+              saving={saving}
+              refreshing={refreshing}
+              onSave={handleSaveToCloud}
+              onRefresh={handleRefreshDiagram}
+              onSignOut={signOut}
+            />
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => modalsRef.current?.openShortcuts()} aria-label={t('canvas.keyboardShortcuts')}>
+                  <Keyboard className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="bottom" className="text-xs">{t('canvas.keyboardShortcutsBtn')}</TooltipContent>
+            </Tooltip>
+          </>
+        )}
       </header>
 
       <div className="relative flex-1" ref={reactFlowWrapper}>
@@ -258,21 +291,24 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
         <ReactFlow
           nodes={nodes}
           edges={edges}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={handleConnect}
-          onNodeDrag={(event, node) => { onNodeDrag(event, node); onNodeDragHandler(event, node as any); }}
-          onNodeDragStop={onNodeDragStop}
-          onNodeContextMenu={handleNodeContextMenu}
+          onNodesChange={readOnly ? undefined : onNodesChange}
+          onEdgesChange={readOnly ? undefined : onEdgesChange}
+          onConnect={readOnly ? undefined : handleConnect}
+          onNodeDrag={readOnly ? undefined : (event, node) => { onNodeDrag(event, node); onNodeDragHandler(event, node as any); }}
+          onNodeDragStop={readOnly ? undefined : onNodeDragStop}
+          onNodeContextMenu={readOnly ? undefined : handleNodeContextMenu}
           onPaneClick={handlePaneClick}
           onNodeClick={handleNodeClick}
           nodeTypes={nodeTypes}
           edgeTypes={edgeTypes}
           fitView
-          snapToGrid
+          snapToGrid={!readOnly}
           snapGrid={[10, 10]}
-          selectionOnDrag={interactionMode === 'select'}
-          panOnDrag={interactionMode === 'select' ? [1, 2] : [0, 1, 2]}
+          nodesDraggable={!readOnly}
+          nodesConnectable={!readOnly}
+          elementsSelectable={!readOnly}
+          selectionOnDrag={!readOnly && interactionMode === 'select'}
+          panOnDrag={readOnly ? true : (interactionMode === 'select' ? [1, 2] : [0, 1, 2])}
           selectionMode={SelectionMode.Partial}
           defaultEdgeOptions={{ type: 'editable', animated: true, style: { strokeWidth: 2 }, data: { waypoints: undefined } }}
           proOptions={{ hideAttribution: true }}
@@ -283,34 +319,44 @@ function DiagramCanvasInner({ shareToken }: DiagramCanvasProps) {
           <MiniMap className="!bg-card !border-border" nodeColor={(node) => MINIMAP_NODE_COLORS[node.type || ''] || '#888'} />
         </ReactFlow>
 
-        <CanvasOverlays
-          ref={overlaysRef}
-          nodes={nodes}
-          interactionMode={interactionMode}
-          onInteractionModeChange={handleSetInteractionMode}
-          onSpawn={(source) => modalsRef.current?.openSpawn(source)}
-        />
+        {!readOnly && (
+          <CanvasOverlays
+            ref={overlaysRef}
+            nodes={nodes}
+            interactionMode={interactionMode}
+            onInteractionModeChange={handleSetInteractionMode}
+            onSpawn={(source) => modalsRef.current?.openSpawn(source)}
+          />
+        )}
       </div>
 
       <StatusBar nodes={nodes} edges={edges} saveStatus={saveStatus} />
 
-      <DiagramModals
-        ref={modalsRef}
-        addNodesFromSource={addNodesFromSource}
-        loadDiagram={loadDiagram}
-        setDiagramName={setDiagramName}
-        clearCanvas={clearCanvas}
-        handleExportMermaid={handleExportMermaid}
-        onAfterImport={() => { lastLoadedUpdatedAtRef.current = null; }}
+      {!readOnly && (
+        <DiagramModals
+          ref={modalsRef}
+          addNodesFromSource={addNodesFromSource}
+          loadDiagram={loadDiagram}
+          setDiagramName={setDiagramName}
+          clearCanvas={clearCanvas}
+          handleExportMermaid={handleExportMermaid}
+          onAfterImport={() => { lastLoadedUpdatedAtRef.current = null; }}
+        />
+      )}
+
+      <UpgradeModal
+        open={upgradeModalOpen}
+        onOpenChange={setUpgradeModalOpen}
+        featureName={upgradeFeatureName}
       />
     </div>
   );
 }
 
-export default function DiagramCanvas({ shareToken }: DiagramCanvasProps = {}) {
+export default function DiagramCanvas({ shareToken, readOnly }: DiagramCanvasProps = {}) {
   return (
     <ReactFlowProvider>
-      <DiagramCanvasInner shareToken={shareToken} />
+      <DiagramCanvasInner shareToken={shareToken} readOnly={readOnly} />
     </ReactFlowProvider>
   );
 }

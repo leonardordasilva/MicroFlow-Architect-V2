@@ -3,6 +3,7 @@ import { useViewport } from '@xyflow/react';
 import type { DiagramNode, DiagramEdge } from '@/types/diagram';
 import type { SaveStatus } from '@/hooks/useAutoSave';
 import { useTranslation } from 'react-i18next';
+import { useWorkspaceStore } from '@/store/workspaceStore';
 
 interface StatusBarProps {
   nodes: DiagramNode[];
@@ -13,6 +14,7 @@ interface StatusBarProps {
 function StatusBar({ nodes, edges, saveStatus }: StatusBarProps) {
   const { zoom } = useViewport();
   const { t } = useTranslation();
+  const currentWorkspace = useWorkspaceStore((s) => s.currentWorkspace);
 
   return (
     <div className="flex items-center justify-center gap-4 border-t border-border bg-card/80 px-4 py-1.5 text-xs text-muted-foreground backdrop-blur-sm">
@@ -26,6 +28,14 @@ function StatusBar({ nodes, edges, saveStatus }: StatusBarProps) {
       )}
       {saveStatus === 'saving' && (
         <span className="text-muted-foreground opacity-70">• {t('status.saving')}</span>
+      )}
+      {currentWorkspace && (
+        <span className="text-border">•</span>
+      )}
+      {currentWorkspace && (
+        <span className="capitalize text-blue-400/80">
+          {t('workspace.roleBadge', { role: currentWorkspace.role })}
+        </span>
       )}
     </div>
   );
